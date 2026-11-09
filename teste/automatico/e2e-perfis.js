@@ -31,7 +31,7 @@ const ok = (nome, cond, extra='') => { resultados.push({ nome, ok: !!cond, extra
       await page.click('.atalho');
       await page.waitForSelector('.palco iframe', { timeout: 15000 }); await page.waitForTimeout(6000);
     }
-    if (p.id === 'admin') ok('[admin] começa na Visão geral, com 5 indicadores e nenhum módulo carregado', (await page.locator('.adm .kpi').count()) === 5 && reqs.size === 0);
+    if (p.id === 'admin') ok('[admin] começa na Visão geral, com 4 indicadores e nenhum módulo carregado', (await page.locator('.adm .kpi').count()) === 4 && reqs.size === 0);
     ok(`[${p.id}] barra do topo aparece; abas de administrador (Usuários/Backup) ${p.espera.barra ? 'aparecem' : 'NÃO aparecem'}`, p.id === 'admin' ? (await page.locator('.trilho .it[data-id=backup]').count() === 1 && await page.locator('.trilho .it[data-id=usuarios]').count() === 1) : ((await page.locator('.barra').count() > 0) && (await page.locator('.barra .item[data-id=backup]').count() > 0) === p.espera.barra));
     const frames = page.frames().filter(f => f !== page.mainFrame());
     ok(`[${p.id}] módulos carregados = ${p.espera.modulos.join('+')}`, JSON.stringify([...reqs].sort()) === JSON.stringify([...p.espera.modulos].sort()), 'pediu: ' + [...reqs].join(','));

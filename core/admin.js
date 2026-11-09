@@ -91,10 +91,6 @@ var ADMIN = (function () {
       b.innerHTML = icone(ico) + '<span>' + rot + '</span>'; return b;
     }
 
-    function atalho(rot, ico, fn) {
-      var b = h('button', { class: 'adm-atalho', type: 'button', onclick: fn });
-      b.innerHTML = '<span class="ai">' + icone(ico) + '</span><span>' + rot + '</span>'; return b;
-    }
     function kpi(ico, rot, cls, destino) {
       var c = h('button', { class: 'adm-card kpi ' + cls + ' anim', type: 'button', onclick: function () { abrir(destino); } });
       c.innerHTML = '<span class="kpi-ico">' + icone(ico) + '</span><span class="kpi-rot">' + rot + '</span><span class="kpi-val">—</span><span class="kpi-sub">carregando…</span>';
@@ -104,8 +100,6 @@ var ADMIN = (function () {
     var kMan = kpi('chave', 'Manutenções abertas', 'k2', 'operacional');
     var kProp = kpi('arquivo', 'Propostas no mês', 'k3', 'comercial');
     var kSug = kpi('chat', 'Sugestões pendentes', 'k4', 'comercial');
-    var kEst = kpi('arquivo', 'Estáticos com aviso', 'k5', 'operacional');
-    kEst.onclick = function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='i';render()"); } catch (e) {} }); };
     function kSet(card, valor, sub, tom) {
       var v = card.querySelector('.kpi-val'), s = card.querySelector('.kpi-sub');
       if (valor == null) { v.textContent = '—'; } else contar(v, valor);
@@ -126,12 +120,7 @@ var ADMIN = (function () {
         h('div', { class: 'adm-tit' }, [sau, h('h1', { text: 'Visão geral' }), data]),
         h('div', { class: 'adm-dir' }, [hora, h('div', { class: 'adm-btns' }, [botao('Comercial', 'comercial', 'vidro', 'comercial'), botao('Operacional', 'operacional', 'rosa', 'operacional')])])
       ]),
-      h('div', { class: 'adm-atalhos anim' }, [
-        atalho('Montar proposta', 'arquivo', function () { abrir('comercial'); }),
-        atalho('Instalar estático', 'operacional', function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='i';render()"); } catch (e) {} }); }),
-        atalho('Players', 'tv', function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='pl';render()"); } catch (e) {} }); })
-      ]),
-      h('div', { class: 'adm-kpis' }, [kCamp, kMan, kEst, kProp, kSug]),
+      h('div', { class: 'adm-kpis' }, [kCamp, kMan, kProp, kSug]),
       h('div', { class: 'adm-linha' }, [cGraf, cRos]),
       h('div', { class: 'adm-linha dois' }, [cMan, cSug])
     ]);
@@ -142,7 +131,7 @@ var ADMIN = (function () {
 
     (async function operacional() {
       try {
-        var r = await client.from('registros').select('tipo,dados').in('tipo', ['vt', 'mn', 'es']).eq('excluido', false);
+        var r = await client.from('registros').select('tipo,dados').in('tipo', ['vt', 'mn']).eq('excluido', false);
         if (r.error) throw r.error;
         var hoje = hojeISO(), agora = Date.now(), noAr = 0, aIniciar = 0, fim = 0, abertas = [];
         (r.data || []).forEach(function (x) {
@@ -151,14 +140,6 @@ var ADMIN = (function () {
             if (d.ini && d.ini > hoje) aIniciar++; else if (d.fim && d.fim < hoje) fim++; else noAr++;
           } else if (x.tipo === 'mn' && d.status !== 'resolvida') abertas.push(d);
         });
-        var avE = 0, dd = function (iso) { return Math.round((new Date(iso + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 864e5); };
-        (r.data || []).forEach(function (x) {
-          var e = x.dados || {};
-          if (x.tipo !== 'es' || e.oc !== 'cli' || !e.ini || !e.fim || e.ret) return;
-          var di = dd(e.ini), df = dd(e.fim);
-          if (!e.inst ? (df < 0 || di <= 2) : df <= 2) avE++;
-        });
-        kSet(kEst, avE, avE ? 'instalar ou retirar lona' : 'tudo em dia', avE ? 'alerta' : 'bom');
         var atrasadas = abertas.filter(function (m) { return m.pz && m.pz < agora; });
         kSet(kCamp, noAr, aIniciar + ' a iniciar · ' + fim + ' encerradas');
         kSet(kMan, abertas.length, atrasadas.length ? '<b>' + atrasadas.length + ' atrasada(s)</b>' : 'nenhuma atrasada', atrasadas.length ? 'alerta' : 'bom');
@@ -176,7 +157,7 @@ var ADMIN = (function () {
           return '<li><span class="pto ' + (atr ? 'ruim' : '') + '"></span><div><b>' + esc(m.def || 'Chamado de manutenção') + '</b><small>' + (m.status === 'eld' ? 'em atendimento' : 'pendente') + (m.moto ? ' · ' + esc(m.moto) : '') + '</small></div>' + chip + '</li>';
         }).join('') : '<li class="vazio">Nenhuma manutenção aberta. Tudo em dia.</li>';
       } catch (e) {
-        falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler'); falhou(kEst, 'não consegui ler');
+        falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler');
         cRos.querySelector('.ros-corpo').innerHTML = '<div class="vazio">Não consegui carregar a operação.</div>';
         cMan.querySelector('.lst').innerHTML = '<li class="vazio">Não consegui carregar.</li>';
       }

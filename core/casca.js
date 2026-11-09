@@ -87,7 +87,6 @@ var MEGA = (function () {
     aviso('Saindo…');
     /* não deixa o "Sair" travar se o servidor demorar: espera no máximo 1,5 s e limpa o login deste navegador */
     try { await Promise.race([client.auth.signOut(), new Promise(function (r) { setTimeout(r, 1500); })]); } catch (e) {}
-    try { sessionStorage.removeItem('mega_bv'); } catch (e) {}
     try { Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
     try { sessionStorage.removeItem('mk_bv'); } catch (e) {}
     try { sessionStorage.setItem('mega_msg', mensagem || ''); } catch (e) {}
@@ -183,7 +182,6 @@ var MEGA = (function () {
       ]);
     }
     montarInterface(perm);
-    boasVindas();
     vigiarPerfil();
   }
 
@@ -230,26 +228,6 @@ var MEGA = (function () {
   function horaCurta(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 
   /* Início: a MESMA tela para todos os perfis (muda só o que aparece nos atalhos) */
-  /* Boas-vindas rápida (~2 s): saudação, data e hora, em vidro suave com as cores Mega. Uma vez por entrada. */
-  function boasVindas() {
-    try { if (sessionStorage.getItem('mega_bv')) return; sessionStorage.setItem('mega_bv', '1'); } catch (e) {}
-    var d = new Date(), pn = primeiroNome();
-    var el = h('div', { class: 'bv', role: 'status' }, [
-      h('div', { class: 'bv-bg' }),
-      h('div', { class: 'bv-card' }, [
-        logo('branca'),
-        h('div', { class: 'bv-sau', text: saudacao() + (pn ? ', ' + pn : '') }),
-        h('div', { class: 'bv-hora', text: horaCurta(d) }),
-        h('div', { class: 'bv-data', text: dataExtensa(d) }),
-        h('div', { class: 'bv-barra' }, [h('i')])
-      ])
-    ]);
-    document.body.appendChild(el);
-    var fim = function () { if (!el.parentNode) return; el.classList.add('sai'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 450); };
-    el.addEventListener('click', fim);
-    setTimeout(fim, 2000);
-  }
-
   function telaInicio(perm) {
     var primeiro = String(perfil.nome || perfil.email || '').split(/[ @.]/)[0];
     primeiro = primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
