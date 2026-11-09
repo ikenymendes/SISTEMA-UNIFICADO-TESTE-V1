@@ -64,9 +64,9 @@ async function syncOut(){
   finally{ syncing=false; if(syncAgain){ syncAgain=false; syncOut(); } }
 }
 function persistLocal(){ L.sel={}; D.pontos.forEach(function(p){ if(p.sel) L.sel[p.id]=1; }); L.cliente=D.kit.cliente||''; if(!ME.admin&&!ME.gerente){ L.precos=D.precos; L.comissao=D.comissao; L.bv=D.bv; L.modoGeral=D.modoGeral; } lsPut(); }
-function dirty(){ persistLocal(); if(ME.admin&&READY){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOut,1200); } else if(ME.gerente&&READY&&curTab==='precos'){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOutGer,1200); } }
+function dirty(){ persistLocal(); if(ME.admin&&READY){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOut,1200); } else if(ME.gerente&&READY&&(curTab==='precos'||curTab==='precosp')){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOutGer,1200); } }
 /* Gerente comercial: na aba Preços base edita e salva os preços base; nas demais abas age como comercial (ajustes só na própria proposta). */
-function baseEditavel(){ return ME.admin||(ME.gerente&&curTab==='precos'); }
+function baseEditavel(){ return ME.admin||(ME.gerente&&(curTab==='precos'||curTab==='precosp')); }
 function baseDoServidor(){ if(!CFGSRV||!DEF0) return; D.precos=JSON.parse(JSON.stringify(CFGSRV.precos||DEF0.precos)); D.comissao=CFGSRV.comissao!=null?CFGSRV.comissao:DEF0.comissao; D.bv=CFGSRV.bv!=null?CFGSRV.bv:DEF0.bv; D.modoGeral=CFGSRV.modoGeral||DEF0.modoGeral; L.precos=null; L.comissao=null; L.bv=null; L.modoGeral=null; lsPut(); lastCfg=stable(cfgSnapshot()); }
 async function syncOutGer(){
   if(!ME.gerente||!READY) return; if(syncing){ syncAgain=true; return; } syncing=true; setSaved('salvando…');

@@ -235,7 +235,7 @@ function viewPrecos(v,embed){ migPrecos(D); var EDITA=baseEditavel(), soEnd=func
   var avMin=h('div',{class:'avmin',hidden:'hidden'}); v.appendChild(avMin);
   function recalc(){ if(window.__onPreco) window.__onPreco(); var tt=0,tn=0, baixo=[]; D.precos.forEach(function(r,i){ var c=calcPreco(D,r); tt+=c.tabela; tn+=c.final; var tr0=trs[i]; if(tr0){ var mw=tr0.querySelector('.minwarn'); if(mw){ mw.hidden=!c.abaixo; mw.textContent=c.abaixo?'⚠ Abaixo do mínimo pré-definido ('+brl(c.minLiq)+' líquido)':''; } tr0.classList.toggle('abaixo',!!c.abaixo); } if(c.abaixo&&(!embed||!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); }))) baixo.push(r.nome); var cell=trs[i]&&trs[i].querySelector('.val'); if(cell) cell.textContent=brl(c.final); var pc=trs[i]&&trs[i].querySelector('.pts'); if(pc) pc.placeholder=String(c.pontos); var ic=trs[i]&&trs[i].querySelector('.ins'); if(ic) ic.textContent=c.insercoes; var tcl=trs[i]&&trs[i].querySelector('.tabcalc'); if(tcl) tcl.textContent=c.tabela?brl(c.tabela):'por endereço'; }); avMin.hidden=!baixo.length; avMin.textContent=baixo.length?'⚠ Você está alterando valores pré-definidos pelo administrador: '+baixo.join(', ')+' ficou abaixo do mínimo líquido. Isso será pedido na conferência antes de gerar a proposta.':''; foot.innerHTML=''; foot.appendChild(h('tr',{},[h('td',{text:'Total'}),h('td'),h('td'),h('td'),h('td'),h('td',{text:brl(tt)}),h('td'),h('td',{text:brl(tn)}),h('td'),h('td')])); }
   function row(r,i){ var tr=h('tr'); if(embed&&r.auto&&!r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) tr.className='vazio'; function td(x){ var t=h('td'); t.appendChild(x); tr.appendChild(t); }
-    var nt=h('td'); nt.appendChild(inp(r,'nome')); if(ehEstatico(r)){ var tp=totProdEst(D,r.auto,EDITA); if(tp>0||r.incProd){ var ck=h('input',{type:'checkbox'}); ck.checked=!!r.incProd; ck.addEventListener('change',function(){ r.incProd=ck.checked; dirty(); recalc(); }); nt.appendChild(h('label',{class:'incprod'},[ck,h('span',{text:' Incluir produção líquida ('+brl(tp)+')'})])); } nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); } if(GRUPO_NOVOS[r.auto]) nt.appendChild(h('small',{class:'dono d-'+(r.auto.slice(-2)==='r2'?'mega_r2':'mega'),text:'interno: '+grupoPorK(r.auto).nome})); tr.appendChild(nt); var pi=inp(r,'pontos'); pi.className='pts'; td(pi); td(inp(r,'periodo')); td(inp(r,'insPor',{onchange:recalc})); var ti=h('td',{class:'calc ins'}); tr.appendChild(ti); if(ehEstatico(r)){ var tc=h('td',{class:'calc tabcalc'}); tr.appendChild(tc); } else td(inp(r,'tabela',{onchange:recalc})); td(inp(r,'desc',{onchange:recalc}));
+    var nt=h('td'); nt.appendChild(inp(r,'nome')); if(ehEstatico(r)){ var tp=totProdEst(D,r.auto,EDITA); if(tp>0||r.incProd){ var ck=h('input',{type:'checkbox'}); ck.checked=!!r.incProd; ck.addEventListener('change',function(){ r.incProd=ck.checked; dirty(); recalc(); }); nt.appendChild(h('label',{class:'incprod'},[ck,h('span',{text:' Incluir produção líquida ('+brl(tp)+')'})])); } nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); } else if(r.auto) nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); if(GRUPO_NOVOS[r.auto]) nt.appendChild(h('small',{class:'dono d-'+(r.auto.slice(-2)==='r2'?'mega_r2':'mega'),text:'interno: '+grupoPorK(r.auto).nome})); tr.appendChild(nt); var pi=inp(r,'pontos'); pi.className='pts'; td(pi); td(inp(r,'periodo')); td(inp(r,'insPor',{onchange:recalc})); var ti=h('td',{class:'calc ins'}); tr.appendChild(ti); if(ehEstatico(r)){ var tc=h('td',{class:'calc tabcalc'}); tr.appendChild(tc); } else td(inp(r,'tabela',{onchange:recalc})); td(inp(r,'desc',{onchange:recalc}));
     var cs=h('td',{class:'calc val'}); tr.appendChild(cs);
     if(!ME.admin){ td(h('span')); td(h('span')); return tr; }
     td(h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})); td(h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})); return tr; }
@@ -249,9 +249,9 @@ function donoField(p,onchg){ var s=h('select',{},DONOS.map(function(d){ var o=h(
 
 /* ---------- preço por endereço (empenas, outdoors e demais estáticos): cada endereço aparece abaixo da sua linha ---------- */
 function enderecosGrupo(k,periodo,nomeLinha){
-  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês';
+  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês', temProd=ESTATICOS.indexOf(k)>=0;
   var g=h('div',{class:'endgrp'}); g.style.cssText='max-width:780px;width:100%;box-sizing:border-box;position:sticky;left:0;margin:6px 0;'; var lista=baseEditavel()?ptsOf(D,k):selEstaticos(D,k);
-  g.appendChild(h('h4',{text:(nomeLinha?nomeLinha+' · ':'')+'endereços · preço por '+per+' (unitário)'+(baseEditavel()?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
+  g.appendChild(h('h4',{text:(nomeLinha?nomeLinha+' · ':'')+(temProd?'endereços · preço por '+per+' (unitário)':'valor mínimo líquido por ponto · por '+per)+(baseEditavel()?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
   if(!lista.length){ g.appendChild(h('p',{class:'hint',text:baseEditavel()?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
   lista.forEach(function(p){
     var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
@@ -261,12 +261,23 @@ function enderecosGrupo(k,periodo,nomeLinha){
       var aviso=h('div',{class:'prewarn',hidden:'hidden'});
       var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else if(!aviso.dataset.outro){ aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
       var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; return h('label',{class:'pre'},[h('small',{text:rot}),i]); };
-      val=h('div',{class:'prebox'},[fl('liq','Líquido / '+per+' (R$)',srv.liq),fl('prod','Produção líquida (R$)',srv.prod)].concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat([aviso]));
+      val=h('div',{class:'prebox'},[fl('liq','Líquido / '+per+' (R$)',srv.liq)].concat(temProd?[fl('prod','Produção líquida (R$)',srv.prod)]:[]).concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat([aviso]));
     }
     else val=h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per+(vlr(p.prod)>0?' · prod. '+brl(vlr(p.prod)):''):(p.preco?brl(vlr(p.preco)):'sem preço definido')});
     var er=h('div',{class:'endrow'+(baseEditavel()&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]); er.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;'; var pb=er.querySelector('.prebox'); if(pb) pb.style.cssText='display:flex;flex-wrap:wrap;gap:8px;'; g.appendChild(er);
   });
   return g;
+}
+
+/* ---------- Preços base SP: valor mínimo líquido de CADA ponto (LED, bancas e estáticos) ---------- */
+function viewPrecosSP(v){
+  v.appendChild(h('h2',{text:'Preços base SP · valor mínimo por ponto'}));
+  v.appendChild(h('p',{class:'hint',text:'Cada ponto tem o seu valor mínimo líquido (mensal; outdoor por bi-semana). Na proposta, o sistema soma o mínimo dos pontos escolhidos e avisa quando o valor negociado ficar abaixo. Estáticos também têm a produção líquida. As alterações são salvas sozinhas.'}));
+  var f=h('input',{type:'search',placeholder:'Filtrar por endereço ou bairro…'}); v.appendChild(field('Buscar ponto',f));
+  var wrap=h('div'); v.appendChild(wrap);
+  GRUPOS.forEach(function(g){ if(!ptsOf(D,g.k).length) return; var el=enderecosGrupo(g.k,g.k==='outdoor'?'Bi-semana':'Mensal',g.nome); el.style.position='static'; wrap.appendChild(el); });
+  if(!wrap.children.length) wrap.appendChild(h('p',{class:'hint',text:'Nenhum ponto cadastrado.'}));
+  f.addEventListener('input',function(){ var q=f.value.trim().toLowerCase(); wrap.querySelectorAll('.endrow').forEach(function(r){ var t=(r.querySelector('.t')||r).textContent.toLowerCase(); r.style.display=(!q||t.indexOf(q)>=0)?'flex':'none'; }); });
 }
 
 /* ---------- gerar ---------- */

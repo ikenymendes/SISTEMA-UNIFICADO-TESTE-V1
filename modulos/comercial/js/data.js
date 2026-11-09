@@ -57,6 +57,7 @@ function calcPreco(D,r){
   else { tabU=num(r.tabela); tab=tabU*(pontos>0?pontos:(r.auto?0:1)); }
   var desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
+  if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+vlr(p.liq); },0); },0); }
   var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
   return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
