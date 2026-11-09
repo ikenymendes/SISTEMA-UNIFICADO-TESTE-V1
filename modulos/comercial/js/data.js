@@ -50,19 +50,24 @@ function qtdPontos(D,auto){ var tot=0,sel=0,alg=false;
 /* Quantidade para o PREÇO: pontos escolhidos na proposta; sem escolha (ou circuito) vale 1, então o negociado fica igual ao valor de tabela. */
 function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!=='mercado'&&k!=='guanabara') sel+=selEstaticos(D,k).length; }); return sel>0?sel:1; }
 /* Valor de tabela é sempre UNITÁRIO (por painel/tela/banca): total = unitário × quantidade. Estáticos somam o valor de cada endereço escolhido. */
+/* Linhas de um estático: UMA por endereço (mensal + produção), cada uma com valor de tabela, desconto e negociado próprios (guardados em r.end[idDoPonto]). Sem valor digitado, a tabela parte do líquido/produção pré-definidos (inflados pela comissão/BV). */
+function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
+  return (todos?ptsOf(D,r.auto):selEstaticos(D,r.auto)).map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod);
+    var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d), tp=num(e.pt)>0?num(e.pt):(pr>0?pr/f:0), dp=num(e.pd);
+    return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:tp,dp:dp,np:tp*(1-dp/100),minM:l,minP:pr}; }); }
 function calcPreco(D,r){
   migPrecos(D);
   var minLiq=0, est=ehEstatico(r);
-  if(est){ var pe=precoEstatico(D,r), sp=selEstaticos(D,r.auto); minLiq=pe.min; r=Object.assign({},r,{tabela:pe.tab.toFixed(2).replace('.',','),pontos:r.pontos!==''&&r.pontos!=null?r.pontos:sp.length}); }
+  var LE=null, eT=0, eN=0; if(est){ LE=linhasEst(D,r); LE.forEach(function(x){ eT+=x.tm+x.tp; eN+=x.nm+x.np; minLiq+=x.minM+x.minP; }); r=Object.assign({},r,{pontos:r.pontos!==''&&r.pontos!=null?r.pontos:LE.length}); }
   var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?qtdPontos(D,r.auto):0);
   var tabU, tab;
-  if(est){ tab=num(r.tabela); tabU=pontos>0?tab/pontos:0; }
+  if(est){ tab=eT; tabU=pontos>0?tab/pontos:0; }
   else { tabU=num(r.tabela); var circ=!!r.auto&&r.auto.split(',').every(function(k){ return k==='mercado'||k==='guanabara'; }), qtd=circ?1:((r.pontos!==''&&r.pontos!=null)?num(r.pontos):(r.auto?qtdPreco(D,r.auto):1)); tab=tabU*(qtd>0?qtd:0); }
-  var desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
+  var desc=est?(tab>0?(1-eN/tab)*100:0):num(r.desc), neg=est?eN:tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
   if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+vlr(p.liq); },0); },0); }
   var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
-  return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
+  return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,linhas:LE,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
 
 /* ===== Estado, mapas, interface ===== */
