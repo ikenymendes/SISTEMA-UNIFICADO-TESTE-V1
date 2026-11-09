@@ -1,12 +1,12 @@
-// Função do Supabase: consulta os players no 4YouSee (API oficial) e devolve o estado deles.
-// O token do 4YouSee fica SÓ nos "Secrets" do Supabase. Nunca vai para a página nem para o GitHub.
+// Funcao do Supabase: consulta os players no 4YouSee (API oficial) e devolve o estado deles.
+// O token do 4YouSee fica SO nos "Secrets" do Supabase. Nunca vai para a pagina nem para o GitHub.
 //
-// Secrets (Edge Functions → Secrets). Cada conta do 4YouSee usa um par:
-//   FOURYOUSEE_TOKEN     token da conta 1 (Configurações → Integrações no 4YouSee)
+// Secrets (Edge Functions -> Secrets). Cada conta do 4YouSee usa um par:
+//   FOURYOUSEE_TOKEN     token da conta 1 (Configuracoes -> Integracoes no 4YouSee)
 //   FOURYOUSEE_NOME      nome da conta 1 que aparece na tela (opcional, ex.: Mega R2)
 //   FOURYOUSEE_TOKEN_2   token da conta 2   |  FOURYOUSEE_NOME_2   nome da conta 2
-//   (e assim por diante, até _5)
-// O Supabase já fornece sozinho o SUPABASE_URL.
+//   (e assim por diante, ate _5)
+// O Supabase ja fornece sozinho o SUPABASE_URL.
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -19,22 +19,26 @@ const J = (obj: unknown, status = 200) =>
 const API = "https://api.4yousee.com.br/v1/players";
 let cache: { t: number; body: unknown } | null = null; // evita consultar o 4YouSee mais de 1x por 45 s
 
-async function quemE(req: Request) {
-  // Confere o login com o próprio token da pessoa (não precisa de chave secreta do Supabase).
-  const url = Deno.env.get("SUPABASE_URL")!;
+async function quemE(req: Request): Promise<{ perfil?: { papel: string; ativo: boolean }; motivo?: string }> {
+  // Confere o login com o proprio token da pessoa (nao precisa de chave secreta do Supabase).
+  const url = Deno.env.get("SUPABASE_URL") || "";
   const auth = req.headers.get("authorization") || "";
   const apikey = req.headers.get("apikey") || Deno.env.get("SUPABASE_ANON_KEY") || "";
-  if (!/^Bearer\s+\S+/i.test(auth) || !apikey) return null;
+  if (!url) return { motivo: "SUPABASE_URL ausente na funcao" };
+  if (!/^Bearer\s+\S+/i.test(auth)) return { motivo: "a pagina nao enviou o login (sem Authorization)" };
+  if (!apikey) return { motivo: "sem apikey" };
   const h = { apikey, Authorization: auth };
   const u = await fetch(url + "/auth/v1/user", { headers: h });
-  if (!u.ok) return null;
+  if (!u.ok) return { motivo: "login recusado pelo Supabase (HTTP " + u.status + ")" };
   const id = (await u.json())?.id;
-  if (!id) return null;
+  if (!id) return { motivo: "login sem usuario" };
   const p = await fetch(`${url}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}&select=papel,ativo`, { headers: h });
-  const rows = p.ok ? await p.json() : [];
+  if (!p.ok) return { motivo: "nao consegui ler o perfil (HTTP " + p.status + ")" };
+  const rows = await p.json();
   const perfil = rows[0];
-  if (!perfil || !perfil.ativo) return null;
-  return perfil as { papel: string; ativo: boolean };
+  if (!perfil) return { motivo: "perfil nao encontrado" };
+  if (perfil.ativo === false) return { motivo: "usuario bloqueado" };
+  return { perfil };
 }
 
 // Aceita lista direta ou embrulhada em qualquer campo (data, items, players, ...).
@@ -59,10 +63,10 @@ async function buscarPlayers(token: string) {
     if (!r.ok) throw new Error("HTTP_" + r.status);
     const txt = await r.text();
     let j: any = null;
-    try { j = JSON.parse(txt); } catch (_) { /* não era JSON */ }
+    try { j = JSON.parse(txt); } catch (_) { /* nao era JSON */ }
     const arr = lista(j);
     if (pg === 1 && !arr.length) {
-      diag = `HTTP ${r.status}; ${j === null ? "resposta não é JSON" : Array.isArray(j) ? "lista vazia" : "campos: " + Object.keys(j).slice(0, 12).join(", ")}; início: ${txt.slice(0, 220).replace(/\s+/g, " ")}`;
+      diag = `HTTP ${r.status}; ${j === null ? "resposta nao e JSON" : Array.isArray(j) ? "lista vazia" : "campos: " + Object.keys(j).slice(0, 12).join(", ")}; inicio: ${txt.slice(0, 220).replace(/\s+/g, " ")}`;
     }
     const antes = todos.size;
     for (const p of arr) todos.set(String(p.id ?? p.name ?? todos.size), p);
@@ -74,14 +78,14 @@ async function buscarPlayers(token: string) {
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   const perfil = await quemE(req);
-  if (!perfil) return J({ ok: false, erro: "Não autorizado. Entre no sistema novamente." }, 401);
+  if (!perfil) return J({ ok: false, erro: "Nao autorizado. Entre no sistema novamente." }, 401);
   if (perfil.papel !== "admin") return J({ ok: false, erro: "Somente o administrador pode ver os players." }, 403);
   const contas: { nome: string; token: string }[] = [];
   for (const suf of ["", "_2", "_3", "_4", "_5"]) {
     const token = Deno.env.get("FOURYOUSEE_TOKEN" + suf);
     if (token) contas.push({ token, nome: Deno.env.get("FOURYOUSEE_NOME" + suf) || (suf ? "Conta " + suf.slice(1) : "Conta 1") });
   }
-  if (!contas.length) return J({ ok: false, erro: "FOURYOUSEE_TOKEN não configurado nos Secrets do Supabase." }, 200);
+  if (!contas.length) return J({ ok: false, erro: "FOURYOUSEE_TOKEN nao configurado nos Secrets do Supabase." }, 200);
   if (cache && Date.now() - cache.t < 45000) return J(cache.body);
   const players: any[] = [], resumo: any[] = [];
   for (const c of contas) {
@@ -103,7 +107,7 @@ export async function handler(req: Request): Promise<Response> {
       }
     } catch (e) {
       const m = String((e as Error).message || e);
-      resumo.push({ nome: c.nome, total: 0, diag: "", erro: m === "TOKEN_RECUSADO" ? "o 4YouSee recusou o token desta conta (gere outro em Configurações → Integrações e atualize o Secret)" : "falha ao consultar (" + m + ")" });
+      resumo.push({ nome: c.nome, total: 0, diag: "", erro: m === "TOKEN_RECUSADO" ? "o 4YouSee recusou o token desta conta (gere outro em Configuracoes -> Integracoes e atualize o Secret)" : "falha ao consultar (" + m + ")" });
     }
   }
   if (!players.length && resumo.every((x) => x.erro)) return J({ ok: false, erro: resumo.map((x) => `${x.nome}: ${x.erro}`).join(" | ") });

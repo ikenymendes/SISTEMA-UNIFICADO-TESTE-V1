@@ -1844,3 +1844,24 @@ body.rm {
     padding: 13px;
   }
 }
+
+/* ===== PADRÃO MEGA UNIFICADO (igual ao Comercial): Poppins, azul-marinho #000066 e rosa #ff0066 ===== */
+@font-face{font-family:'Poppins';font-weight:400;src:url(../assets/fonts/Poppins-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Poppins';font-weight:500;src:url(../assets/fonts/Poppins-Medium.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Poppins';font-weight:700;src:url(../assets/fonts/Poppins-Bold.ttf) format('truetype');font-display:swap}
+:root{--bg:#f3f3f9;--tx:#16164a;--mu:#666687;--bd:#e3e2ee;--ac:#000066;--acb:#ff0066;--ac2:#edeef8;--sh:0 6px 24px rgba(0,0,102,.07)}
+body,button,input,select,textarea{font-family:Poppins,"Segoe UI",system-ui,sans-serif}
+body{font-size:14px;line-height:1.55}
+.shell{grid-template-columns:264px 1fr}
+.side{background:#00003d;padding:22px 14px}
+.side::after{right:-70px;top:-30px;bottom:-30px;width:150px;height:auto;background:linear-gradient(180deg,#ff006622,#ff006600 60%);transform:skewX(-8deg)}
+.side::before{display:none}
+.brand{border-bottom:0}
+.brand .sub{color:#ffffffa8;letter-spacing:.12em}
+.side #tabs .grp{color:#ffffff80;font-weight:500;letter-spacing:.06em;text-transform:none;font-size:12px}
+.side #tabs button{color:#ffffffc8;font-weight:500;font-size:13.5px;border-radius:10px}
+.side #tabs button:hover{background:#ffffff12;color:#fff}
+.side #tabs button.on{background:#ffffff1c;color:#fff;box-shadow:none}
+.side #tabs button.on::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:5px;border-radius:0 4px 4px 0;background:#ff0066;transform:skewX(-8deg)}
+.side #tabs button.on i{background:#ff0066;color:#fff}
+.side #tabs button.on i.d::before{background:#ff0066}

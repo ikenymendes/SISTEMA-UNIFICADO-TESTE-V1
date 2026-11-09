@@ -224,7 +224,7 @@ async function plLoad() {
       rede = 0;
     for (const fn of [...new Set([PLFN, "players-status", "quick-endpoint", "dynamic-task"].filter(Boolean))]) {
       try {
-        r = await sb("/functions/v1/" + fn, { method: "POST", body: {} });
+        r = await sb("/functions/v1/" + fn, { method: "POST", body: {}, retry: 1 });
       } catch (_) {
         rede++;
         r = null;
