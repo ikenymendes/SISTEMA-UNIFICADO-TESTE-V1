@@ -25,7 +25,8 @@ function migPrecos(D){ if(!D.precos) return;
     D.precos=rs.map(function(r,i){return [r,i]}).sort(function(a,b){ return (ix(a[0])-ix(b[0]))||(a[1]-b[1]); }).map(function(x){return x[0]}); }
   /* v2: inserções por tela/dia (mínimo por ativo). v3: período mensal; só outdoor é por bi-semana */
   (D.precos||[]).forEach(function(r){ if(!r.v2){ r.v2=1; var d=INS_DEF[(r.auto||'').split(',')[0]]; r.insPor=d!=null?d:(parseInt(r.insercoes,10)||''); delete r.modo; }
-    if(!r.v3){ r.v3=1; if(r.auto) r.periodo=r.auto==='outdoor'?'Bi-semana':'Mensal'; } }); }
+    if(!r.v3){ r.v3=1; if(r.auto) r.periodo=r.auto==='outdoor'?'Bi-semana':'Mensal'; }
+    if(!r.v4){ r.v4=1; if(ehEstatico(r)) r.incProd=true; } }); }
 var ESTATICOS=['empena','front','mensal','outdoor','revista','metro'];
 function ehEstatico(r){ return !!r.auto&&ESTATICOS.indexOf(r.auto)>=0; }
 function selEstaticos(D,k){ return ptsOf(D,k).filter(function(p){ return p.sel; }); }
