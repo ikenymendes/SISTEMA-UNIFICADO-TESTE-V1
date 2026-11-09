@@ -104,7 +104,7 @@ function ckOpen(id) {
       f.dataset.ready = "1";
       f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
     };
-    f.src = "gerador-checking.html?v=20261109p";
+    f.src = "gerador-checking.html?v=20261109q";
     h.appendChild(f);
   } else f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
   render();
