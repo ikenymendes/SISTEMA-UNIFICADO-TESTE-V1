@@ -29,6 +29,9 @@ var AREAS = {
   backup:   { rotulo: 'Backup',   descricao: 'Backup completo dos dois sistemas' }
 };
 
+/* Visual da tela de Início (igual para todos os perfis): 'claro' ou 'escuro' */
+var INICIO_ESTILO = 'claro';
+
 /* Perfis */
 var PERMISSOES = {
   admin: {
@@ -40,20 +43,20 @@ var PERMISSOES = {
   comercial: {
     rotulo: 'Comercial',
     modulos: ['comercial'],
-    areas: [],
-    inicial: 'comercial'
+    areas: ['inicio'],
+    inicial: 'inicio'
   },
   operacional: {
     rotulo: 'Operacional',
     modulos: ['operacional'],
-    areas: [],
-    inicial: 'operacional'
+    areas: ['inicio'],
+    inicial: 'inicio'
   },
   manutencao: {
     rotulo: 'Manutenção',
     modulos: ['operacional'],
-    areas: [],
-    inicial: 'operacional'
+    areas: ['inicio'],
+    inicial: 'inicio'
   }
 };
 

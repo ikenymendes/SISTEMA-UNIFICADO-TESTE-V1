@@ -217,8 +217,12 @@ var MEGA = (function () {
     var hr = new Date().getHours();
     return hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
   }
+  var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  function dataExtensa(d) { return DIAS[d.getDay()].replace(/^./, function (c) { return c.toUpperCase(); }) + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]; }
+  function horaCurta(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 
-  /* Início do administrador: a mesma tela sempre, com atalhos para tudo */
+  /* Início: a MESMA tela para todos os perfis (muda só o que aparece nos atalhos) */
   function telaInicio(perm) {
     var primeiro = String(perfil.nome || perfil.email || '').split(/[ @.]/)[0];
     primeiro = primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
@@ -230,9 +234,16 @@ var MEGA = (function () {
         h('span', { class: 'seta', text: '›' })
       ]);
     });
-    return h('div', { class: 'conteudo inicio' }, [
-      h('h1', { text: saudacao() + (primeiro ? ', ' + primeiro : '') }),
-      h('p', { class: 'sub', text: 'O que você quer abrir?' }),
+    var sau = h('div', { class: 'sau' }), hora = h('div', { class: 'relogio' }), data = h('div', { class: 'data' });
+    function relogio() {
+      var d = new Date();
+      sau.textContent = saudacao() + (primeiro ? ', ' + primeiro : '');
+      hora.textContent = horaCurta(d); data.textContent = dataExtensa(d);
+    }
+    relogio();
+    var timer = setInterval(function () { if (!document.body.contains(hora)) { clearInterval(timer); return; } relogio(); }, 15000);
+    return h('div', { class: 'conteudo inicio' + (cartoes.length === 1 ? ' um' : '') }, [
+      h('div', { class: 'topo-inicio' }, [sau, hora, data]),
       h('div', { class: 'atalhos' }, cartoes)
     ]);
   }
@@ -311,7 +322,7 @@ var MEGA = (function () {
         f.addEventListener('load', function () { painel.classList.add('pronto'); if (aoPronto) aoPronto(f); });
         painel.appendChild(f);
       } else if (id === 'inicio') {
-        painel.classList.add('area', 'pronto');
+        painel.classList.add('area', 'pronto', 'inicio-' + (typeof INICIO_ESTILO !== 'undefined' ? INICIO_ESTILO : 'claro'));
         painel.appendChild(telaInicio(perm));
       } else if (id === 'backup') {
         painel.classList.add('area', 'pronto');

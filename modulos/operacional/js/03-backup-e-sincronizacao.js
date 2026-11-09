@@ -457,7 +457,7 @@ function bkLine() {
       ") · " +
       cs +
       (BK.st === "on" ? " · " + h : "") +
-      (HOST && ROLE === "admin" ? "" : ' · <a href="#" data-a="sair">sair</a>');
+      (HOST ? "" : ' · <a href="#" data-a="sair">sair</a>');
   }
   el.innerHTML = h;
 }

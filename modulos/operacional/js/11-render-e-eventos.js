@@ -41,7 +41,7 @@ function mobNav() {
     });
   }
   if (eMan()) {
-    bar.innerHTML = `<img src="${LOGO_W}" alt="Mega OOH"><b>Manutenção</b><span>👤 ${e(mtUser())}</span><a href="#" data-a="sair">Sair</a>`;
+    bar.innerHTML = `<img src="${LOGO_W}" alt="Mega OOH"><b>Manutenção</b><span>👤 ${e(mtUser())}</span>${HOST ? "" : `<a href="#" data-a="sair">Sair</a>`}`;
     nav.innerHTML = "";
     sh.innerHTML = "";
     return;
@@ -56,7 +56,7 @@ function mobNav() {
   const rest = ["m", "c", "t", "pl", "x", "e", "ev", "o", "a"].filter((v) =>
     T.querySelector('button[data-v="' + v + '"]'),
   );
-  sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !(HOST && ROLE === "admin") ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
+  sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !HOST ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
 }
 function render() {
   PEND = false;
