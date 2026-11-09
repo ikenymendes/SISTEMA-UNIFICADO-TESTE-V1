@@ -185,10 +185,11 @@ const kindTipo=t=>{t=normTipo(t);return /BANCA/.test(t)?"banca":/EMPENA/.test(t)
 function tipoSel(v,attr){const known=TIPOS.includes(v);let o=TIPOS.map(t=>`<option ${t===v?"selected":""}>${esc(t)}</option>`).join("");if(v&&!known)o=`<option selected>${esc(v)}</option>`+o;return`<select ${attr}>${v?"":'<option value="" selected disabled>Selecione o tipo…</option>'}${o}<option value="__outro">➕ Outro (digitar)…</option></select>`}
 
 /* ---------------- estado ---------------- */
+const EMP_PADRAO={nome:"MEGA MÍDIA COMUNICAÇÃO LTDA",cnpj:"30.754.263/0001-57",end:"Rua Igaraçu, 544 – Sala 01 – Novo Eldorado – Contagem/MG – CEP 32341-230",tel:"(31) 3267-5087"};
 const blank=()=>({
- cli:{cliente:"",agencia:"",pi:"",oc:"",ini:"",fim:"",praca:"",obs:"",tipoPad:"PAINEL DE LED",fmtPad:""},
+ cli:{cliente:"",agencia:"",pi:"",oc:"",ini:"",fim:"",praca:"",obs:"",campanha:"",tipoPad:"PAINEL DE LED",fmtPad:""},
  paineis:[],
- emp:{nome:"MEGA MÍDIA COMUNICAÇÃO EIRELI",cnpj:"30.754.263/0001-57",end:"Rua Igaraçu, 544 – Sala 01 – Novo Eldorado – Contagem/MG – CEP 32341-230",tel:""},
+ emp:Object.assign({},EMP_PADRAO),
  opt:{perSlide:1,sep:true,indice:true},
  ins:{on:false,pos:"cada",graf:true,rel:[],map:{}}
 });
@@ -467,7 +468,7 @@ function rodape(p,idx,total){
   logo(LOGO_COR,10.83,6.45,1.8)];
 }
 function buildSlides(){
- const c=S.cli,e=S.emp,out=[];
+ const c=S.cli,e=EMP_PADRAO,out=[];
  const empLine=[e.nome,e.cnpj?"CNPJ: "+e.cnpj:"",e.end,e.tel].filter(Boolean).join("  ·  ");
  // capa
  out.push({bg:bgURL("capa"),items:[
@@ -482,11 +483,12 @@ function buildSlides(){
  const cards=[["Cliente",c.cliente],["Agência",c.agencia],["Período",periodo()],["Praça",c.praca],["Qtd. de peças",qtdPecas()],["PI / OC",[c.pi&&"PI "+c.pi,c.oc&&"OC "+c.oc].filter(Boolean).join("  ·  ")]];
  const it=[TX(0.7,0.55,9,.6,[[R("Dados da campanha",28,NAVY,1)]]),RC(0.7,1.2,.8,.06,PINK,{r:.03})];
  const cw=(W-1.4-.6)/3;
- cards.forEach(([l,v],i)=>{const x=.7+(i%3)*(cw+.3),y=1.7+Math.floor(i/3)*1.75;
-  it.push(RC(x,y,cw,1.45,"FFFFFF",{r:.14,shadow:true}),RC(x+.28,y+.3,.28,.05,PINK,{r:.02}),
+ cards.forEach(([l,v],i)=>{const x=.7+(i%3)*(cw+.3),y=2.55+Math.floor(i/3)*1.55;
+  it.push(RC(x,y,cw,1.4,"FFFFFF",{r:.14,shadow:true}),RC(x+.28,y+.3,.28,.05,PINK,{r:.02}),
    TX(x+.28,y+.42,cw-.5,.3,[[R(l.toUpperCase(),10,PINK,1,2)]]),
    TX(x+.28,y+.75,cw-.5,.6,[[R(v||"—",(v||"").length>40?10:(v||"").length>28?12:(v||"").length>20?14:16,NAVY,1)]],{valign:"top"}))});
- if(c.obs)it.push(RC(.7,5.2,W-1.4,.95,"FFFFFF",{r:.14,shadow:true}),TX(.98,5.3,W-2,.75,[[R("OBSERVAÇÕES",10,PINK,1,2)],[R(c.obs,13,INK,0)]]));
+ it.push(RC(.7,1.45,W-1.4,.9,"FFFFFF",{r:.14,shadow:true}),RC(.98,1.82,.28,.05,PINK,{r:.02}),TX(1.4,1.55,2.1,.7,[[R("CAMPANHA:",11,PINK,1,2)]],{valign:"middle"}),TX(3.5,1.55,W-4.5,.7,[[R(c.campanha||"—",(c.campanha||"").length>60?14:(c.campanha||"").length>40?17:22,NAVY,1)]],{valign:"middle"}));
+ if(c.obs)it.push(RC(.7,5.65,W-1.4,.95,"FFFFFF",{r:.14,shadow:true}),TX(.98,5.75,W-2,.75,[[R("OBSERVAÇÕES",10,PINK,1,2)],[R(c.obs,13,INK,0)]]));
  it.push(TX(.7,6.75,9.4,.5,[[R(empLine,8.5,MUTED,0)]],{valign:"middle"}),logo(LOGO_COR,10.83,6.8,1.8));
  out.push({bg:bgURL("soft"),items:it});
  // índice
@@ -578,7 +580,7 @@ document.addEventListener("keydown",ev=>{if(!$("#modal").classList.contains("on"
 async function gerarPPTX(){
  const sl=buildSlides(),pres=new PptxGenJS();
  pres.defineLayout({name:"MEGA",width:W,height:H});pres.layout="MEGA";
- pres.title="Checking "+(S.cli.cliente||"");pres.company=S.emp.nome;
+ pres.title="Checking "+(S.cli.cliente||"");pres.company=EMP_PADRAO.nome;
  const b64=u=>u.replace(/^data:/,"");
  const FONT="Segoe UI";
  sl.forEach(s=>{const sd=pres.addSlide();sd.background={data:b64(s.bg)};
@@ -637,7 +639,7 @@ function render0(){
  <div class="card" id="cardMatriz"><h2>Importar da Matriz VT <span class="pill">opcional</span></h2><p class="hint">Escolha o backup da Matriz (matriz-vt-auto.json). O cliente, PI, período e todos os endereços do VT entram sozinhos, sem digitar nada. ✔ = checking já marcado como feito.</p>
   <button class="b nv" id="bMatriz">Escolher backup da Matriz…</button>${mt}</div>
  <div class="card"><h2>Dados da campanha</h2><p class="hint">Aparecem na capa e no slide “Dados da campanha”.</p>
-  <div class="grid">${field("Cliente","cli.cliente","text","Ex.: Anhanguera")}${field("Agência","cli.agencia","text","Ex.: MG Outdoor")}${field("Nº da PI","cli.pi")}${field("OC","cli.oc")}${field("Início da veiculação","cli.ini","date")}${field("Fim da veiculação","cli.fim","date")}${field("Praça","cli.praca","text","Ex.: Betim / MG")}</div>
+  <div class="grid">${field("Cliente","cli.cliente","text","Ex.: Anhanguera")}${field("Campanha","cli.campanha","text","Ex.: Lançamento Verão 2026")}${field("Agência","cli.agencia","text","Ex.: MG Outdoor")}${field("Nº da PI","cli.pi")}${field("OC","cli.oc")}${field("Início da veiculação","cli.ini","date")}${field("Fim da veiculação","cli.fim","date")}${field("Praça","cli.praca","text","Ex.: Betim / MG")}</div>
   <div style="margin-top:14px"><label class="f">Observações (opcional)</label><textarea data-k="cli.obs" placeholder="Ex.: veiculação conforme PI, fotos realizadas em dias distintos">${esc(S.cli.obs)}</textarea></div></div>
  <div class="card"><h2>Padrões para novos painéis</h2><p class="hint">Usados quando o endereço não tem tipo/formato cadastrado. Dá para ajustar painel a painel.</p>
   <div class="grid">${field("Tipo padrão","cli.tipoPad","text","Ex.: Painel de LED, Banca estática…").replace("<input ","<input list=\"tiposDl\" ")}<datalist id="tiposDl">${TIPOS.map(t=>`<option value="${esc(t)}">`).join("")}</datalist>${field("Formato padrão","cli.fmtPad","text","Ex.: 4x6m")}</div></div>`;
@@ -681,8 +683,8 @@ function renderIns(){
 }
 function renderEmp(){
  const o=S.opt;
- $("#t3").innerHTML=`<div class="card"><h2>Empresa (rodapé e encerramento)</h2><p class="hint">Já vem preenchido com os dados do checking Anhanguera. Confira.</p>
-  <div class="grid">${field("Razão social","emp.nome")}${field("CNPJ","emp.cnpj")}${field("Telefone / site","emp.tel")}</div><div style="margin-top:14px">${field("Endereço","emp.end")}</div></div>
+ $("#t3").innerHTML=`<div class="card"><h2>Empresa (rodapé e encerramento)</h2><p class="hint">Dados padrão da Mega: são sempre os mesmos em todos os checkings (não precisam de ajuste).</p>
+  <div class="grid">${[["Razão social",EMP_PADRAO.nome],["CNPJ",EMP_PADRAO.cnpj],["Telefone / site",EMP_PADRAO.tel]].map(x=>`<div><label class="f">${x[0]}</label><input type="text" readonly value="${esc(x[1])}"></div>`).join("")}</div><div style="margin-top:14px"><label class="f">Endereço</label><input type="text" readonly value="${esc(EMP_PADRAO.end)}"></div></div>
   <div class="card"><h2>Opções do checking</h2><div class="grid"><div><label class="f">Fotos por slide</label><select data-o="perSlide"><option value="1" ${o.perSlide==1?"selected":""}>1 foto grande</option><option value="2" ${o.perSlide==2?"selected":""}>2 fotos lado a lado</option></select></div>
   <div><label class="f">Slide de separação por tipo (ex.: “PAINÉIS DE LED”)</label><select data-o="sep"><option value="1" ${o.sep?"selected":""}>Sim</option><option value="0" ${o.sep?"":"selected"}>Não</option></select></div>
   <div><label class="f">Slide índice com todos os endereços</label><select data-o="indice"><option value="1" ${o.indice?"selected":""}>Sim</option><option value="0" ${o.indice?"":"selected"}>Não</option></select></div></div></div>
@@ -746,13 +748,13 @@ $("#fileMatriz").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{i
 function salvarProjeto(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(semFotos(S))],{type:"application/json"}));a.download=nomeArquivo()+".projeto.json";a.click();toast("Projeto salvo (sem fotos)")}
 $("#bSalvar").onclick=salvarProjeto;
 addEventListener("beforeunload",e=>{if(nFotos()>0){e.preventDefault();e.returnValue=""}});
-$("#fileProj").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.paineis))throw 0;S=Object.assign(blank(),d);save();go(0);toast("Projeto aberto")}catch(_){toast("Arquivo de projeto inválido")}};
+$("#fileProj").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.paineis))throw 0;S=Object.assign(blank(),d,{emp:Object.assign({},EMP_PADRAO)});save();go(0);toast("Projeto aberto")}catch(_){toast("Arquivo de projeto inválido")}};
 $("#bNovo").onclick=async()=>{if(!await ask4("Começar um novo checking? Os dados atuais serão apagados (salve o projeto antes se quiser guardar)."))return;const emp=S.emp,opt=S.opt;S=blank();S.emp=emp;S.opt=opt;save();go(0)};
 
 /* ---------------- início ---------------- */
 function receberVT(pl){
  const c=S.cli;
- if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:S.emp,opt:S.opt});S.vtId=pl.id}
+ if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:Object.assign({},EMP_PADRAO),opt:S.opt});S.vtId=pl.id}
  Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
  const antigos=S.paineis,novos=pl.paineis.map(p=>{const loc=locDe(p),ex=antigos.find(a=>a.loc===loc&&(a.tela||"")===(p.tela||""));if(ex){ex.st=p.st;if(p.tp)ex.tipo=normTipo(p.tp);if(p.fm)ex.fmt=p.fm;if(p.pl)ex.pl=p.pl;return ex}return{id:uid(),tipo:normTipo(p.tp)||S.cli.tipoPad,fmt:p.fm||S.cli.fmtPad,loc,tela:p.tela||"",pl:p.pl||"",st:p.st,fotos:[]}});
  S.paineis=novos;
@@ -760,7 +762,7 @@ function receberVT(pl){
  save();
 }
 addEventListener("message",ev=>{const d=ev.data;if(!d||!d.vt)return;const run=()=>{if(!window.__ready)return setTimeout(run,100);receberVT(d.vt);go(1)};run()});
-(async()=>{const d=await dbGet();if(d&&Array.isArray(d.paineis))S=Object.assign(blank(),d);
+(async()=>{const d=await dbGet();if(d&&Array.isArray(d.paineis))S=Object.assign(blank(),d,{emp:Object.assign({},EMP_PADRAO)});
  let start=0;
  try{const m=location.hash.match(/^#vt=(.+)$/);if(m){receberVT(JSON.parse(decodeURIComponent(escape(atob(m[1])))));history.replaceState(null,"",location.pathname);start=1;toast("VT carregado da Matriz. Insira as fotos de cada painel.")}}catch(e){console.error(e)}
  resumo();go(start);window.__ready=true})();
