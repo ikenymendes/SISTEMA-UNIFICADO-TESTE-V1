@@ -471,7 +471,7 @@ function buildSlides(){
  cards.forEach(([l,v],i)=>{const x=.7+(i%3)*(cw+.3),y=1.7+Math.floor(i/3)*1.75;
   it.push(RC(x,y,cw,1.45,"FFFFFF",{r:.14,shadow:true}),RC(x+.28,y+.3,.28,.05,PINK,{r:.02}),
    TX(x+.28,y+.42,cw-.5,.3,[[R(l.toUpperCase(),10,PINK,1,2)]]),
-   TX(x+.28,y+.75,cw-.5,.6,[[R(v||"—",16,NAVY,1)]]))});
+   TX(x+.28,y+.75,cw-.5,.6,[[R(v||"—",(v||"").length>40?10:(v||"").length>28?12:(v||"").length>20?14:16,NAVY,1)]],{valign:"top"}))});
  if(c.obs)it.push(RC(.7,5.2,W-1.4,.95,"FFFFFF",{r:.14,shadow:true}),TX(.98,5.3,W-2,.75,[[R("OBSERVAÇÕES",10,PINK,1,2)],[R(c.obs,13,INK,0)]]));
  it.push(TX(.7,6.75,9.4,.5,[[R(empLine,8.5,MUTED,0)]],{valign:"middle"}),logo(LOGO_COR,10.83,6.8,1.8));
  out.push({bg:bgURL("soft"),items:it});
@@ -493,7 +493,7 @@ function buildSlides(){
     dias=(S.cli.ini&&S.cli.fim)?Math.round((new Date(S.cli.fim)-new Date(S.cli.ini))/864e5)+1:0,
     txt=`Registro fotográfico da veiculação de ${S.cli.cliente||"—"}${praca?" em "+praca:""}${per?", no período de "+per:""}. Cada ponto foi fotografado pela operação Mega.`,
     ends=g.l.map(p=>(p.loc||"—")+(p.tela?" · "+p.tela:"")),bl=ends.slice(0,3);if(ends.length>3)bl[2]=`${ends[2]}  + ${ends.length-3} ${ends.length-3===1?"endereço":"endereços"}`;
-   const tile=(x,v,l,pk)=>[RC(x,4.16,2.15,1.35,pk?PINK:"FFFFFF",{a:pk?1:.10,r:.12}),TX(x+.25,4.34,1.8,.7,[[R(v,v.length>9?20:30,"FFFFFF",0)]],{valign:"middle"}),TX(x+.25,5.05,1.8,.3,[[R(l,9,pk?"FFFFFF":"C9CCF2",0)]])];
+   const tile=(x,v,l,pk)=>[RC(x,4.16,2.15,1.35,pk?PINK:"FFFFFF",{a:pk?1:.10,r:.12}),TX(x+.25,4.3,1.82,.78,[[R(v,v.length<=7?30:v.length<=11?20:v.length<=14?16:v.length<=17?13:v.length<=21?11:9,"FFFFFF",0)]],{valign:"middle"}),TX(x+.25,5.05,1.8,.3,[[R(l,9,pk?"FFFFFF":"C9CCF2",0)]])];
    out.push({bg:bgURL(`kit:${kindTipo(g.t)}:${/LED/.test(g.t)?1:0}:${gi}:${grupos.length}`),items:[
    logo(LOGO_BRANCA,0.94,0.55,2.0),
    TX(0.71,3.62,4.3,.3,[[R(`${String(gi+1).padStart(2,"0")} · TIPO DE MÍDIA`,8.5,PINK,1,3)]]),

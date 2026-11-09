@@ -53,7 +53,7 @@ function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!
 /* Linhas de um estático: UMA por endereço (mensal + produção), cada uma com valor de tabela, desconto e negociado próprios (guardados em r.end[idDoPonto]). Sem valor digitado, a tabela parte do líquido/produção pré-definidos (inflados pela comissão/BV). */
 /* Produção: sem tabela/desconto. Só muda conforme o perfil escolhido (líquido, agência, planejador); valor = produção líquida ÷ fator do perfil. Devolvido já na base do kit (÷ fator do modo) para o total bater. */
 function fatorPerfilProd(D,q){ return q==='liq'?1:q==='ag'?0.75:q==='pl'?0.5625:fatorLiq(D); }
-function prodDe(D,e,base){ base=vlr(base); if(!(base>0)) return 0; var fm=D.modoGeral==='liquido'?fatorLiq(D):1; return base/fatorPerfilProd(D,(e||{}).pq)/(fm>0?fm:1); }
+function prodDe(D,e,base){ base=(e&&num(e.pl)>0)?num(e.pl):vlr(base); if(!(base>0)) return 0; var fm=D.modoGeral==='liquido'?fatorLiq(D):1; return base/fatorPerfilProd(D,(e||{}).pq)/(fm>0?fm:1); }
 function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
   if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; mM+=vlr(p.liq); mP+=vlr(p.prod); });
     var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=prodDe(D,e,pp?pp.prod:0), dm=num(e.d), dp=0;
