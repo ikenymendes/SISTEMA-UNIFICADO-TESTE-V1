@@ -227,52 +227,46 @@ function pointCard(p,ix){
 /* ---------- preços ---------- */
 function viewPrecos(v,embed){ migPrecos(D);
   if(!embed) v.appendChild(h('h2',{text:'Tabela de preços e investimento'}));
-  v.appendChild(h('p',{class:'hint dica-longa',text:'Preencha valor de tabela e desconto: o valor negociado, o total e a página de Investimento Total são calculados sozinhos. O valor é bruto ou líquido para todas as linhas (campo acima). Pontos vêm da contagem dos pontos cadastrados (Mercado Central e Parque Guanabara usam o número de telas). Inserções: digite por ativo/tela e o total é calculado (pontos × inserções).'}));
+  v.appendChild(h('p',{class:'hint dica-longa',text:'Preencha o valor de tabela UNITÁRIO (por painel, tela ou banca) e o desconto: o total é unitário × quantidade de pontos, e o valor negociado e a página de Investimento Total são calculados sozinhos. Estáticos (empenas, frontlight, mega painéis, outdoor, bancas estáticas, Metrô-DF) têm o preço de cada endereço logo abaixo da linha; outdoor é por bi-semana e os demais formatos são mensais. O valor é bruto ou líquido para todas as linhas (campo acima). Pontos vêm da contagem dos pontos cadastrados (Mercado Central e Parque Guanabara usam o número de telas). Inserções: é sempre o MÍNIMO por tela/dia (ex.: Mercado Central 220 × 8 telas; Parque Guanabara 250 × 10 telas) e o total é calculado (telas × mínimo).'}));
   var top=h('div',{class:'grid'}), ms=h('select',{},[['bruto','Bruto'],['liquido','Líquido (desconta comissão da agência e BV)']].map(function(o){ var op=h('option',{value:o[0],text:o[1]}); if(D.modoGeral===o[0]) op.selected=true; return op; })); ms.addEventListener('change',function(){ D.modoGeral=ms.value; dirty(); recalc(); });
   top.appendChild(field('Valor padrão do kit',ms)); top.appendChild(field('Comissão da agência (%)',inp(D,'comissao',{num:true,onchange:recalc}))); top.appendChild(field('BV à parte (%)',inp(D,'bv',{num:true,onchange:recalc}))); if(ME.admin) top.appendChild(field('Alertar desconto acima de (%)',inp(D,'descAlerta',{num:true}))); v.appendChild(top);
-  var tb=h('table',{class:'ptab'}); tb.appendChild(h('thead',{},[h('tr',{},['Formato','Pontos','Período','Inserções por ativo/tela','Total inserções','Valor tabela (R$)','Desconto (%)','Valor negociado','',''].map(function(t){return h('th',{text:t})}))]));
-  var body=h('tbody'); tb.appendChild(body); var foot=h('tfoot'); tb.appendChild(foot);
+  var tb=h('table',{class:'ptab'}); tb.appendChild(h('thead',{},[h('tr',{},['Formato','Pontos','Período','Mín. inserções por tela/dia','Total inserções/dia','Valor tabela unitário (R$)','Desconto (%)','Valor negociado','',''].map(function(t){return h('th',{text:t})}))]));
+  var body=h('tbody'), trs=[]; tb.appendChild(body); var foot=h('tfoot'); tb.appendChild(foot);
   var avMin=h('div',{class:'avmin',hidden:'hidden'}); v.appendChild(avMin);
-  function recalc(){ if(window.__onPreco) window.__onPreco(); var tt=0,tn=0, baixo=[]; D.precos.forEach(function(r,i){ var c=calcPreco(D,r); tt+=c.tabela; tn+=c.final; var tr0=body.children[i]; if(tr0){ var mw=tr0.querySelector('.minwarn'); if(mw){ mw.hidden=!c.abaixo; mw.textContent=c.abaixo?'⚠ Abaixo do mínimo pré-definido ('+brl(c.minLiq)+' líquido)':''; } tr0.classList.toggle('abaixo',!!c.abaixo); } if(c.abaixo&&(!embed||!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); }))) baixo.push(r.nome); var cell=body.children[i]&&body.children[i].querySelector('.val'); if(cell) cell.textContent=brl(c.final); var pc=body.children[i]&&body.children[i].querySelector('.pts'); if(pc) pc.placeholder=String(c.pontos); var ic=body.children[i]&&body.children[i].querySelector('.ins'); if(ic) ic.textContent=c.insercoes; var tcl=body.children[i]&&body.children[i].querySelector('.tabcalc'); if(tcl) tcl.textContent=c.tabela?brl(c.tabela):'por endereço'; }); avMin.hidden=!baixo.length; avMin.textContent=baixo.length?'⚠ Você está alterando valores pré-definidos pelo administrador: '+baixo.join(', ')+' ficou abaixo do mínimo líquido. Isso será pedido na conferência antes de gerar a proposta.':''; foot.innerHTML=''; foot.appendChild(h('tr',{},[h('td',{text:'Total'}),h('td'),h('td'),h('td'),h('td'),h('td',{text:brl(tt)}),h('td'),h('td',{text:brl(tn)}),h('td'),h('td')])); }
+  function recalc(){ if(window.__onPreco) window.__onPreco(); var tt=0,tn=0, baixo=[]; D.precos.forEach(function(r,i){ var c=calcPreco(D,r); tt+=c.tabela; tn+=c.final; var tr0=trs[i]; if(tr0){ var mw=tr0.querySelector('.minwarn'); if(mw){ mw.hidden=!c.abaixo; mw.textContent=c.abaixo?'⚠ Abaixo do mínimo pré-definido ('+brl(c.minLiq)+' líquido)':''; } tr0.classList.toggle('abaixo',!!c.abaixo); } if(c.abaixo&&(!embed||!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); }))) baixo.push(r.nome); var cell=trs[i]&&trs[i].querySelector('.val'); if(cell) cell.textContent=brl(c.final); var pc=trs[i]&&trs[i].querySelector('.pts'); if(pc) pc.placeholder=String(c.pontos); var ic=trs[i]&&trs[i].querySelector('.ins'); if(ic) ic.textContent=c.insercoes; var tcl=trs[i]&&trs[i].querySelector('.tabcalc'); if(tcl) tcl.textContent=c.tabela?brl(c.tabela):'por endereço'; }); avMin.hidden=!baixo.length; avMin.textContent=baixo.length?'⚠ Você está alterando valores pré-definidos pelo administrador: '+baixo.join(', ')+' ficou abaixo do mínimo líquido. Isso será pedido na conferência antes de gerar a proposta.':''; foot.innerHTML=''; foot.appendChild(h('tr',{},[h('td',{text:'Total'}),h('td'),h('td'),h('td'),h('td'),h('td',{text:brl(tt)}),h('td'),h('td',{text:brl(tn)}),h('td'),h('td')])); }
   function row(r,i){ var tr=h('tr'); if(embed&&r.auto&&!r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) tr.className='vazio'; function td(x){ var t=h('td'); t.appendChild(x); tr.appendChild(t); }
     var nt=h('td'); nt.appendChild(inp(r,'nome')); if(ehEstatico(r)){ var tp=totProdEst(D,r.auto,ME.admin); if(tp>0||r.incProd){ var ck=h('input',{type:'checkbox'}); ck.checked=!!r.incProd; ck.addEventListener('change',function(){ r.incProd=ck.checked; dirty(); recalc(); }); nt.appendChild(h('label',{class:'incprod'},[ck,h('span',{text:' Incluir produção líquida ('+brl(tp)+')'})])); } nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); } if(GRUPO_NOVOS[r.auto]) nt.appendChild(h('small',{class:'dono d-'+(r.auto.slice(-2)==='r2'?'mega_r2':'mega'),text:'interno: '+grupoPorK(r.auto).nome})); tr.appendChild(nt); var pi=inp(r,'pontos'); pi.className='pts'; td(pi); td(inp(r,'periodo')); td(inp(r,'insPor',{onchange:recalc})); var ti=h('td',{class:'calc ins'}); tr.appendChild(ti); if(ehEstatico(r)){ var tc=h('td',{class:'calc tabcalc'}); tr.appendChild(tc); } else td(inp(r,'tabela',{onchange:recalc})); td(inp(r,'desc',{onchange:recalc}));
     var cs=h('td',{class:'calc val'}); tr.appendChild(cs);
     if(!ME.admin){ td(h('span')); td(h('span')); return tr; }
     td(h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})); td(h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})); return tr; }
-  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Inserções por ativo/tela','Total inserções','Valor tabela (R$)','Desconto (%)','Valor negociado']; D.precos.forEach(function(r,i){ var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); body.appendChild(tr); }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
-  v.appendChild(blocoEnderecos());
+  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Mín. inserções por tela/dia','Total inserções/dia','Valor tabela unitário (R$)','Desconto (%)','Valor negociado']; D.precos.forEach(function(r,i){ var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); trs.push(tr); body.appendChild(tr); if(ehEstatico(r)){ var sub=h('tr',{class:'endsub'+(tr.className?' '+tr.className:'')}), sc=h('td',{colspan:'10'}); sc.appendChild(enderecosGrupo(r.auto,r.periodo)); sub.appendChild(sc); body.appendChild(sub); } }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
   if(!ME.admin) v.appendChild(h('button',{class:'btn',text:'Restaurar valores da tabela base',onclick:function(){ restorePrecos(); showTab(curTab); }}));
-  if(ME.admin) v.appendChild(h('button',{class:'btn',text:'+ Adicionar linha',onclick:function(){ D.precos.push({nome:'Nova linha',auto:'',pontos:'',periodo:'4 semanas',insercoes:'',insPor:'',v2:1,tabela:'',desc:'',modo:'geral'}); dirty(); showTab(curTab); }}));
+  if(ME.admin) v.appendChild(h('button',{class:'btn',text:'+ Adicionar linha',onclick:function(){ D.precos.push({nome:'Nova linha',auto:'',pontos:'',periodo:'Mensal',insercoes:'',insPor:'',v2:1,v3:1,tabela:'',desc:'',modo:'geral'}); dirty(); showTab(curTab); }}));
 }
 
 function filtroDonoSel(onchg){ var s=h('select',{},[h('option',{value:'',text:'Todas as propriedades'})].concat(DONOS.map(function(d){ var o=h('option',{value:d[0],text:d[1]}); if(filtroDono===d[0]) o.selected=true; return o; }))); s.addEventListener('change',function(){ filtroDono=s.value; onchg(); }); return s; }
 function donoField(p,onchg){ var s=h('select',{},DONOS.map(function(d){ var o=h('option',{value:d[0],text:d[1]}); if(donoDe(p)===d[0]) o.selected=true; return o; })); s.addEventListener('change',function(){ p.dono=s.value; if(onchg) onchg(); dirty(); }); return field('Propriedade do ponto',s,'MEGA, MEGA/R2 (sócio), Terceiros ou Padrão.'); }
 
-/* ---------- preço por endereço (empenas, outdoors e demais estáticos) ---------- */
-function blocoEnderecos(){
-  var w=h('section',{class:'endpr'}); var algum=false;
-  w.appendChild(h('h3',{text:'Preço por endereço'}));
-  w.appendChild(h('p',{class:'hint',text:ME.admin?'Defina o valor LÍQUIDO de cada ponto estático (e a produção líquida, se houver). Ele é o valor mínimo pré-definido: nas propostas a linha soma os endereços escolhidos e o sistema avisa quando alguém reduzir abaixo disso. Alterar um valor já definido também mostra um aviso.':'Os pontos estáticos escolhidos entram na proposta com o valor líquido pré-definido pelo administrador. Reduzir abaixo do mínimo mostra um aviso e pede justificativa antes de gerar. A produção líquida pode ser incluída na linha, quando existir.'}));
-  ESTATICOS.forEach(function(k){
-    var lista=ME.admin?ptsOf(D,k):selEstaticos(D,k); if(!lista.length) return; algum=true;
-    var g=h('div',{class:'endgrp'}); g.appendChild(h('h4',{text:secLabel(k)+(ME.admin?'':' · '+lista.length+' escolhido'+(lista.length>1?'s':''))}));
-    lista.forEach(function(p){
-      var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
-      var val;
-      if(ME.admin){
-        var srv={}; try{ srv=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; }catch(e){}
-        var aviso=h('div',{class:'prewarn',hidden:'hidden'});
-        var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else if(!aviso.dataset.outro){ aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
-        var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; return h('label',{class:'pre'},[h('small',{text:rot}),i]); };
-        val=h('div',{class:'prebox'},[fl('liq','Líquido (R$)',srv.liq),fl('prod','Produção líquida (R$)',srv.prod)].concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat([aviso]));
-      }
-      else val=h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq.'+(vlr(p.prod)>0?' · prod. '+brl(vlr(p.prod)):''):(p.preco?brl(vlr(p.preco)):'sem preço definido')});
-      g.appendChild(h('div',{class:'endrow'+(ME.admin&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]));
-    });
-    w.appendChild(g);
+/* ---------- preço por endereço (empenas, outdoors e demais estáticos): cada endereço aparece abaixo da sua linha ---------- */
+function enderecosGrupo(k,periodo){
+  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês';
+  var g=h('div',{class:'endgrp'}); var lista=ME.admin?ptsOf(D,k):selEstaticos(D,k);
+  g.appendChild(h('h4',{text:'Endereços · preço por '+per+' (unitário)'+(ME.admin?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
+  if(!lista.length){ g.appendChild(h('p',{class:'hint',text:ME.admin?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
+  lista.forEach(function(p){
+    var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
+    var val;
+    if(ME.admin){
+      var srv={}; try{ srv=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; }catch(e){}
+      var aviso=h('div',{class:'prewarn',hidden:'hidden'});
+      var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else if(!aviso.dataset.outro){ aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
+      var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; return h('label',{class:'pre'},[h('small',{text:rot}),i]); };
+      val=h('div',{class:'prebox'},[fl('liq','Líquido / '+per+' (R$)',srv.liq),fl('prod','Produção líquida (R$)',srv.prod)].concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat([aviso]));
+    }
+    else val=h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per+(vlr(p.prod)>0?' · prod. '+brl(vlr(p.prod)):''):(p.preco?brl(vlr(p.preco)):'sem preço definido')});
+    g.appendChild(h('div',{class:'endrow'+(ME.admin&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]));
   });
-  if(!algum) w.appendChild(h('p',{class:'hint',text:ME.admin?'Nenhum ponto estático cadastrado.':'Nenhum ponto estático escolhido. Quando você marcar empenas, outdoors, frontlight ou bancas estáticas, o valor de cada endereço aparece aqui.'}));
-  return w;
+  return g;
 }
 
 /* ---------- gerar ---------- */

@@ -2,19 +2,30 @@
 var ONLINE=false; /* false = mapas reais (Esri/OSM) com a internet */
 var INS_DEF={led_mega:500,led_r2:500,banca_mega:500,banca_r2:500,led_bh:500,led_rm:500,banca_led:500,mercado:220,guanabara:250,df_painel:420};
 var PRECO_ORD=['mercado','led_mega','banca_mega','led_r2','banca_r2','guanabara','empena','front','mensal','outdoor','revista','metro','df_painel'];
+function temK(rs,k){ return rs.some(function(r){ return (r.auto||'').split(',').indexOf(k)>=0; }); }
+function juntaLinha(rs,a,b,nome){
+  var ra=rs.filter(function(r){ return (r.auto||'').split(',').indexOf(a)>=0; })[0], rb=rs.filter(function(r){ return (r.auto||'').split(',').indexOf(b)>=0&&r!==ra; })[0], alvo=ra||rb; if(!alvo) return false;
+  if(ra&&rb){ ['tabela','desc','insPor'].forEach(function(c){ if(!String(ra[c]==null?'':ra[c]).trim()&&String(rb[c]==null?'':rb[c]).trim()) ra[c]=rb[c]; }); rs.splice(rs.indexOf(rb),1); }
+  var novo=a+','+b; if(alvo.auto===novo&&alvo.nome===nome) return !!(ra&&rb); alvo.auto=novo; alvo.nome=nome; return true; }
 function migPrecos(D){ if(!D.precos) return;
-  if(D.precos.some(function(r){return /led_bh|led_rm|banca_led/.test(r.auto||'')})||!D.precos.some(function(r){return r.auto==='led_r2'})||!D.precos.some(function(r){return r.auto==='outdoor'})){
-    var rs=D.precos, bh=rs.filter(function(r){return r.auto==='led_bh'})[0], rm=rs.filter(function(r){return r.auto==='led_rm'})[0], bl=rs.filter(function(r){return r.auto==='banca_led'})[0];
+  var rs=D.precos, mudou=false;
+  if(rs.some(function(r){return /led_bh|led_rm|banca_led/.test(r.auto||'')})){
+    var bh=rs.filter(function(r){return r.auto==='led_bh'})[0], rm=rs.filter(function(r){return r.auto==='led_rm'})[0], bl=rs.filter(function(r){return r.auto==='banca_led'})[0];
     if(bh){ bh.auto='led_mega'; bh.nome='Painéis de LED'; if(rm&&!String(bh.tabela||'').trim()&&String(rm.tabela||'').trim()){ bh.tabela=rm.tabela; bh.desc=rm.desc; } }
     if(rm) rs.splice(rs.indexOf(rm),1);
     if(bl){ bl.auto='banca_mega'; bl.nome='Bancas de LED'; }
-    rs.forEach(function(r){ if(r.auto&&/led_bh|led_rm|banca_led/.test(r.auto)) r.auto=r.auto.split(',').map(function(k){return k==='led_bh'?'led_mega':k==='banca_led'?'banca_mega':k==='led_rm'?'':k;}).filter(Boolean).join(','); });
-    var tem=function(k){ return rs.some(function(r){return r.auto===k}); };
-    [['led_r2','Painéis de LED','4 semanas'],['banca_r2','Bancas de LED','4 semanas'],['led_mega','Painéis de LED','4 semanas'],['banca_mega','Bancas de LED','4 semanas'],['mercado','Circuito Mercado Central','4 semanas'],['outdoor','Painéis outdoor','Mensal']].forEach(function(n){ if(!tem(n[0])) rs.push({nome:n[1],auto:n[0],pontos:'',periodo:n[2],insercoes:'',tabela:'',desc:'',modo:'geral'}); });
-    var ix=function(r){ var i=PRECO_ORD.indexOf(r.auto); return i<0?99:i; };
-    D.precos=rs.map(function(r,i){return [r,i]}).sort(function(a,b){ return (ix(a[0])-ix(b[0]))||(a[1]-b[1]); }).map(function(x){return x[0]});
-  }
-  (D.precos||[]).forEach(function(r){ if(r.nome==='Bancas de revista') r.nome='Bancas Estáticas'; if(!r.v2){ r.v2=1; var d=INS_DEF[r.auto]; r.insPor=d!=null?d:(parseInt(r.insercoes,10)||''); delete r.modo; } }); }
+    mudou=true; }
+  /* Painéis de LED e Bancas de LED: uma linha só (MEGA e MEGA/R2 são só informação interna) */
+  if(juntaLinha(rs,'led_mega','led_r2','Painéis de LED')) mudou=true;
+  if(juntaLinha(rs,'banca_mega','banca_r2','Bancas de LED')) mudou=true;
+  [['led_mega,led_r2','Painéis de LED','led_mega'],['banca_mega,banca_r2','Bancas de LED','banca_mega'],['mercado','Circuito Mercado Central','mercado'],['outdoor','Painéis outdoor','outdoor']].forEach(function(n){ if(!temK(rs,n[2])){ rs.push({nome:n[1],auto:n[0],pontos:'',periodo:'Mensal',insercoes:'',tabela:'',desc:'',modo:'geral'}); mudou=true; } });
+  /* nenhuma linha repetida (ex.: Bancas Estáticas só uma) */
+  var vis={}; for(var i=0;i<rs.length;i++){ var a=rs[i]; if(a.nome==='Bancas de revista') a.nome='Bancas Estáticas'; if(!a.auto) continue; if(vis[a.auto]){ var o=vis[a.auto]; ['tabela','desc','insPor'].forEach(function(c){ if(!String(o[c]==null?'':o[c]).trim()&&String(a[c]==null?'':a[c]).trim()) o[c]=a[c]; }); rs.splice(i,1); i--; mudou=true; } else vis[a.auto]=a; }
+  if(mudou){ var ix=function(r){ var j=PRECO_ORD.indexOf((r.auto||'').split(',')[0]); return j<0?99:j; };
+    D.precos=rs.map(function(r,i){return [r,i]}).sort(function(a,b){ return (ix(a[0])-ix(b[0]))||(a[1]-b[1]); }).map(function(x){return x[0]}); }
+  /* v2: inserções por tela/dia (mínimo por ativo). v3: período mensal; só outdoor é por bi-semana */
+  (D.precos||[]).forEach(function(r){ if(!r.v2){ r.v2=1; var d=INS_DEF[(r.auto||'').split(',')[0]]; r.insPor=d!=null?d:(parseInt(r.insercoes,10)||''); delete r.modo; }
+    if(!r.v3){ r.v3=1; if(r.auto) r.periodo=r.auto==='outdoor'?'Bi-semana':'Mensal'; } }); }
 var ESTATICOS=['empena','front','mensal','outdoor','revista','metro'];
 function ehEstatico(r){ return !!r.auto&&ESTATICOS.indexOf(r.auto)>=0; }
 function selEstaticos(D,k){ return ptsOf(D,k).filter(function(p){ return p.sel; }); }
@@ -30,15 +41,24 @@ function precoEstatico(D,r){
     tab+=(l>0?l/f:vlr(p.preco))+pr/f; min+=(l>0?l:0)+pr; });
   return {tab:Math.round(tab*100)/100,min:Math.round(min*100)/100};
 }
+/* Quantidade padrão: pontos escolhidos na proposta (se houver); senão, todos os cadastrados. Circuitos usam o nº de telas. */
+function qtdPontos(D,auto){ var tot=0,sel=0,alg=false;
+  auto.split(',').forEach(function(k){ var a=ptsOf(D,k), s=a.filter(function(p){return p.sel;}).length; if(s) alg=true;
+    if(k==='mercado'||k==='guanabara'){ var n=(D[k]&&D[k].nTelas)||0; tot+=n; if(s) sel+=n; } else { tot+=a.length; sel+=s; } });
+  return alg?sel:tot; }
+/* Valor de tabela é sempre UNITÁRIO (por painel/tela/banca): total = unitário × quantidade. Estáticos somam o valor de cada endereço escolhido. */
 function calcPreco(D,r){
   migPrecos(D);
-  var minLiq=0;
-  if(ehEstatico(r)){ var pe=precoEstatico(D,r), sp=selEstaticos(D,r.auto); minLiq=pe.min; r=Object.assign({},r,{tabela:pe.tab.toFixed(2).replace('.',','),pontos:r.pontos!==''&&r.pontos!=null?r.pontos:sp.length}); }
-  var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?(r.auto.split(',').reduce(function(a,k){ return a+(k==='mercado'?(D.mercado.nTelas||0):k==='guanabara'?(D.guanabara.nTelas||0):ptsOf(D,k).length);},0)):0);
-  var tab=num(r.tabela), desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
+  var minLiq=0, est=ehEstatico(r);
+  if(est){ var pe=precoEstatico(D,r), sp=selEstaticos(D,r.auto); minLiq=pe.min; r=Object.assign({},r,{tabela:pe.tab.toFixed(2).replace('.',','),pontos:r.pontos!==''&&r.pontos!=null?r.pontos:sp.length}); }
+  var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?qtdPontos(D,r.auto):0);
+  var tabU, tab;
+  if(est){ tab=num(r.tabela); tabU=pontos>0?tab/pontos:0; }
+  else { tabU=num(r.tabela); tab=tabU*(pontos>0?pontos:(r.auto?0:1)); }
+  var desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
   var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
-  return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
+  return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
 
 /* ===== Estado, mapas, interface ===== */
@@ -65,7 +85,7 @@ var DEF=function(){ return {
   specs:[['Totens Guanabara','1,00 x 2,00 m','239 x 479'],['Painel de LED','4,00 x 2,00 m','768 x 320']],caption:'Totem (1 x 2 m) e painel de LED (4 x 2 m).',chips:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['250','Veiculações por dia'],['20 MB','Tamanho máximo']]},
  brasilia:{tiles:[['3.854.278','usuários por mês'],['160 mil','usuários por dia'],['68%','usam o metrô todos os dias'],['59%','têm entre 21 e 40 anos'],['81%','com ensino médio completo'],['~20%','com nível superior completo']],genero:[53.4,45.4],generoNota:'1,2% se declararam com outra identidade.',fonte:'Pesquisa Ser Desenvolvimento Humano e Empresarial.',texto:'O Metrô-DF transporta por mês 3.854.278 usuários, sendo público A, B e C. A faixa etária é majoritariamente jovem, economicamente ativa e receptiva a novas tendências: mais de 59% dos passageiros têm entre 21 e 40 anos.',formatos:[['Envelopamento externo','Envelopamento externo de vagões'],['Cabeceira de vagão','Mídia na cabeceira do vagão'],['Mídia interna','Painéis dentro dos vagões'],['Interna em cabeceira','Mídia interna na cabeceira do vagão'],['Mídia nas estações','Painéis de 6,00 x 2,00 m (tamanhos variam por estação)']],dims:['1,92 m','2,88 m'],veic:'420',caption:'Painel de LED de 1,92 x 2,88 m (640 x 960 px).',painelChips:[['MP4','Extensão do arquivo'],['10 s','Duração do VT · sem animação'],['420','Inserções por dia'],['6 MB','Tamanho máximo']]},
  comissao:20, descAlerta:20, bv:0, modoGeral:'bruto',
- precos:[['Circuito Mercado Central','mercado','4 semanas','220'],['Painéis de LED','led_mega','4 semanas','500'],['Bancas de LED','banca_mega','4 semanas','500'],['Painéis de LED','led_r2','4 semanas','500'],['Bancas de LED','banca_r2','4 semanas','500'],['Circuito Parque Guanabara','guanabara','4 semanas','250'],['Empenas','empena','Mensal','—'],['Painéis frontlight','front','Mensal','—'],['Mega Painéis','mensal','Mensal','—'],['Painéis outdoor','outdoor','Mensal','—'],['Bancas Estáticas','revista','Mensal','—'],['Metrô-DF · mídia no metrô','metro','Mensal','—'],['Painéis de LED · Brasília','df_painel','4 semanas','420']].map(function(r){ return {nome:r[0],auto:r[1],pontos:'',periodo:r[2],insercoes:r[3],tabela:'',desc:'',modo:'geral'}; })
+ precos:[['Circuito Mercado Central','mercado','Mensal','220'],['Painéis de LED','led_mega,led_r2','Mensal','500'],['Bancas de LED','banca_mega,banca_r2','Mensal','500'],['Circuito Parque Guanabara','guanabara','Mensal','250'],['Empenas','empena','Mensal','—'],['Painéis frontlight','front','Mensal','—'],['Mega Painéis','mensal','Mensal','—'],['Painéis outdoor','outdoor','Bi-semana','—'],['Bancas Estáticas','revista','Mensal','—'],['Metrô-DF · mídia no metrô','metro','Mensal','—'],['Painéis de LED · Brasília','df_painel','Mensal','420']].map(function(r){ return {nome:r[0],auto:r[1],pontos:'',periodo:r[2],insercoes:r[3],tabela:'',desc:'',modo:'geral'}; })
 };};
 var D=DEF(), uid=0;
 function newId(){ return 'p'+Date.now().toString(36)+(uid++); }
