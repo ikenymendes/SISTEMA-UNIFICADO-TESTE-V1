@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sistema Mega · Mega Mídia OOH</title>
+<link rel="icon" href="core/assets/logoC.png">
+<link rel="stylesheet" href="core/casca.css">
+</head>
+<body>
+<div id="app"></div>
+<div id="aviso" class="aviso" role="status"></div>
+
+<!-- 1) configuração única (URL e chave do Supabase) -->
+<script src="config.js"></script>
+<!-- 2) biblioteca do Supabase (um único cliente, compartilhado com os módulos) -->
+<script src="core/vendor/supabase.js"></script>
+<!-- 3) quem pode ver o quê -->
+<script src="core/permissoes.js"></script>
+<!-- 4) casca: login, interface de cada perfil, ponte com os módulos -->
+<script src="core/casca.js"></script>
+<script src="core/backup.js"></script>
+<script>MEGA.iniciar();</script>
+</body>
+</html>

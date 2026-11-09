@@ -1,0 +1,107 @@
+# BACKUP DIÁRIO UNIFICADO (Comercial + Operacional)
+# Baixa todos os dados do Supabase e guarda uma cópia por dia em OUTRO repositório,
+# que precisa ser PRIVADO. Nunca guarde o backup no repositório do sistema (ele é público).
+#
+# Instalação: este arquivo já está no lugar certo (.github/workflows/). Basta criar 4 Secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL          a Project URL
+#   SUPABASE_SERVICE_KEY  a chave service_role (NUNCA vai para a página)
+#   BACKUP_REPO           ex.: seuusuario/mega-backup   (repositório PRIVADO)
+#   BACKUP_TOKEN          token fine-grained com "Contents: Read and write" só nesse repositório
+#
+# Resultado no repositório de backup:
+#   diario/AAAA-MM-DD/operacional-registros.json   (importável em Admin → Dados e planilha → Importar backup)
+#   diario/AAAA-MM-DD/comercial-pontos.json
+#   diario/AAAA-MM-DD/comercial-config.json
+#   diario/AAAA-MM-DD/comercial-sugestoes.json
+#   diario/AAAA-MM-DD/comercial-propostas.json
+#   diario/AAAA-MM-DD/usuarios.json                (sem senhas: só e-mail, nome, papel, ativo)
+#   matriz-vt-ultimo.json                          (cópia do último operacional-registros.json)
+name: Backup diário unificado
+
+on:
+  schedule:
+    - cron: "0 8 * * *"      # todo dia às 05:00 (horário de Brasília)
+  workflow_dispatch:          # permite rodar na mão (aba Actions → Run workflow)
+
+env:
+  DIAS_DE_RETENCAO: 60        # quantos dias de backup manter na pasta diario/
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar os dados do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+
+          # baixa(arquivo, tabela, colunas, coluna_de_ordem)
+          # Paginação por posição (Range) com ordenação estável pela coluna de ordem + desempate pela chave.
+          baixa() {
+            local arq="$1" tabela="$2" cols="$3" ordem="$4"
+            echo "[]" > "out/$arq"
+            local de=0 passo=1000
+            while true; do
+              local ate=$((de + passo - 1))
+              page=$(curl -sS --fail \
+                -H "apikey: $SUPABASE_SERVICE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+                -H "Range-Unit: items" -H "Range: $de-$ate" \
+                "$SUPABASE_URL/rest/v1/$tabela?select=$cols&order=$ordem")
+              n=$(echo "$page" | jq 'length')
+              [ "$n" -eq 0 ] && break
+              jq -s '.[0] + .[1]' "out/$arq" <(echo "$page") > out/tmp.json
+              mv out/tmp.json "out/$arq"
+              [ "$n" -lt "$passo" ] && break
+              de=$((de + passo))
+            done
+            echo "$arq: $(jq length "out/$arq") registros"
+          }
+
+          # Operacional: formato que o "Importar backup" aceita (lista de registros com "chave")
+          baixa operacional-registros.json registros "chave,tipo,dados,u,excluido,rev" "rev.asc,chave.asc"
+          # Comercial
+          baixa comercial-pontos.json      pontos     "*" "ord.asc.nullslast,id.asc"
+          baixa comercial-config.json      config     "*" "id.asc"
+          baixa comercial-sugestoes.json   sugestoes  "*" "criado_em.asc,id.asc"
+          baixa comercial-propostas.json   propostas  "*" "criado_em.asc,id.asc"
+          # Usuários (sem senhas: elas ficam só no Supabase Auth)
+          baixa usuarios.json              profiles   "id,email,nome,papel,ativo,criado_em" "criado_em.asc,id.asc"
+
+          # Sem registros operacionais = algo errado (chave errada, projeto pausado...). Não guarda backup vazio.
+          test "$(jq length out/operacional-registros.json)" -gt 0
+          test "$(jq length out/comercial-pontos.json)" -gt 0
+          # confere o formato importável: lista onde todo item tem "chave"
+          jq -e 'all(.[]; has("chave"))' out/operacional-registros.json > /dev/null
+
+      - name: Guardar no repositório privado de backup
+        env:
+          BACKUP_REPO: ${{ secrets.BACKUP_REPO }}
+          BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone "https://x-access-token:${BACKUP_TOKEN}@github.com/${BACKUP_REPO}.git" backup-repo
+          cd backup-repo
+          dia=$(date -u +%F)
+          mkdir -p "diario/$dia"
+          for f in ../out/*.json; do
+            jq . "$f" > "diario/$dia/$(basename "$f")"
+          done
+          cp "diario/$dia/operacional-registros.json" matriz-vt-ultimo.json
+
+          # Retenção: apaga as pastas diario/AAAA-MM-DD mais antigas que DIAS_DE_RETENCAO
+          limite=$(date -u -d "-${DIAS_DE_RETENCAO} days" +%F)
+          for d in diario/*/; do
+            nome=$(basename "$d")
+            if [[ "$nome" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && [[ "$nome" < "$limite" ]]; then
+              git rm -rq "$d"
+            fi
+          done
+
+          git config user.name  "backup-automatico"
+          git config user.email "backup@users.noreply.github.com"
+          git add -A
+          git commit -m "Backup $dia" || echo "Nada novo para guardar"
+          git push

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gerador de Mídia Kit · Mega Mídia OOH</title>
+<link rel="icon" href="assets/logoC.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Menu">
+    <div class="brand"><img id="hl" alt="MEGA OOH"><small>Gerador de mídia kit</small></div>
+    <nav id="tabs"></nav>
+    <div class="me" id="who"></div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <button id="menu" type="button" aria-label="Abrir menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <span class="sp"></span>
+      <span id="saved"></span>
+      <button id="bell" class="bell" type="button" title="Sugestões pendentes" hidden><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>Sugestões <b id="bellN">0</b></button>
+    </div>
+    <div id="banner" hidden></div>
+    <main id="view"></main>
+  </div>
+</div>
+<nav id="bnav" aria-label="Menu rápido"></nav>
+<div id="gate"></div>
+<div id="toast" class="toast"></div>
+
+<!-- configuração única do sistema (raiz do projeto) -->
+<script src="../../config.js"></script>
+<script src="../../core/vendor/supabase.js"></script>
+<script src="js/vendor/pptxgen.bundle.js"></script>
+<script src="js/vendor/jspdf.umd.js"></script>
+<script src="js/lib-index.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/suggestions.js"></script>
+<script src="js/history.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/users.js"></script>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script>boot();</script>
+</body>
+</html>

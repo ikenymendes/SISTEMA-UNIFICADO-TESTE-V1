@@ -1,0 +1,8 @@
+AMBIENTE DE TESTES - SISTEMA MEGA
+1. Extraia esta pasta do zip (nao abra de dentro do zip).
+2. Dê dois cliques em ABRIR-AMBIENTE-DE-TESTE.bat. O navegador abre sozinho.
+3. Na tela de entrada, clique em Administrador, Comercial, Operacional ou Manutencao.
+   (senha de todos: teste123). O botao "Trocar de perfil" no canto compara as interfaces.
+Os dados sao ficticios e ficam so no seu navegador. Nada aqui toca nos sistemas reais.
+Se o .bat nao funcionar: com Python instalado, abra um terminal nesta pasta e rode
+   python -m http.server 8765      e acesse http://localhost:8765/
