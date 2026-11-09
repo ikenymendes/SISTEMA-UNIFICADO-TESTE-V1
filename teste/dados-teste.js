@@ -25,7 +25,8 @@
     { id: '00000000-0000-4000-8000-000000000001', email: 'admin@teste.com',       senha: 'teste123', nome: 'Admin Teste',       papel: 'admin' },
     { id: '00000000-0000-4000-8000-000000000002', email: 'comercial@teste.com',   senha: 'teste123', nome: 'Comercial Teste',   papel: 'comercial' },
     { id: '00000000-0000-4000-8000-000000000003', email: 'operacional@teste.com', senha: 'teste123', nome: 'Operacional Teste', papel: 'operacional' },
-    { id: '00000000-0000-4000-8000-000000000004', email: 'manutencao@teste.com',  senha: 'teste123', nome: 'ELDRIANO - Manutenção (teste)', papel: 'manutencao' }
+    { id: '00000000-0000-4000-8000-000000000004', email: 'manutencao@teste.com',  senha: 'teste123', nome: 'ELDRIANO - Manutenção (teste)', papel: 'manutencao' },
+    { id: '00000000-0000-4000-8000-000000000005', email: 'financeiro@teste.com',  senha: 'teste123', nome: 'Financeiro Teste',  papel: 'financeiro' }
   ];
 
   /* --------------------------------------------------------------------
@@ -308,7 +309,13 @@
       { id: 'v1004', cliente: 'CLIENTE EXEMPLO C', tipo: 'pi', pi: 'PI-1003', ini: dia(agora + 5 * DIA), fim: dia(agora + 35 * DIA), paineis: ['p11', 'p12'], fif: false, nf: 2 },
       { id: 'v1005', cliente: 'CLIENTE EXEMPLO D', tipo: 'pi', pi: 'PI-1004', ini: dia(agora - 15 * DIA), fim: dia(agora + 15 * DIA), paineis: ['p13', 'p14', 'p15', 'x1'], fif: true, nf: 1 },
       { id: 'v1006', cliente: 'CLIENTE EXEMPLO E', tipo: 'pi', pi: 'PI-1005', ini: dia(agora - 45 * DIA), fim: dia(agora - 15 * DIA), paineis: ['p1', 'p6', 'x2'], fif: false, nf: 1,
-        chk: true, chkd: dia(agora - 13 * DIA), fat: true, fdt: dia(agora - 10 * DIA), nfn: '4377' }
+        chk: true, chkd: dia(agora - 13 * DIA), fat: true, fdt: dia(agora - 10 * DIA), nfn: '4377' },
+      { id: 'v1007', cliente: 'CLIENTE EXEMPLO F', tipo: 'pi', pi: 'PI-1006', ini: dia(agora - 40 * DIA), fim: dia(agora - 9 * DIA), paineis: ['p2', 'p3'], fif: false, nf: 1,
+        chk: true, chkd: dia(agora - 8 * DIA), fat: false },
+      { id: 'v1008', cliente: 'CLIENTE EXEMPLO G', tipo: 'pi', pi: 'PI-1007', ini: dia(agora - 33 * DIA), fim: dia(agora - 3 * DIA), paineis: ['p6', 'p8', 'p10'], fif: false, nf: 1,
+        chk: true, chkd: dia(agora - 1 * DIA), fat: false },
+      { id: 'v1009', cliente: 'EVENTO EXEMPLO H', tipo: 'evento', ev: { nome: 'Festival Exemplo', dt: dia(agora - 12 * DIA), dtf: '' }, pi: '', ini: dia(agora - 20 * DIA), fim: dia(agora - 11 * DIA), paineis: ['p4'], fif: false, nf: 1,
+        chk: true, chkd: dia(agora - 17 * DIA), fat: false }
     ];
     vts.forEach(function (v) { add('vt:' + v.id, v, agora - DIA); });
 

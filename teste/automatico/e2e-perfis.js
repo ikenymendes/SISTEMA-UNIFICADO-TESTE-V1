@@ -7,6 +7,7 @@ const perfis = [
   { id: 'comercial',   botao: 'Comercial',     espera: { barra: false, modulos: ['comercial'] } },
   { id: 'operacional', botao: 'Operacional',   espera: { barra: false, modulos: ['operacional'] } },
   { id: 'manutencao',  botao: 'Manutenção',    espera: { barra: false, modulos: ['operacional'] } },
+  { id: 'financeiro',  botao: 'Financeiro',    espera: { barra: false, modulos: ['financeiro'] } },
 ];
 const resultados = [];
 const ok = (nome, cond, extra='') => { resultados.push({ nome, ok: !!cond, extra }); console.log((cond ? 'OK   ' : 'FALHA') + ' ' + nome + (extra ? ' · ' + extra : '')); };

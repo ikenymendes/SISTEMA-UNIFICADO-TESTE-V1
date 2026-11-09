@@ -19,6 +19,11 @@ var MODULOS = {
     rotulo: 'Operacional',
     descricao: 'Gestão operacional: VTs, rotas, manutenção, checking',
     url: 'modulos/operacional/index.html'
+  },
+  financeiro: {
+    rotulo: 'Financeiro',
+    descricao: 'Faturamento: nota fiscal dos checkings concluídos',
+    url: 'modulos/financeiro/index.html'
   }
 };
 
@@ -39,7 +44,7 @@ var ADMIN_TEMA = 'vidro';
 var PERMISSOES = {
   admin: {
     rotulo: 'Administrador',
-    modulos: ['comercial', 'operacional'],
+    modulos: ['comercial', 'operacional', 'financeiro'],
     areas: ['inicio', 'usuarios', 'backup'],
     inicial: 'inicio'
   },
@@ -58,6 +63,12 @@ var PERMISSOES = {
   manutencao: {
     rotulo: 'Manutenção',
     modulos: ['operacional'],
+    areas: ['inicio'],
+    inicial: 'inicio'
+  },
+  financeiro: {
+    rotulo: 'Financeiro',
+    modulos: ['financeiro'],
     areas: ['inicio'],
     inicial: 'inicio'
   }

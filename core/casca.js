@@ -7,6 +7,7 @@
        comercial   -> só o sistema Comercial, em tela cheia
        operacional -> só a Gestão Operacional, em tela cheia
        manutencao  -> Gestão Operacional (a tela de chamados do celular)
+       financeiro  -> Financeiro (faturamento dos checkings concluídos)
    - Só carrega (baixa) o módulo que o perfil pode usar.
    - Oferece a "ponte" (window.MEGA) que os módulos usam para pegar a
      sessão, renovar o login e sair.
@@ -25,7 +26,8 @@ var MEGA = (function () {
     { email: 'admin@teste.com',       nome: 'Administrador', desc: 'vê tudo' },
     { email: 'comercial@teste.com',   nome: 'Comercial',     desc: 'só o sistema comercial' },
     { email: 'operacional@teste.com', nome: 'Operacional',   desc: 'só a gestão operacional' },
-    { email: 'manutencao@teste.com',  nome: 'Manutenção',    desc: 'só os chamados (celular)' }
+    { email: 'manutencao@teste.com',  nome: 'Manutenção',    desc: 'só os chamados (celular)' },
+    { email: 'financeiro@teste.com',  nome: 'Financeiro',    desc: 'só faturamentos' }
   ];
 
   /* ---------- utilidades ---------- */
@@ -147,7 +149,7 @@ var MEGA = (function () {
     }
 
     app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 01:00' })]))
+      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 01:25' })]))
     ]));
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }

@@ -111,7 +111,7 @@
   /* ====================================================================
    *  2) ESQUEMA DAS TABELAS (colunas, chaves, valores padrão, checks)
    * ==================================================================== */
-  var PAPEIS = ['admin', 'comercial', 'operacional', 'manutencao', 'pendente', 'bloqueado'];
+  var PAPEIS = ['admin', 'comercial', 'operacional', 'manutencao', 'financeiro', 'pendente', 'bloqueado'];
   var TIPOS_REG = ['fx', 'vr', 'vt', 'ft', 'mn', 'es', 'cf', 'cfg', 'rot'];
 
   var ESQUEMA = {
@@ -606,6 +606,33 @@
       return { status: 200, corpo: { ok: ok, negado: negado, antigo: antigo }, salvar: true };
     }
 
+    /* ---- fin_listar() / fin_registrar(): financeiro só vê VTs com checking concluído ---- */
+    if (fn === 'fin_listar' || fn === 'fin_registrar') {
+      if (!perfil || perfil.ativo === false || (perfil.papel !== 'admin' && perfil.papel !== 'financeiro')) return lancar('Sem acesso ao financeiro.');
+      var regs = db.tabelas.registros;
+      if (fn === 'fin_listar') {
+        var lista = regs.filter(function (x) { return x.tipo === 'vt' && !x.excluido && x.dados && x.dados.chk === true; }).map(function (x) {
+          var d = x.dados;
+          return { chave: x.chave, cliente: d.cliente, pi: d.pi || '', tipo: d.tipo || '', evento: (d.ev && d.ev.nome) || '', ini: d.ini || '', fim: d.fim || '',
+                   paineis: (d.paineis || []).length, chkd: d.chkd || '', fat: d.fat === true, fdt: d.fdt || '', nfn: d.nfn || '', u: x.u };
+        }).sort(function (a, b) { return b.u - a.u; });
+        return { status: 200, corpo: lista };
+      }
+      var alvoF = regs.filter(function (x) { return x.chave === args.p_chave && x.tipo === 'vt' && !x.excluido; })[0];
+      if (!alvoF) return lancar('VT não encontrado.');
+      if (!(alvoF.dados && alvoF.dados.chk === true)) return lancar('O checking deste VT ainda não foi concluído.');
+      var antesF = JSON.parse(JSON.stringify(alvoF)), dF = Object.assign({}, alvoF.dados);
+      if (args.p_desfazer) { dF.fat = false; dF.fdt = ''; dF.nfn = ''; }
+      else {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(args.p_fdt || '')) return lancar('Informe a data do faturamento.');
+        if (!String(args.p_nfn || '').trim()) return lancar('Informe o número da nota fiscal.');
+        dF.fat = true; dF.fdt = args.p_fdt; dF.nfn = String(args.p_nfn).trim();
+      }
+      alvoF.dados = dF; alvoF.u = Math.max(Date.now(), alvoF.u + 1);
+      emitir('registros', 'UPDATE', alvoF, antesF);
+      return { status: 200, corpo: { ok: true, u: alvoF.u }, salvar: true };
+    }
+
     /* ---- resolver_sugestao(p_id, p_acao, p_payload, p_resposta) ---- */
     if (fn === 'resolver_sugestao') {
       if (!ehAdmin(perfil)) return lancar('Apenas administrador.');
@@ -645,7 +672,7 @@
       var email = String(args.p_email || '').trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return lancar('E-mail inválido.');
       if (String(args.p_senha || '').length < 6) return lancar('A senha precisa ter pelo menos 6 caracteres.');
-      if (['admin', 'comercial', 'operacional', 'manutencao'].indexOf(args.p_papel) < 0) return lancar('Função inválida.');
+      if (['admin', 'comercial', 'operacional', 'manutencao', 'financeiro'].indexOf(args.p_papel) < 0) return lancar('Função inválida.');
       if (db.users.some(function (u) { return u.email === email; })) return lancar('Este e-mail já tem cadastro.');
       var nome = String(args.p_nome || '').trim() || email.split('@')[0];
       var nu = { id: uuid(), email: email, senha: args.p_senha, nome: nome, criado_em: agora() };
