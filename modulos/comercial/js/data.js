@@ -46,6 +46,8 @@ function qtdPontos(D,auto){ var tot=0,sel=0,alg=false;
   auto.split(',').forEach(function(k){ var a=ptsOf(D,k), s=a.filter(function(p){return p.sel;}).length; if(s) alg=true;
     if(k==='mercado'||k==='guanabara'){ var n=(D[k]&&D[k].nTelas)||0; tot+=n; if(s) sel+=n; } else { tot+=a.length; sel+=s; } });
   return alg?sel:tot; }
+/* Quantidade para o PREÇO: pontos escolhidos na proposta; sem escolha (ou circuito) vale 1, então o negociado fica igual ao valor de tabela. */
+function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!=='mercado'&&k!=='guanabara') sel+=selEstaticos(D,k).length; }); return sel>0?sel:1; }
 /* Valor de tabela é sempre UNITÁRIO (por painel/tela/banca): total = unitário × quantidade. Estáticos somam o valor de cada endereço escolhido. */
 function calcPreco(D,r){
   migPrecos(D);
@@ -54,7 +56,7 @@ function calcPreco(D,r){
   var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?qtdPontos(D,r.auto):0);
   var tabU, tab;
   if(est){ tab=num(r.tabela); tabU=pontos>0?tab/pontos:0; }
-  else { tabU=num(r.tabela); tab=tabU*(pontos>0?pontos:(r.auto?0:1)); }
+  else { tabU=num(r.tabela); var qtd=(r.pontos!==''&&r.pontos!=null)?num(r.pontos):(r.auto?qtdPreco(D,r.auto):1); tab=tabU*(qtd>0?qtd:0); }
   var desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
   if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+vlr(p.liq); },0); },0); }
