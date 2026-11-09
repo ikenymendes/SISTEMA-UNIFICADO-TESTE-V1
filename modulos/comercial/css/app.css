@@ -490,3 +490,7 @@ details.novo{border:1.5px solid var(--pink);margin-bottom:18px}
 .gbox.gsimples{padding:30px 28px}.gbox.gsimples h2{font-size:22px}.gbox.gsimples h2::before{display:none}
 @keyframes gspin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.gspin{animation-duration:2s}}
+
+/* dentro da casca: a aba só cuida das assinaturas (usuários e funções ficam no menu principal) */
+.so-ass .newuser,.so-ass .x-pend{display:none}
+.so-ass .ptab th:nth-child(3),.so-ass .ptab td:nth-child(3),.so-ass .ptab th:nth-child(5),.so-ass .ptab td:nth-child(5),.so-ass .ptab th:nth-child(6),.so-ass .ptab td:nth-child(6){display:none}

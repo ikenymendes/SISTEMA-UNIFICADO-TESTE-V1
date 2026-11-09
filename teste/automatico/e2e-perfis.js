@@ -45,10 +45,22 @@ const ok = (nome, cond, extra='') => { resultados.push({ nome, ok: !!cond, extra
       await page.waitForTimeout(2500);
       await page.screenshot({ path: `${OUT}/admin-3-backup.png` });
       await page.click('.trilho .it[data-id=usuarios]');
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(1500);
       await page.screenshot({ path: `${OUT}/admin-4-usuarios.png` });
+      ok('[admin] Usuários é uma área própria (não abre dentro do Comercial)', await page.locator('.painel:not([hidden]) .conteudo.usr').count() === 1 && await page.locator('.painel:not([hidden]) iframe').count() === 0);
+      ok('[admin] a lista de Função tem a opção Financeiro', (await page.locator('.painel:not([hidden]) .usr-grade select option[value=financeiro]').count()) === 1);
+      await page.fill('.usr-grade input[type=text]', 'Novo Fin');
+      await page.fill('.usr-grade input[type=email]', 'novo.fin@teste.com');
+      await page.fill('.usr-pw input', 'senha123');
+      await page.selectOption('.usr-grade select', 'financeiro');
+      await page.click('.usr-btn.pri');
+      await page.waitForSelector('.usr-modal', { timeout: 5000 });
+      await page.click('.usr-modal .usr-btn:not(.pri)');
+      await page.waitForTimeout(800);
+      ok('[admin] usuário Financeiro criado aparece na lista com a função certa', (await page.locator('.usr-linha', { hasText: 'novo.fin@teste.com' }).locator('.etq.papel-financeiro').count()) === 1);
+      await page.screenshot({ path: `${OUT}/admin-5-usuarios-criado.png` });
     }
-    if (p.id === 'admin') ok('[admin] depois de abrir Operacional os dois módulos foram carregados', JSON.stringify([...reqs].sort()) === JSON.stringify(['comercial','operacional']));
+    if (p.id === 'admin') ok('[admin] depois de abrir Operacional os dois módulos foram carregados', JSON.stringify([...reqs].sort()) === JSON.stringify(['operacional']));
     ok(`[${p.id}] sem erros de JavaScript`, erros.length === 0, erros.slice(0, 4).join(' | '));
     await ctx.close();
   }

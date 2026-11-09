@@ -1,9 +1,10 @@
 /* Usuários (administrador): liberar cadastros e definir função. */
 function viewUsuarios(v){
-  v.appendChild(h('h2',{text:'Usuários e funções'}));
-  v.appendChild(h('p',{class:'hint',text:'Quem se cadastra na tela de entrada aparece aqui como "Pendente". Comercial monta propostas, gera o mídia kit e sugere pontos. Operacional e Manutenção acessam só a Gestão Operacional. Administrador acessa tudo: edita pontos, textos e preços base, decide as sugestões e vê o dashboard. "Bloqueado" impede o acesso.'}));
+  var so=(function(){ try{ return window.parent!==window&&!!window.parent.MEGA; }catch(e){ return false; } })(); if(so) v.classList.add('so-ass');
+  v.appendChild(h('h2',{text:so?'Assinaturas da contracapa':'Usuários e funções'}));
+  v.appendChild(h('p',{class:'hint',text:so?'Cada usuário pode ter a sua assinatura na contracapa do mídia kit e da proposta. Para criar usuários e definir funções, use Usuários no menu principal.':'Quem se cadastra na tela de entrada aparece aqui como "Pendente". Comercial monta propostas, gera o mídia kit e sugere pontos. Operacional e Manutenção acessam só a Gestão Operacional. Administrador acessa tudo: edita pontos, textos e preços base, decide as sugestões e vê o dashboard. "Bloqueado" impede o acesso.'}));
   v.appendChild(formNovoUsuario(function(){ load(); }));
-  var pend=h('div'), tab=h('div',{class:'tw'}), ass=h('div',{class:'card pad'}); v.appendChild(h('h3',{text:'Aguardando liberação'})); v.appendChild(pend); v.appendChild(h('h3',{text:'Usuários'})); v.appendChild(tab); v.appendChild(ass); v.appendChild(ass);
+  var pend=h('div'), tab=h('div',{class:'tw'}), ass=h('div',{class:'card pad'}); v.appendChild(h('h3',{class:'x-pend',text:'Aguardando liberação'})); pend.className='x-pend'; v.appendChild(pend); v.appendChild(h('h3',{text:'Usuários'})); v.appendChild(tab); v.appendChild(ass); v.appendChild(ass);
   var lista=[];
   async function mudar(u,papel){ try{ await Store.mudarPapel(u.id,papel); u.papel=papel; toast('Acesso de '+u.email+' atualizado.'); draw(); }catch(e){ toast('Não foi possível salvar: '+erroMsg(e),true); load(); } }
   function draw(){

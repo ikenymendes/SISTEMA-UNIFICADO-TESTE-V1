@@ -149,7 +149,7 @@ var MEGA = (function () {
     }
 
     app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 01:25' })]))
+      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 02:10' })]))
     ]));
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }
@@ -384,10 +384,6 @@ var MEGA = (function () {
   function abrir(id, aoPronto) {
     var perm = PERMISSOES[perfil.papel];
     var ehModulo = !!MODULOS[id], ehArea = !!AREAS[id];
-    if (id === 'usuarios') {                       // Usuários vive dentro do Comercial (aba "Usuários")
-      if (perm.areas.indexOf('usuarios') < 0) return;
-      return irParaUsuarios();
-    }
     if ((ehModulo && perm.modulos.indexOf(id) < 0) || (ehArea && perm.areas.indexOf(id) < 0) || (!ehModulo && !ehArea)) return;
 
     moduloAtual = id;
@@ -412,6 +408,9 @@ var MEGA = (function () {
       } else if (id === 'backup') {
         painel.classList.add('area', 'pronto');
         painel.appendChild(BACKUP.tela(client));
+      } else if (id === 'usuarios') {
+        painel.classList.add('area', 'pronto');
+        painel.appendChild(USUARIOS.tela(client, perfil.id));
       }
       painéis[id] = painel;
       $('#palco').appendChild(painel);
@@ -419,20 +418,7 @@ var MEGA = (function () {
       var fr = painéis[id].querySelector('iframe'); if (fr) aoPronto(fr);
     }
     if (id === 'backup') BACKUP.atualizar && BACKUP.atualizar();
-  }
-
-  /* "Usuários" abre o Comercial já na aba de usuários (a mesma tela cria e gerencia todos os perfis). */
-  function irParaUsuarios() {
-    abrir('comercial', function (f) {
-      var tentativas = 0;
-      (function tentar() {
-        var w = f.contentWindow, ok = false;
-        try { ok = w && w.ME && w.ME.admin && typeof w.showTab === 'function' && w.entered; } catch (e) {}
-        if (ok) { w.showTab('usuarios'); return; }
-        if (++tentativas < 80) setTimeout(tentar, 250);
-      })();
-    });
-    marcar('usuarios');
+    if (id === 'usuarios') USUARIOS.atualizar();
   }
 
   /* ---------- início ---------- */
