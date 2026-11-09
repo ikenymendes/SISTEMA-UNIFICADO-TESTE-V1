@@ -494,3 +494,17 @@ details.novo{border:1.5px solid var(--pink);margin-bottom:18px}
 /* dentro da casca: a aba só cuida das assinaturas (usuários e funções ficam no menu principal) */
 .so-ass .newuser,.so-ass .x-pend{display:none}
 .so-ass .ptab th:nth-child(3),.so-ass .ptab td:nth-child(3),.so-ass .ptab th:nth-child(5),.so-ass .ptab td:nth-child(5),.so-ass .ptab th:nth-child(6),.so-ass .ptab td:nth-child(6){display:none}
+
+/* ---- preço pré-definido (líquido) + produção + avisos de alteração ---- */
+.prebox{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:flex-end;flex:none}
+.prebox label.pre{display:flex;flex-direction:column;gap:2px;font-size:11px;color:#6b6b8a}
+.prebox label.pre input{width:150px;text-align:right}
+.prebox .legado{flex:1 1 100%;text-align:right;color:var(--pink-d)}
+.prewarn,.minwarn,.avmin{background:#fff4e0;border:1px solid #f0b95a;color:#8a5a00;border-radius:10px;padding:8px 12px;font-size:13px;line-height:1.35}
+.prewarn{flex:1 1 100%}
+.minwarn{margin-top:6px;font-size:12px;padding:5px 9px}
+.avmin{margin:10px 0}
+.incprod{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--navy);cursor:pointer}
+.incprod input{width:auto;flex:none}
+tr.abaixo td{background:#fff8ec}
+@media(max-width:900px){.prebox{justify-content:flex-start;width:100%}.prebox label.pre{flex:1 1 45%}.prebox label.pre input{width:100%;text-align:left}.prebox .legado{text-align:left}}

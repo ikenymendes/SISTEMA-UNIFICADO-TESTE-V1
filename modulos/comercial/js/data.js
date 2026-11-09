@@ -18,13 +18,27 @@ function migPrecos(D){ if(!D.precos) return;
 var ESTATICOS=['empena','front','mensal','outdoor','revista','metro'];
 function ehEstatico(r){ return !!r.auto&&ESTATICOS.indexOf(r.auto)>=0; }
 function selEstaticos(D,k){ return ptsOf(D,k).filter(function(p){ return p.sel; }); }
+/* Preço pré-definido (líquido) dos estáticos: o admin cadastra, por ponto, o valor LÍQUIDO (p.liq) e, se houver, a
+   produção líquida (p.prod). A linha pode incluir a produção (r.incProd). O valor de tabela da linha é o líquido
+   "inflado" pela comissão/BV, para que no modo Líquido o valor final volte a ser exatamente o pré-definido.
+   Pontos sem p.liq continuam usando p.preco (tabela bruta antiga). */
+function fatorLiq(D){ var f=(1-num(D.comissao)/100)*(1-num(D.bv)/100); return f>0.01?f:1; }
+function totProdEst(D,k,todos){ return (todos?ptsOf(D,k):selEstaticos(D,k)).reduce(function(a,p){ return a+vlr(p.prod); },0); }
+function precoEstatico(D,r){
+  var f=fatorLiq(D), tab=0, min=0;
+  selEstaticos(D,r.auto).forEach(function(p){ var l=vlr(p.liq), pr=r.incProd?vlr(p.prod):0;
+    tab+=(l>0?l/f:vlr(p.preco))+pr/f; min+=(l>0?l:0)+pr; });
+  return {tab:Math.round(tab*100)/100,min:Math.round(min*100)/100};
+}
 function calcPreco(D,r){
   migPrecos(D);
-  if(ehEstatico(r)){ var sp=selEstaticos(D,r.auto); r=Object.assign({},r,{tabela:sp.reduce(function(a,p){ return a+vlr(p.preco); },0).toFixed(2).replace('.',','),pontos:r.pontos!==''&&r.pontos!=null?r.pontos:sp.length}); }
+  var minLiq=0;
+  if(ehEstatico(r)){ var pe=precoEstatico(D,r), sp=selEstaticos(D,r.auto); minLiq=pe.min; r=Object.assign({},r,{tabela:pe.tab.toFixed(2).replace('.',','),pontos:r.pontos!==''&&r.pontos!=null?r.pontos:sp.length}); }
   var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?(r.auto.split(',').reduce(function(a,k){ return a+(k==='mercado'?(D.mercado.nTelas||0):k==='guanabara'?(D.guanabara.nTelas||0):ptsOf(D,k).length);},0)):0);
   var tab=num(r.tabela), desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
-  return {nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
+  var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
+  return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
 
 /* ===== Estado, mapas, interface ===== */
