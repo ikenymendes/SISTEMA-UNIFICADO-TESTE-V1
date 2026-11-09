@@ -279,31 +279,35 @@ function donoField(p,onchg){ var s=h('select',{},DONOS.map(function(d){ var o=h(
 
 /* ---------- preço por endereço (empenas, outdoors e demais estáticos): cada endereço aparece abaixo da sua linha ---------- */
 function enderecosGrupo(k,periodo,nomeLinha){
-  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês', temProd=ESTATICOS.indexOf(k)>=0;
-  var g=h('div',{class:'endgrp'}); g.style.cssText='max-width:780px;width:100%;box-sizing:border-box;position:sticky;left:0;margin:6px 0;'; var lista=baseEditavel()?ptsOf(D,k):selEstaticos(D,k);
-  g.appendChild(h('h4',{text:(nomeLinha?nomeLinha+' · ':'')+(temProd?'endereços · valor mínimo líquido por '+per+' (produção na linha de baixo)':'valor mínimo líquido por ponto · por '+per)+(baseEditavel()?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
-  if(!lista.length){ g.appendChild(h('p',{class:'hint',text:baseEditavel()?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
+  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês', temProd=ESTATICOS.indexOf(k)>=0, edita=baseEditavel();
+  var g=h('div',{class:'endgrp'}); g.style.cssText='width:100%;max-width:900px;box-sizing:border-box;margin:12px 0;padding:14px 16px;background:#fff;border:1px solid rgba(0,0,102,.12);border-radius:12px;overflow-x:auto;';
+  var lista=edita?ptsOf(D,k):selEstaticos(D,k);
+  var t=h('h4',{text:(nomeLinha||'')+(edita?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}); t.style.cssText='margin:0 0 10px;'; g.appendChild(t);
+  if(!lista.length){ g.appendChild(h('p',{class:'hint',text:edita?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
+  var tb=h('table'); tb.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed;min-width:560px;';
+  var cg=h('colgroup'); [temProd?'52%':'72%','24%',temProd?'24%':'4%'].forEach(function(w){ var c=h('col'); c.style.width=w; cg.appendChild(c); }); if(!temProd) cg.removeChild(cg.lastChild); cg.firstChild.style.width=temProd?'52%':'70%'; if(!temProd) cg.lastChild.style.width='30%'; tb.appendChild(cg);
+  var cab=h('tr'); ['Endereço','Mínimo líquido / '+per].concat(temProd?['Produção líquida']:[]).forEach(function(x,i){ var th=h('th',{text:x}); th.style.cssText='font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.65;font-weight:600;padding:0 8px 8px;text-align:'+(i?'right':'left')+';'; cab.appendChild(th); }); tb.appendChild(h('thead',{},[cab]));
+  var body=h('tbody'); tb.appendChild(body);
+  var td=function(x,right){ var c=h('td'); c.style.cssText='padding:8px;vertical-align:top;border-top:1px solid rgba(0,0,102,.08);'+(right?'text-align:right;':''); if(x) c.appendChild(x); return c; };
   lista.forEach(function(p){
-    var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
-    var edita=baseEditavel(), er=h('div',{class:'endrow'+(edita&&p.sel?' on':'')});
-    var lin=function(esq,dir,ind){ var d=h('div',{},[esq,dir]); d.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;'+(ind?'padding:2px 0 2px 22px;':''); return d; };
+    var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''), tr=h('tr',{class:'endrow'+(edita&&p.sel?' on':'')});
+    var c0=td(null); c0.appendChild(h('span',{class:'t',text:nome})); tr.appendChild(c0);
     if(edita){
       var srv={}; try{ srv=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; }catch(e){}
       var aviso=h('div',{class:'prewarn',hidden:'hidden'});
-      var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else if(!aviso.dataset.outro){ aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
-      var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; return h('label',{class:'pre'},[h('small',{text:rot}),i]); };
-      er.appendChild(lin(h('span',{class:'t',text:nome}),fl('liq','Líquido / '+per+' (R$)',srv.liq)));
-      if(temProd) er.appendChild(lin(h('span',{class:'t',text:'↳ Produção deste endereço'}),fl('prod','Produção líquida (R$)',srv.prod),true));
-      if(p.preco&&!(vlr(p.liq)>0)) er.appendChild(h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'}));
-      if(temProd&&vlr(p.liq)>0&&!(vlr(p.prod)>0)) er.appendChild(h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'}));
-      er.appendChild(aviso);
+      var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else { aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
+      var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; i.style.cssText='width:100%;box-sizing:border-box;text-align:right;'; return i; };
+      tr.appendChild(td(fl('liq','Mínimo líquido',srv.liq))); if(temProd) tr.appendChild(td(fl('prod','Produção líquida',srv.prod)));
+      if(p.preco&&!(vlr(p.liq)>0)) c0.appendChild(h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'}));
+      if(temProd&&vlr(p.liq)>0&&!(vlr(p.prod)>0)) c0.appendChild(h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'}));
+      c0.appendChild(aviso);
     } else {
-      er.appendChild(lin(h('span',{class:'t',text:nome}),h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per:(p.preco?brl(vlr(p.preco)):'sem preço definido')})));
-      if(temProd) er.appendChild(lin(h('span',{class:'t',text:'↳ Produção'}),h('b',{class:vlr(p.prod)>0?'':'sem',text:vlr(p.prod)>0?brl(vlr(p.prod))+' líq.':'sem produção definida'}),true));
+      tr.appendChild(td(h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq)):(p.preco?brl(vlr(p.preco)):'sem preço')}),true));
+      if(temProd) tr.appendChild(td(h('b',{class:vlr(p.prod)>0?'':'sem',text:vlr(p.prod)>0?brl(vlr(p.prod)):'sem produção'}),true));
     }
-    g.appendChild(er);
+    body.appendChild(tr);
   });
-  return g;
+  g.appendChild(tb); return g;
 }
 
 /* ---------- Preços base SP: valor mínimo líquido de CADA ponto (LED, bancas e estáticos) ---------- */
@@ -312,9 +316,9 @@ function viewPrecosSP(v){
   v.appendChild(h('p',{class:'hint',text:'Cada ponto tem o seu valor mínimo líquido (mensal; outdoor por bi-semana). Na proposta, o sistema soma o mínimo dos pontos escolhidos e avisa quando o valor negociado ficar abaixo. Estáticos também têm a produção líquida. As alterações são salvas sozinhas.'}));
   var f=h('input',{type:'search',placeholder:'Filtrar por endereço ou bairro…'}); v.appendChild(field('Buscar ponto',f));
   var wrap=h('div'); v.appendChild(wrap);
-  GRUPOS.forEach(function(g){ if(!ptsOf(D,g.k).length) return; var el=enderecosGrupo(g.k,g.k==='outdoor'?'Bi-semana':'Mensal',g.nome); el.style.position='static'; wrap.appendChild(el); });
+  GRUPOS.forEach(function(g){ if(!ptsOf(D,g.k).length) return; var el=enderecosGrupo(g.k,g.k==='outdoor'?'Bi-semana':'Mensal',g.nome); wrap.appendChild(el); });
   if(!wrap.children.length) wrap.appendChild(h('p',{class:'hint',text:'Nenhum ponto cadastrado.'}));
-  f.addEventListener('input',function(){ var q=f.value.trim().toLowerCase(); wrap.querySelectorAll('.endrow').forEach(function(r){ var t=(r.querySelector('.t')||r).textContent.toLowerCase(); r.style.display=(!q||t.indexOf(q)>=0)?'flex':'none'; }); });
+  f.addEventListener('input',function(){ var q=f.value.trim().toLowerCase(); wrap.querySelectorAll('.endrow').forEach(function(r){ var t=(r.querySelector('.t')||r).textContent.toLowerCase(); r.style.display=(!q||t.indexOf(q)>=0)?'':'none'; }); });
 }
 
 /* ---------- gerar ---------- */
