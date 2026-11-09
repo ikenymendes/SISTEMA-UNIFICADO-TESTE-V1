@@ -53,7 +53,7 @@ function mobNav() {
   nav.innerHTML =
     main.map(bt).join("") +
     `<button id="mmais" class="${main.includes(view) ? "" : "on"}"><span>☰</span>Mais</button>`;
-  const rest = ["m", "c", "t", "pl", "x", "e", "ev", "o", "a"].filter((v) =>
+  const rest = ["m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
     T.querySelector('button[data-v="' + v + '"]'),
   );
   sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !HOST ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
@@ -79,6 +79,7 @@ function render() {
         ["t", "Manutenção"],
         ...(CLD && ROLE === "admin" ? [["pl", "Verificação de players"]] : []),
         ["x", "Fixos (" + nfx[0] + "/" + nfx[1] + ")"],
+        ["i", "Instalação de estáticos" + (inAvisos().length ? " (" + inAvisos().length + ")" : "")],
         ["e", "Estáticos"],
         ["ev", "Eventos (" + evProx().length + ")"],
         ["a", "Admin"],
@@ -108,6 +109,7 @@ function render() {
       t: manut,
       pl: plview,
       x: fixosMes,
+      i: instalacao,
       e: estaticos,
       ev: eventos,
       k: ckview,
