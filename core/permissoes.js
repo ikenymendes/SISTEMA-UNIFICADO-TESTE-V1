@@ -24,6 +24,7 @@ var MODULOS = {
 
 /* Áreas exclusivas da casca (só administrador) */
 var AREAS = {
+  inicio:   { rotulo: 'Início',   descricao: 'Tela inicial com atalhos' },
   usuarios: { rotulo: 'Usuários', descricao: 'Criar usuários e definir o perfil de cada um' },
   backup:   { rotulo: 'Backup',   descricao: 'Backup completo dos dois sistemas' }
 };
@@ -33,8 +34,8 @@ var PERMISSOES = {
   admin: {
     rotulo: 'Administrador',
     modulos: ['comercial', 'operacional'],
-    areas: ['usuarios', 'backup'],
-    inicial: 'comercial'
+    areas: ['inicio', 'usuarios', 'backup'],
+    inicial: 'inicio'
   },
   comercial: {
     rotulo: 'Comercial',

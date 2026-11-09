@@ -164,6 +164,7 @@ async function boot(){
 /* ---- saudação rápida após o login (~2,8 s; clique para pular) ---- */
 function boasVindas(){
   return new Promise(function(res){
+    try{ if(window.parent&&window.parent!==window&&window.parent.MEGA){ res(); return; } }catch(e){}  /* dentro da casca: sem saudação própria (o Início da casca faz isso) */
     try{ if(sessionStorage.getItem('mk_bv')===ME.uid){ res(); return; } }catch(e){}
     var d=new Date(), h0=d.getHours(), sau=h0<12?'Bom dia':h0<18?'Boa tarde':'Boa noite';
     var nome=String(ME.nome||ME.email||'').split(/[ @.]/)[0]; nome=nome.charAt(0).toUpperCase()+nome.slice(1).toLowerCase();

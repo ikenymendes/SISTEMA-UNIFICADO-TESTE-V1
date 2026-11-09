@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const [,, PORT, OUT] = process.argv;
 const BASE = `http://127.0.0.1:${PORT}/`;
 const perfis = [
-  { id: 'admin',       botao: 'Administrador', espera: { barra: true,  modulos: ['comercial'] } },
+  { id: 'admin',       botao: 'Administrador', espera: { barra: true,  modulos: [] } },
   { id: 'comercial',   botao: 'Comercial',     espera: { barra: false, modulos: ['comercial'] } },
   { id: 'operacional', botao: 'Operacional',   espera: { barra: false, modulos: ['operacional'] } },
   { id: 'manutencao',  botao: 'Manutenção',    espera: { barra: false, modulos: ['operacional'] } },
@@ -24,8 +24,9 @@ const ok = (nome, cond, extra='') => { resultados.push({ nome, ok: !!cond, extra
     await page.waitForSelector('.teste-box button');
     await page.screenshot({ path: `${OUT}/00-login.png` });
     await page.click(`.teste-box button:has-text("${p.botao}")`);
-    await page.waitForSelector('.palco iframe', { timeout: 15000 });
-    await page.waitForTimeout(6000); // módulos terminam de carregar (boas-vindas do comercial etc.)
+    if (p.id === 'admin') { await page.waitForSelector('.atalho', { timeout: 15000 }); await page.waitForTimeout(1500); }   // admin começa no Início (sem módulos)
+    else { await page.waitForSelector('.palco iframe', { timeout: 15000 }); await page.waitForTimeout(6000); }
+    if (p.id === 'admin') ok('[admin] começa na tela Início, com 4 atalhos e nenhum módulo carregado', (await page.locator('.atalho').count()) === 4 && reqs.size === 0);
     ok(`[${p.id}] barra de administrador ${p.espera.barra ? 'aparece' : 'NÃO aparece'}`, (await page.locator('.barra').count() > 0) === p.espera.barra);
     const frames = page.frames().filter(f => f !== page.mainFrame());
     ok(`[${p.id}] módulos carregados = ${p.espera.modulos.join('+')}`, JSON.stringify([...reqs].sort()) === JSON.stringify([...p.espera.modulos].sort()), 'pediu: ' + [...reqs].join(','));

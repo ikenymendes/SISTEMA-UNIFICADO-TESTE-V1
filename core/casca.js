@@ -141,11 +141,7 @@ var MEGA = (function () {
     }
 
     app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'lado' }, [
-        logo('branca'),
-        h('div', {}, [h('h2', { text: 'Um só sistema para toda a Mega.' }), h('p', { text: 'Cada pessoa vê apenas a parte do trabalho dela.' })])
-      ]),
-      h('div', { class: 'form' }, [h('div', { style: 'width:100%;max-width:360px' }, [form].concat(extra))])
+      h('div', { class: 'cartao' }, [logo('colorida'), form].concat(extra))
     ]));
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }
@@ -199,6 +195,48 @@ var MEGA = (function () {
     }, 30000);
   }
 
+  /* ordem do menu do administrador: Início · módulos · (Usuários · Backup) */
+  function ordemItens(perm) {
+    var l = [];
+    if (perm.areas.indexOf('inicio') >= 0) l.push('inicio');
+    perm.modulos.forEach(function (id) { l.push(id); });
+    perm.areas.forEach(function (id) { if (id !== 'inicio') l.push(id); });
+    return l;
+  }
+  function infoItem(id) { return MODULOS[id] || AREAS[id]; }
+
+  /* marca o item ativo (barra do computador) e o nome da seção (menu do celular) */
+  function marcar(id) {
+    document.querySelectorAll('.barra .item, .folha .opcao').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
+    var t = document.querySelector('.menu-m .atual'); if (t && infoItem(id)) t.textContent = infoItem(id).rotulo;
+  }
+
+  function fecharFolha() { var f = document.querySelector('.folha'); if (f) f.hidden = true; var m = document.querySelector('.menu-m'); if (m) m.setAttribute('aria-expanded', 'false'); }
+
+  function saudacao() {
+    var hr = new Date().getHours();
+    return hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
+  }
+
+  /* Início do administrador: a mesma tela sempre, com atalhos para tudo */
+  function telaInicio(perm) {
+    var primeiro = String(perfil.nome || perfil.email || '').split(/[ @.]/)[0];
+    primeiro = primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
+    var cartoes = ordemItens(perm).filter(function (id) { return id !== 'inicio'; }).map(function (id) {
+      var i = infoItem(id);
+      return h('button', { class: 'atalho', type: 'button', onclick: function () { abrir(id); } }, [
+        h('span', { class: 'bolinha', text: i.rotulo.charAt(0) }),
+        h('span', { class: 'txt' }, [h('b', { text: i.rotulo }), h('small', { text: i.descricao })]),
+        h('span', { class: 'seta', text: '›' })
+      ]);
+    });
+    return h('div', { class: 'conteudo inicio' }, [
+      h('h1', { text: saudacao() + (primeiro ? ', ' + primeiro : '') }),
+      h('p', { class: 'sub', text: 'O que você quer abrir?' }),
+      h('div', { class: 'atalhos' }, cartoes)
+    ]);
+  }
+
   function montarInterface(perm) {
     var app = limparTela();
     var comBarra = perm.modulos.length > 1 || perm.areas.length > 0;   // só o administrador
@@ -207,23 +245,37 @@ var MEGA = (function () {
     var palco = h('div', { class: 'palco', id: 'palco' });
 
     if (comBarra) {
+      var ordem = ordemItens(perm);
       var itens = h('div', { class: 'itens' });
-      perm.modulos.forEach(function (id) {
-        itens.appendChild(h('button', { class: 'item', 'data-id': id, text: MODULOS[id].rotulo, title: MODULOS[id].descricao, onclick: function () { abrir(id); } }));
+      var folha = h('div', { class: 'folha', hidden: 'hidden' });
+      var viuSep = false;
+      ordem.forEach(function (id) {
+        var i = infoItem(id);
+        if (!viuSep && AREAS[id] && id !== 'inicio') { viuSep = true; itens.appendChild(h('span', { class: 'sep' })); folha.appendChild(h('div', { class: 'linha' })); }
+        itens.appendChild(h('button', { class: 'item', 'data-id': id, text: i.rotulo, title: i.descricao, onclick: function () { abrir(id); } }));
+        folha.appendChild(h('button', { class: 'opcao', 'data-id': id, onclick: function () { fecharFolha(); abrir(id); } }, [h('b', { text: i.rotulo }), h('small', { text: i.descricao })]));
       });
-      if (perm.areas.length) itens.appendChild(h('span', { class: 'sep' }));
-      perm.areas.forEach(function (id) {
-        itens.appendChild(h('button', { class: 'item', 'data-id': id, text: AREAS[id].rotulo, title: AREAS[id].descricao, onclick: function () { abrir(id); } }));
-      });
+      folha.appendChild(h('div', { class: 'linha' }));
+      folha.appendChild(h('div', { class: 'quem', text: (perfil.nome || perfil.email) + ' · ' + perm.rotulo }));
+      folha.appendChild(h('button', { class: 'opcao sair-m', onclick: function () { sair(); } }, [h('b', { text: 'Sair' })]));
+
+      var menuM = h('button', { class: 'menu-m', type: 'button', 'aria-expanded': 'false', onclick: function (ev) {
+        ev.stopPropagation(); var abre = folha.hidden; folha.hidden = !abre; menuM.setAttribute('aria-expanded', String(abre));
+      } }, [h('span', { class: 'atual', text: 'Início' }), h('span', { class: 'chev', text: '▾' })]);
+      document.addEventListener('click', function (ev) { if (!folha.hidden && !folha.contains(ev.target)) fecharFolha(); });
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fecharFolha(); });
+
       app.appendChild(h('div', { class: 'barra' }, [
-        h('img', { class: 'marca', src: 'core/assets/logoW.png', alt: 'Mega' }),
+        h('img', { class: 'marca', src: 'core/assets/logoW.png', alt: 'Mega', title: 'Início', onclick: function () { abrir('inicio'); } }),
         itens,
+        menuM,
         h('div', { class: 'eu' }, [
           h('span', { class: 'nome', text: perfil.nome || perfil.email }),
           h('span', { class: 'selo', text: perm.rotulo }),
           h('button', { class: 'sair', text: 'Sair', onclick: function () { sair(); } })
         ])
       ]));
+      app.appendChild(folha);
     }
     app.appendChild(palco);
 
@@ -248,7 +300,7 @@ var MEGA = (function () {
     if ((ehModulo && perm.modulos.indexOf(id) < 0) || (ehArea && perm.areas.indexOf(id) < 0) || (!ehModulo && !ehArea)) return;
 
     moduloAtual = id;
-    document.querySelectorAll('.barra .item').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
+    marcar(id);
     Object.keys(painéis).forEach(function (k) { painéis[k].hidden = (k !== id); });
 
     if (!painéis[id]) {
@@ -258,6 +310,9 @@ var MEGA = (function () {
         var f = h('iframe', { src: MODULOS[id].url, title: MODULOS[id].rotulo, allow: 'clipboard-write; fullscreen' });
         f.addEventListener('load', function () { painel.classList.add('pronto'); if (aoPronto) aoPronto(f); });
         painel.appendChild(f);
+      } else if (id === 'inicio') {
+        painel.classList.add('area', 'pronto');
+        painel.appendChild(telaInicio(perm));
       } else if (id === 'backup') {
         painel.classList.add('area', 'pronto');
         painel.appendChild(BACKUP.tela(client));
@@ -281,7 +336,7 @@ var MEGA = (function () {
         if (++tentativas < 80) setTimeout(tentar, 250);
       })();
     });
-    document.querySelectorAll('.barra .item').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === 'usuarios'); });
+    marcar('usuarios');
   }
 
   /* ---------- início ---------- */
