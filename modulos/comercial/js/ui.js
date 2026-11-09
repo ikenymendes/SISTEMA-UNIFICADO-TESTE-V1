@@ -239,7 +239,7 @@ function viewPrecos(v,embed){ migPrecos(D);
     var cs=h('td',{class:'calc val'}); tr.appendChild(cs);
     if(!ME.admin){ td(h('span')); td(h('span')); return tr; }
     td(h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})); td(h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})); return tr; }
-  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Mín. inserções por tela/dia','Total inserções/dia','Valor tabela unitário (R$)','Desconto (%)','Valor negociado']; D.precos.forEach(function(r,i){ var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); trs.push(tr); body.appendChild(tr); if(ehEstatico(r)){ var sub=h('tr',{class:'endsub'+(tr.className?' '+tr.className:'')}), sc=h('td',{colspan:'10'}); sc.appendChild(enderecosGrupo(r.auto,r.periodo)); sub.appendChild(sc); body.appendChild(sub); } }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
+  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Mín. inserções por tela/dia','Total inserções/dia','Valor tabela unitário (R$)','Desconto (%)','Valor negociado']; D.precos.forEach(function(r,i){ var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); trs.push(tr); body.appendChild(tr); if(ehEstatico(r)){ var sub=h('tr',{class:'endsub'+(tr.className?' '+tr.className:'')}), sc=h('td',{colspan:'10'}); sc.appendChild(enderecosGrupo(r.auto,r.periodo,r.nome)); sub.appendChild(sc); body.appendChild(sub); } }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
   if(!ME.admin) v.appendChild(h('button',{class:'btn',text:'Restaurar valores da tabela base',onclick:function(){ restorePrecos(); showTab(curTab); }}));
   if(ME.admin) v.appendChild(h('button',{class:'btn',text:'+ Adicionar linha',onclick:function(){ D.precos.push({nome:'Nova linha',auto:'',pontos:'',periodo:'Mensal',insercoes:'',insPor:'',v2:1,v3:1,tabela:'',desc:'',modo:'geral'}); dirty(); showTab(curTab); }}));
 }
@@ -248,10 +248,10 @@ function filtroDonoSel(onchg){ var s=h('select',{},[h('option',{value:'',text:'T
 function donoField(p,onchg){ var s=h('select',{},DONOS.map(function(d){ var o=h('option',{value:d[0],text:d[1]}); if(donoDe(p)===d[0]) o.selected=true; return o; })); s.addEventListener('change',function(){ p.dono=s.value; if(onchg) onchg(); dirty(); }); return field('Propriedade do ponto',s,'MEGA, MEGA/R2 (sócio), Terceiros ou Padrão.'); }
 
 /* ---------- preço por endereço (empenas, outdoors e demais estáticos): cada endereço aparece abaixo da sua linha ---------- */
-function enderecosGrupo(k,periodo){
+function enderecosGrupo(k,periodo,nomeLinha){
   var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês';
-  var g=h('div',{class:'endgrp'}); var lista=ME.admin?ptsOf(D,k):selEstaticos(D,k);
-  g.appendChild(h('h4',{text:'Endereços · preço por '+per+' (unitário)'+(ME.admin?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
+  var g=h('div',{class:'endgrp'}); g.style.cssText='max-width:780px;width:100%;box-sizing:border-box;position:sticky;left:0;margin:6px 0;'; var lista=ME.admin?ptsOf(D,k):selEstaticos(D,k);
+  g.appendChild(h('h4',{text:(nomeLinha?nomeLinha+' · ':'')+'endereços · preço por '+per+' (unitário)'+(ME.admin?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}));
   if(!lista.length){ g.appendChild(h('p',{class:'hint',text:ME.admin?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
   lista.forEach(function(p){
     var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
@@ -264,7 +264,7 @@ function enderecosGrupo(k,periodo){
       val=h('div',{class:'prebox'},[fl('liq','Líquido / '+per+' (R$)',srv.liq),fl('prod','Produção líquida (R$)',srv.prod)].concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat([aviso]));
     }
     else val=h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per+(vlr(p.prod)>0?' · prod. '+brl(vlr(p.prod)):''):(p.preco?brl(vlr(p.preco)):'sem preço definido')});
-    g.appendChild(h('div',{class:'endrow'+(ME.admin&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]));
+    var er=h('div',{class:'endrow'+(ME.admin&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]); er.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;'; var pb=er.querySelector('.prebox'); if(pb) pb.style.cssText='display:flex;flex-wrap:wrap;gap:8px;'; g.appendChild(er);
   });
   return g;
 }
