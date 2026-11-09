@@ -58,9 +58,13 @@ function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
   if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; mM+=vlr(p.liq); mP+=vlr(p.prod); });
     var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=prodDe(D,e,pp?pp.prod:0), dm=num(e.d), dp=0;
     return [{p:{id:'*',endereco:'Bancas estáticas · '+n+(n===1?' ponto':' pontos')},n:n,tu:tu,tpu:tpu,tm:tu*n,dm:dm,nm:tu*n*(1-dm/100),tp:tpu*n,dp:dp,np:tpu*n*(1-dp/100),minM:mM,minP:mP}]; }
-  return (todos?ptsOf(D,r.auto):selEstaticos(D,r.auto)).map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod);
-    var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d), tp=prodDe(D,e,pr), dp=0;
-    return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:tp,dp:dp,np:tp*(1-dp/100),minM:l,minP:pr}; }); }
+  var SL=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), sumP=0;
+  var out=SL.map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod); sumP+=pr;
+    var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d);
+    return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:0,dp:0,np:0,minM:l,minP:pr}; });
+  /* Produção: UM valor único por formato (líquido + perfil), em vez de um por endereço. */
+  if(out.length){ var ep=end['#prod']||{}, tv=prodDe(D,ep,sumP); out.push({p:{id:'#prod',endereco:'Produção'},isProd:true,tm:0,dm:0,nm:0,tp:tv,dp:0,np:tv,minM:0,minP:0}); }
+  return out; }
 function calcPreco(D,r){
   migPrecos(D);
   var minLiq=0, est=ehEstatico(r);
