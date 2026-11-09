@@ -255,16 +255,23 @@ function enderecosGrupo(k,periodo,nomeLinha){
   if(!lista.length){ g.appendChild(h('p',{class:'hint',text:baseEditavel()?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
   lista.forEach(function(p){
     var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
-    var val;
-    if(baseEditavel()){
+    var edita=baseEditavel(), er=h('div',{class:'endrow'+(edita&&p.sel?' on':'')});
+    var lin=function(esq,dir,ind){ var d=h('div',{},[esq,dir]); d.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;'+(ind?'padding:2px 0 2px 22px;':''); return d; };
+    if(edita){
       var srv={}; try{ srv=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; }catch(e){}
       var aviso=h('div',{class:'prewarn',hidden:'hidden'});
       var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else if(!aviso.dataset.outro){ aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
       var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; return h('label',{class:'pre'},[h('small',{text:rot}),i]); };
-      val=h('div',{class:'prebox'},[fl('liq','Líquido / '+per+' (R$)',srv.liq)].concat(temProd?[fl('prod','Produção líquida (R$)',srv.prod)]:[]).concat(p.preco&&!(vlr(p.liq)>0)?[h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'})]:[]).concat(temProd&&vlr(p.liq)>0&&!(vlr(p.prod)>0)?[h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'})]:[]).concat([aviso]));
+      er.appendChild(lin(h('span',{class:'t',text:nome}),fl('liq','Líquido / '+per+' (R$)',srv.liq)));
+      if(temProd) er.appendChild(lin(h('span',{class:'t',text:'↳ Produção deste endereço'}),fl('prod','Produção líquida (R$)',srv.prod),true));
+      if(p.preco&&!(vlr(p.liq)>0)) er.appendChild(h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'}));
+      if(temProd&&vlr(p.liq)>0&&!(vlr(p.prod)>0)) er.appendChild(h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'}));
+      er.appendChild(aviso);
+    } else {
+      er.appendChild(lin(h('span',{class:'t',text:nome}),h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per:(p.preco?brl(vlr(p.preco)):'sem preço definido')})));
+      if(temProd) er.appendChild(lin(h('span',{class:'t',text:'↳ Produção'}),h('b',{class:vlr(p.prod)>0?'':'sem',text:vlr(p.prod)>0?brl(vlr(p.prod))+' líq.':'sem produção definida'}),true));
     }
-    else val=h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq))+' líq. / '+per+(vlr(p.prod)>0?' · prod. '+brl(vlr(p.prod)):''):(p.preco?brl(vlr(p.preco)):'sem preço definido')});
-    var er=h('div',{class:'endrow'+(baseEditavel()&&p.sel?' on':'')},[h('span',{class:'t',text:nome}),val]); er.style.cssText='display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;'; var pb=er.querySelector('.prebox'); if(pb) pb.style.cssText='display:flex;flex-wrap:wrap;gap:8px;'; g.appendChild(er);
+    g.appendChild(er);
   });
   return g;
 }
