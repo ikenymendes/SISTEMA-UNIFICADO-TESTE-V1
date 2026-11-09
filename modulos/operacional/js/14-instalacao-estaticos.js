@@ -99,7 +99,7 @@ function inCartao(x) {
     : x.inst
       ? `<button class="sm pri" data-a="in_ret" data-v="${x.id}">Marcar retirada</button><button class="sm" data-a="in_des" data-v="${x.id}">Desfazer instalação</button>`
       : `<button class="sm pri" data-a="in_ins" data-v="${x.id}">Marcar instalada</button>`;
-  return `<div class="task" id="in_${x.id}"><div style="flex:1"><b>${e(inNome(x))}</b>${x.nome ? `<div class="mu">${e(x.end)}</div>` : ""}<div>${e(x.cl || "")}${x.pi ? ` <span class="mu">PI ${e(x.pi)}</span>` : ""} <span class="mu">${e(fmt(x.ini))} → ${e(fmt(x.fim))}</span> ${sit} ${prazo}</div>${av ? `<div style="margin-top:4px;font-weight:600;color:${av.n === "er" ? "#c4003f" : "#b45309"}">${av.n === "er" ? "🚨" : "⏰"} ${e(av.t)}</div>` : ""}<div class="mu"><a href="${mapa(x)}" target="_blank" rel="noopener">mapa</a></div></div><div class="acts">${btn}<button class="sm" data-a="in_ed" data-v="${x.id}">Editar</button></div></div>`;
+  return `<div class="task" id="in_${x.id}"><div style="flex:1"><b>${e(inNome(x))}</b>${x.nome ? `<div class="mu">${e(x.end)}</div>` : ""}<div>${e(x.cl || "")}${x.pi ? ` <span class="mu">PI ${e(x.pi)}</span>` : ""} <span class="mu">${e(fmt(x.ini))} → ${e(fmt(x.fim))}</span> ${sit} ${prazo}</div>${av ? `<div style="margin-top:4px;font-weight:600;color:${av.n === "er" ? "#c4003f" : "#b45309"}">${av.n === "er" ? "🚨" : "⏰"} ${e(av.t)}</div>` : ""}<div class="mu"><a href="${mapa(x)}" target="_blank" rel="noopener">mapa</a></div></div><div class="acts">${btn}${x.ret ? "" : `<button class="sm" data-a="in_msg" data-v="${x.id}">📋 Mensagem</button>`}<button class="sm" data-a="in_ed" data-v="${x.id}">Editar</button></div></div>`;
 }
 function instalacao() {
   const L = inLista(),
@@ -155,7 +155,9 @@ document.addEventListener("click", (ev) => {
       const w = document.getElementById("in_warn");
       if (w) w.innerHTML = '<div class="warn" style="margin-top:8px">' + t + "</div>";
     };
-  if (a === "in_ir") {
+  if (a === "in_msg" && x) {
+    inMsgAbrir(x);
+  } else if (a === "in_ir") {
     view = "i";
     render();
     if (v)
@@ -216,3 +218,70 @@ document.addEventListener("click", (ev) => {
     render();
   }
 });
+
+/* ---- mensagens prontas para copiar e colar no grupo do WhatsApp ---- */
+function inMsgTexto(x, tipo) {
+  const L = [];
+  const dat = (d) => fmt(d);
+  const cab = (t) => {
+    L.push(t, "");
+    L.push("*Cliente:* " + (x.cl || "—"));
+    L.push("*PI:* " + (x.pi || "—"));
+    L.push("*Endereço:* " + (x.end || inNome(x)));
+    if (x.nome && x.nome !== x.end) L.push("*Ponto:* " + x.nome);
+  };
+  if (tipo === "ini") {
+    const di = inDias(x.ini);
+    cab("🪧 *INSTALAÇÃO DE LONA " + (di === 0 ? "— HOJE" : di === 1 ? "— AMANHÃ" : di > 1 ? "— em " + di + " dias" : "— PENDENTE") + "*");
+    L.push("*Início da campanha:* " + dat(x.ini));
+    L.push("*Fim da campanha:* " + dat(x.fim));
+    L.push("", "Favor confirmar no grupo quando a lona for instalada. ✅");
+  } else {
+    const n = tipo === "r1" ? "1 dia" : tipo === "r2" ? "2 dias" : "HOJE";
+    cab("⚠️ *RETIRAR LONA " + (tipo === "r0" ? "HOJE" : "— faltam " + n) + "*");
+    L.push("*Fim da campanha:* " + dat(x.fim));
+    L.push("", "Programar a retirada da lona e confirmar no grupo. ✅");
+  }
+  return L.join("\n");
+}
+function inMsgSugerido(x) {
+  const di = inDias(x.ini),
+    df = inDias(x.fim);
+  if (!x.inst && di >= -1) return "ini";
+  if (x.inst) return df <= 0 ? "r0" : df === 1 ? "r1" : "r2";
+  return "ini";
+}
+function inMsgAbrir(x) {
+  const old = document.getElementById("inmsg");
+  if (old) old.remove();
+  const el = document.createElement("div");
+  el.id = "inmsg";
+  el.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,18,60,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+  const sug = inMsgSugerido(x);
+  const op = [["ini", "Instalação de lona (início)"], ["r2", "Retirar lona — faltam 2 dias"], ["r1", "Retirar lona — falta 1 dia"], ["r0", "Retirar lona — hoje"]];
+  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:520px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #25d366"><div style="font-size:18px;font-weight:700;color:#000066;margin-bottom:10px">📋 Mensagem para o grupo</div><select id="inmt" style="width:100%;margin-bottom:8px">${op.map((o) => `<option value="${o[0]}" ${o[0] === sug ? "selected" : ""}>${o[1]}</option>`).join("")}</select><textarea id="inmx" rows="11" style="width:100%;font-family:inherit;font-size:14px;box-sizing:border-box"></textarea><div class="row" style="margin-top:10px"><button class="pri" id="inmc" style="flex:1">Copiar mensagem</button><button id="inmf" style="flex:0 0 auto">Fechar</button></div><div id="inmo" class="mu" style="margin-top:6px"></div></div>`;
+  document.body.appendChild(el);
+  const ta = el.querySelector("#inmx"),
+    sel = el.querySelector("#inmt");
+  const atual = () => (ta.value = inMsgTexto(x, sel.value));
+  atual();
+  sel.onchange = atual;
+  el.querySelector("#inmf").onclick = () => el.remove();
+  el.onclick = (e2) => {
+    if (e2.target === el) el.remove();
+  };
+  el.querySelector("#inmc").onclick = async () => {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(ta.value);
+      ok = true;
+    } catch (_) {
+      ta.focus();
+      ta.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch (_) {}
+    }
+    el.querySelector("#inmo").textContent = ok ? "✅ Copiado! Agora é só colar no grupo do WhatsApp." : "Não consegui copiar automaticamente — selecione o texto e copie.";
+  };
+}
