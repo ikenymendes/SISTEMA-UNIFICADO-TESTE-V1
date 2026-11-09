@@ -147,7 +147,7 @@ var MEGA = (function () {
     }
 
     app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'cartao' }, [logo('colorida'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 00:50' })]))
+      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 01:00' })]))
     ]));
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }

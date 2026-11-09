@@ -237,3 +237,20 @@ button, input { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .bv-bg::before, .bv-bg::after, .bv-card, .bv-sau, .bv-hora, .bv-data, .bv-barra i { animation: none; opacity: 1; } }
 
 .versao { margin-top: 14px; text-align: center; font-size: 11px; color: #9a9ab5; }
+
+/* ===== login em vidro (igual para todos os usuários) ===== */
+.login { position: relative; overflow: hidden; background: linear-gradient(135deg, #0a0a55 0%, #10107a 42%, #1d46b8 85%, #3a2a9a 100%); }
+.login::before, .login::after { content: ''; position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+.login::before { width: 60vmax; height: 60vmax; left: -22vmax; top: -24vmax; background: #ff006688; animation: bvf 9s ease-in-out infinite alternate; }
+.login::after { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -24vmax; background: #38bdf866; animation: bvf 11s ease-in-out infinite alternate-reverse; }
+.login .cartao { position: relative; z-index: 1; background: #ffffff1f; border: 1px solid #ffffff42; color: #fff; backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%); box-shadow: 0 30px 70px -28px #00001f; border-radius: 28px; animation: bvin .6s cubic-bezier(.2,.8,.2,1) both; }
+.login .cartao > img { width: 160px; }
+.login h1 { color: #fff; }
+.login .sub { color: #ffffffb8; }
+.login label { color: #ffffffe0; }
+.login input[type=email], .login input[type=password], .login input[type=text] { background: #ffffffee; border: 1px solid #ffffff66; color: #16164a; }
+.login .lembrar { color: #ffffffb8; }
+.login .erro { background: #ffe4ec; color: #c4003f; }
+.login .versao { color: #ffffff80; }
+.login .teste-box { color: #fff; }
+@media (prefers-reduced-motion: reduce) { .login::before, .login::after, .login .cartao { animation: none; } }
