@@ -13,17 +13,17 @@ var MODULOS = {
   comercial: {
     rotulo: 'Comercial',
     descricao: 'Pontos, propostas e mídia kit',
-    url: 'modulos/comercial/index.html?v=20261109l'
+    url: 'modulos/comercial/index.html?v=20261109m'
   },
   operacional: {
     rotulo: 'Operacional',
     descricao: 'Gestão operacional: VTs, rotas, manutenção, checking',
-    url: 'modulos/operacional/index.html?v=20261109l'
+    url: 'modulos/operacional/index.html?v=20261109m'
   },
   financeiro: {
     rotulo: 'Financeiro',
     descricao: 'Faturamento: nota fiscal dos checkings concluídos',
-    url: 'modulos/financeiro/index.html?v=20261109l'
+    url: 'modulos/financeiro/index.html?v=20261109m'
   }
 };
 

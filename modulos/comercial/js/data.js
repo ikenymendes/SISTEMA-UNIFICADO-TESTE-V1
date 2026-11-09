@@ -51,12 +51,15 @@ function qtdPontos(D,auto){ var tot=0,sel=0,alg=false;
 function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!=='mercado'&&k!=='guanabara') sel+=selEstaticos(D,k).length; }); return sel>0?sel:1; }
 /* Valor de tabela é sempre UNITÁRIO (por painel/tela/banca): total = unitário × quantidade. Estáticos somam o valor de cada endereço escolhido. */
 /* Linhas de um estático: UMA por endereço (mensal + produção), cada uma com valor de tabela, desconto e negociado próprios (guardados em r.end[idDoPonto]). Sem valor digitado, a tabela parte do líquido/produção pré-definidos (inflados pela comissão/BV). */
+/* Produção: sem tabela/desconto. Só muda conforme o perfil escolhido (líquido, agência, planejador); valor = produção líquida ÷ fator do perfil. Devolvido já na base do kit (÷ fator do modo) para o total bater. */
+function fatorPerfilProd(D,q){ return q==='liq'?1:q==='ag'?0.75:q==='pl'?0.5625:fatorLiq(D); }
+function prodDe(D,e,base){ base=vlr(base); if(!(base>0)) return 0; var fm=D.modoGeral==='liquido'?fatorLiq(D):1; return base/fatorPerfilProd(D,(e||{}).pq)/(fm>0?fm:1); }
 function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
   if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; mM+=vlr(p.liq); mP+=vlr(p.prod); });
-    var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=num(e.pt)>0?num(e.pt):(pp?vlr(pp.prod)/f:0), dm=num(e.d), dp=num(e.pd);
+    var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=prodDe(D,e,pp?pp.prod:0), dm=num(e.d), dp=0;
     return [{p:{id:'*',endereco:'Bancas estáticas · '+n+(n===1?' ponto':' pontos')},n:n,tu:tu,tpu:tpu,tm:tu*n,dm:dm,nm:tu*n*(1-dm/100),tp:tpu*n,dp:dp,np:tpu*n*(1-dp/100),minM:mM,minP:mP}]; }
   return (todos?ptsOf(D,r.auto):selEstaticos(D,r.auto)).map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod);
-    var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d), tp=num(e.pt)>0?num(e.pt):(pr>0?pr/f:0), dp=num(e.pd);
+    var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d), tp=prodDe(D,e,pr), dp=0;
     return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:tp,dp:dp,np:tp*(1-dp/100),minM:l,minP:pr}; }); }
 function calcPreco(D,r){
   migPrecos(D);
