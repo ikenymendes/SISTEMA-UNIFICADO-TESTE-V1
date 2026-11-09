@@ -344,6 +344,20 @@ function insJog(){
  return out;
 }
 
+/* ---------- inserções aleatórias (gradual, dentro do período de veiculação) ---------- */
+function limitesGer(){let a=parseInt(S.ins.gmin,10),b=parseInt(S.ins.gmax,10);if(!(a>=0))a=529;if(!(b>=0))b=630;if(a>b)[a,b]=[b,a];return[a,b]}
+function serieGradual(n,a,b){const o=[],c=(a+b)/2,st=Math.max(3,Math.round((b-a)*.09));let v=a+Math.random()*(b-a);
+ for(let i=0;i<n;i++){o.push(Math.max(a,Math.min(b,Math.round(v))));v+=(Math.random()*2-1)*st+(c-v)*.04}return o}
+function gerarAleatorias(rid){
+ const[a,b]=limitesGer();let r=rid?S.ins.rel.find(x=>x.id===rid):null,ci=r?r.ini:isoBr(S.cli.ini),cf=r?r.fim:isoBr(S.cli.fim);
+ const ds=datasEntre(ci,cf);if(!ds.length){toast("Preencha o início e o fim da veiculação na etapa Campanha");return}
+ let alvo;if(r){const nm={};r.dias.forEach(d=>d.pl.forEach(x=>nm[x.pid]=x.nome));alvo=Object.keys(nm).map(pid=>({pid,nome:nm[pid]}))}
+ else{const ps=S.paineis.filter(p=>p.fotos.length).length?S.paineis.filter(p=>p.fotos.length):S.paineis;alvo=ps.map(p=>({pid:"m-"+p.id,nome:(p.loc||"Painel")+(p.tela?" · "+p.tela:""),pid2:p.id}));
+  if(!alvo.length){toast("Cadastre os painéis primeiro");return}
+  r={id:uid(),arq:"Inserções geradas ("+a+"–"+b+"/dia)",cont:"",nomeExib:"Conteúdo da campanha",cid:"manual",dur:"",ini:ci,fim:cf,total:0,dias:[],manual:true,gerado:true,ed:false};S.ins.rel.push(r)}
+ r.dias=ds.map(d=>({d,n:0,pl:[]}));
+ alvo.forEach(t=>{const sr=serieGradual(ds.length,a,b);r.dias.forEach((dd,i)=>dd.pl.push({pid:t.pid,nome:t.nome,n:sr[i]}));if(t.pid2)S.ins.map[t.pid]=t.pid2});
+ recalc(r);save();renderIns();toast("Inserções geradas entre "+a+" e "+b+" por dia ✔")}
 /* ---------- verificações e lançamento manual ---------- */
 const isoBr=s=>s?s.split("-").reverse().join("/"):"";
 const brIso=s=>s?s.split("/").reverse().join("-"):"";
@@ -581,7 +595,7 @@ async function gerarPPTX(){
 }
 const TIT0=document.title;
 addEventListener("afterprint",()=>{document.title=TIT0;tell({titleReset:1})});
-function gerarPDF(){const r=$("#printRoot");r.innerHTML="";buildSlides().forEach(s=>r.appendChild(slideEl(s)));const nm=nomeArquivo();document.title=nm;tell({title:nm});setTimeout(()=>{window.print();tell({exported:"pdf"})},250)}
+function gerarPDF(){const r=$("#printRoot");r.innerHTML="";buildSlides().forEach(s=>r.appendChild(slideEl(s)));const nm=nomeArquivo(),T=[];try{if(window.top!==window){T.push([window.top,window.top.document.title]);window.top.document.title=nm}}catch(_){}document.title=nm;tell({title:nm});const rest=()=>T.forEach(([w,t])=>{try{w.document.title=t}catch(_){}});addEventListener("afterprint",rest,{once:true});setTimeout(()=>{window.print();tell({exported:"pdf"})},250)}
 
 /* ---------------- fotos ---------------- */
 async function lerFoto(file){
@@ -653,8 +667,8 @@ function renderIns(){
   h+=`<div class="card"><h2>Anexar relatório do sistema (4yousee)</h2><p class="hint">Use o relatório <b>“Exibições de Conteúdos – Agrupado por Data e Player”</b> em PDF. Pode anexar vários (outras semanas, outros conteúdos). Os PDFs não são guardados.</p>
    <div class="dz" id="dzIns">📄 Arraste o(s) PDF(s) aqui ou clique para escolher</div>
    ${I.rel.map(r=>`<div class="relrow" data-rid="${r.id}"><div class="rl"><b>${esc(r.arq)}${r.ed&&!r.manual?" (editado)":""}</b><span>${r.manual?"Manual":"Conteúdo "+esc(r.cid)} · ${r.dur?esc(r.dur)+"s · ":""}${esc(r.ini)} a ${esc(r.fim)} · <b>${nf(r.total)}</b> exibições</span></div>
-     <div class="rn"><label class="f">Nome do conteúdo no relatório</label><input type="text" data-rn="${r.id}" value="${esc(r.nomeExib)}"></div><button class="b sm" data-re="${r.id}">${edRid===r.id?"Fechar":"Conferir / editar dias"}</button><button class="b sm" data-rx="${r.id}">Remover</button></div>${edRid===r.id?editorHtml(r):""}`).join("")}
-   <button class="b" id="bManual" style="margin-top:6px">+ Lançar inserções manualmente</button></div>${avisosHtml()}`;
+     <div class="rn"><label class="f">Nome do conteúdo no relatório</label><input type="text" data-rn="${r.id}" value="${esc(r.nomeExib)}"></div><button class="b sm" data-re="${r.id}">${edRid===r.id?"Fechar":"Conferir / editar dias"}</button>${r.gerado?`<button class="b sm" data-rg="${r.id}">🎲 Gerar novamente</button>`:""}<button class="b sm" data-rx="${r.id}">Remover</button></div>${edRid===r.id?editorHtml(r):""}`).join("")}
+   <div class="row" style="margin-top:6px;align-items:flex-end;gap:10px"><button class="b" id="bManual">+ Lançar inserções manualmente</button><div style="flex:0 0 auto"><label class="f">Mínimo/dia</label><input type="number" min="0" data-gi="gmin" value="${limitesGer()[0]}" style="width:96px"></div><div style="flex:0 0 auto"><label class="f">Máximo/dia</label><input type="number" min="0" data-gi="gmax" value="${limitesGer()[1]}" style="width:96px"></div><button class="b" data-gerar="1">🎲 Gerar inserções aleatórias</button></div><p class="hint" style="margin-top:6px">Gera, para cada painel, um valor por dia entre o mínimo e o máximo, variando de forma gradual (sem saltos bruscos) e só dentro do período de veiculação da campanha. Depois você ainda pode ajustar qualquer dia em “Conferir / editar dias”.</p></div>${avisosHtml()}`;
   if(pl.length)h+=`<div class="card"><h2>Vincular players aos painéis</h2><p class="hint">O sistema já tentou casar pelo endereço. Confira e ajuste, se precisar. Players sem painel ficam de fora.</p>
    ${pl.map(j=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><span style="flex:1;min-width:0"><b>Player ${esc(j.pid)}</b> · ${esc(j.nome)} <span class="hint">· ${nf(j.total)} exibições</span></span><div style="flex:0 0 340px"><select data-pm="${j.pid}"><option value="">— não incluir —</option>${S.paineis.map((p,i)=>`<option value="${p.id}" ${I.map[j.pid]===p.id?"selected":""}>${String(i+1).padStart(2,"0")} · ${esc((p.loc||"—")+(p.tela?" · "+p.tela:""))}</option>`).join("")}</select></div></div>`).join("")}</div>
    <div class="card"><h2>Como apresentar</h2><div class="grid"><div><label class="f">Onde colocar os slides de inserções</label><select data-io="pos"><option value="cada" ${I.pos==="cada"?"selected":""}>Logo após as fotos de cada painel</option><option value="fim" ${I.pos==="fim"?"selected":""}>Agrupados no final</option></select></div>
@@ -704,10 +718,13 @@ document.addEventListener("change",e=>{const t=e.target;
  if(t.dataset.rp){if(t.value)addPainelManual(t.dataset.rp,t.value);return}
  if(t.name==="insOn"){S.ins.on=t.value==="1";save();renderIns();return}
  if(t.dataset.pm!==undefined){S.ins.map[t.dataset.pm]=t.value;save();return}
+ if(t.dataset.gi){S.ins[t.dataset.gi]=parseInt(t.value,10);save();return}
  if(t.dataset.io){S.ins[t.dataset.io]=t.dataset.io==="graf"?t.value==="1":t.value;save();return}
  if(t.tagName==="SELECT"&&t.dataset.f==="tipo"){const pn=S.paineis.find(x=>x.id===t.closest(".painel").dataset.pid);if(t.value==="__outro"){pn.outro=true;pn.tipo="";save();renderPaineis(pn.id)}else{pn.tipo=t.value;pn.outro=false;save()}return}
  if(t.tagName==="SELECT"&&t.dataset.tp){const pn=S.paineis.find(x=>x.id===t.dataset.tp);if(t.value==="__outro"){pn.outro=true;pn.tipo="";save();toast("Digite o tipo na etapa 2 (Painéis e fotos).");go(1)}else{pn.tipo=t.value;pn.outro=false;save();thumbs()}return}if(t.dataset.o){const v=t.dataset.o==="perSlide"?+t.value:t.value==="1";S.opt[t.dataset.o]=v;save()}});
 document.addEventListener("click",async e=>{
+ const gg=e.target.closest("[data-gerar]");if(gg){gerarAleatorias();return}
+ const gr=e.target.closest("[data-rg]");if(gr){gerarAleatorias(gr.dataset.rg);return}
  const re=e.target.closest("[data-re]");if(re){edRid=edRid===re.dataset.re?null:re.dataset.re;renderIns();return}
  const rx=e.target.closest("[data-rx]");if(rx){if(!await ask4("Remover este relatório de inserções?"))return;const id=rx.dataset.rx;S.ins.rel=S.ins.rel.filter(r=>r.id!==id);const ids=new Set(insPlayers().map(j=>j.pid));Object.keys(S.ins.map).forEach(k=>{if(!ids.has(k))delete S.ins.map[k]});save();renderIns();return}
  const bt=e.target.closest("[data-a]");if(!bt)return;const pe=bt.closest(".painel");if(!pe)return;
