@@ -1,0 +1,1 @@
+Extraia este ZIP na RAIZ da pasta do repositorio (onde ficam config.js e index.html), substituindo os arquivos. Sao 12 arquivos.
