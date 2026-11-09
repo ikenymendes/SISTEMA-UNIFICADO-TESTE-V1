@@ -482,3 +482,11 @@ details.novo{border:1.5px solid var(--pink);margin-bottom:18px}
   .fab{bottom:78px}
 }
 .pinbox.conf label.f{display:block;margin-top:14px}
+
+/* dentro da casca: carregando discreto, sem a tela de login antiga */
+#gate .gcentro{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#f3f3f9}
+.gspin{width:34px;height:34px;border-radius:50%;border:3px solid #e3e2ee;border-top-color:var(--pink);animation:gspin .8s linear infinite}
+.gcarrega{color:var(--mid,#666687);font-size:14px}
+.gbox.gsimples{padding:30px 28px}.gbox.gsimples h2{font-size:22px}.gbox.gsimples h2::before{display:none}
+@keyframes gspin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.gspin{animation-duration:2s}}

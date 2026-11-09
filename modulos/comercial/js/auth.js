@@ -73,8 +73,16 @@ function relogio(root){
 }
 
 /* Tela de acesso: login, primeiro cadastro, espera de liberação e saída. */
+function hospedado(){ try{ return window.parent!==window && !!window.parent.MEGA; }catch(e){ return false; } }
 function gate(title,msg,actions,hero){ hero=hero||{};
   var g=$('#gate'); g.hidden=false; g.innerHTML='';
+  if(hospedado()){   /* dentro da casca: nada da tela de login antiga; só um carregando discreto (ou um cartão simples para avisos) */
+    var tem=(actions&&actions.length)||(Array.isArray(msg)?msg.length>1:false);
+    var centro=h('div',{class:'gcentro'});
+    if(!tem){ centro.appendChild(h('div',{class:'gspin'})); centro.appendChild(h('div',{class:'gcarrega',text:title})); }
+    else { var cx=h('div',{class:'gbox gsimples'}); cx.appendChild(h('h2',{text:title})); (Array.isArray(msg)?msg:[msg]).forEach(function(m){ if(m) cx.appendChild(h('p',{class:'hint',text:m})); }); (actions||[]).forEach(function(a){ cx.appendChild(a); }); centro.appendChild(cx); }
+    g.appendChild(centro); return centro;
+  }
   var split=h('div',{class:'gsplit'});
   split.appendChild(h('div',{class:'gslash'}));
   var cena=h('div',{class:'scene'}); cena.innerHTML=cenaSvg(ASSETS.logoW);
@@ -148,7 +156,10 @@ async function sairDoGerador(){
 
 async function boot(){
   $('#hl').src=ASSETS.logoW;
-  for(var k of ['logoW','logoC','mercN','mercW']){ var a=await loadAsset(ASSETS[k]); if(a){ try{ var cv=document.createElement('canvas'); cv.width=a.w; cv.height=a.h; cv.getContext('2d').drawImage(a.el,0,0); a.src=cv.toDataURL('image/png'); }catch(e){ console.warn('logo',k,e); } } BASE[k]=a; }
+  /* logos: carregam em paralelo com a verificação de acesso (a entrada espera por elas só no fim) */
+  window.ASSETS_PRONTOS=(async function(){
+    for(var k of ['logoW','logoC','mercN','mercW']){ var a=await loadAsset(ASSETS[k]); if(a){ try{ var cv=document.createElement('canvas'); cv.width=a.w; cv.height=a.h; cv.getContext('2d').drawImage(a.el,0,0); a.src=cv.toDataURL('image/png'); }catch(e){ console.warn('logo',k,e); } } BASE[k]=a; }
+  })();
   if(!Store.configurado()){
     gate('Falta configurar o Supabase',['Abra o arquivo js/config.js e cole a "Project URL" e a "anon key" do seu projeto Supabase (Project Settings > API).','Veja o passo a passo no README.md.']); return;
   }

@@ -32,6 +32,9 @@ var AREAS = {
 /* Visual da tela de Início (igual para todos os perfis): 'claro' ou 'escuro' */
 var INICIO_ESTILO = 'claro';
 
+/* Tema do painel do ADMINISTRADOR: 'vidro' (azul Mega, escuro) ou 'branco' (claro e limpo). Só o admin usa. */
+var ADMIN_TEMA = 'vidro';
+
 /* Perfis */
 var PERMISSOES = {
   admin: {

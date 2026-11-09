@@ -82,6 +82,7 @@ async function enterApp(){
     try{ await carregarDados(); synced=true; }
     catch(e){ gate('Não foi possível carregar os dados',[erroMsg(e),'Verifique a conexão. Nada foi alterado.'],[h('div',{class:'bar'},[h('button',{class:'btn pri',text:'Tentar de novo',onclick:enterApp}),h('button',{class:'btn',text:'Sair',onclick:sairDoGerador})])]); return; }
   }
+  try{ if(window.ASSETS_PRONTOS) await window.ASSETS_PRONTOS; }catch(e){}
   $('#gate').hidden=true; $('#banner').hidden=true;
   await boasVindas();
   iniciarTempoReal(); atualizarPendentes(); if(ME.admin) fqScan(contFotos);

@@ -80,9 +80,14 @@ var MEGA = (function () {
       return paraFormatoOperacional(sessaoAtual);
     } catch (e) { return null; }
   }
+  var saindo = false;
   async function sair(mensagem) {
+    if (saindo) return; saindo = true;           // evita clique duplo
     clearInterval(vigia);
-    try { await client.auth.signOut(); } catch (e) {}
+    aviso('Saindo…');
+    /* não deixa o "Sair" travar se o servidor demorar: espera no máximo 1,5 s e limpa o login deste navegador */
+    try { await Promise.race([client.auth.signOut(), new Promise(function (r) { setTimeout(r, 1500); })]); } catch (e) {}
+    try { Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
     try { sessionStorage.removeItem('mk_bv'); } catch (e) {}
     try { sessionStorage.setItem('mega_msg', mensagem || ''); } catch (e) {}
     location.reload();
@@ -207,7 +212,7 @@ var MEGA = (function () {
 
   /* marca o item ativo (barra do computador) e o nome da seção (menu do celular) */
   function marcar(id) {
-    document.querySelectorAll('.barra .item, .folha .opcao').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
+    document.querySelectorAll('.barra .item, .folha .opcao, .trilho .it').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
     var t = document.querySelector('.menu-m .atual'); if (t && infoItem(id)) t.textContent = infoItem(id).rotulo;
   }
 
@@ -248,7 +253,58 @@ var MEGA = (function () {
     ]);
   }
 
+  function primeiroNome() {
+    var p = String(perfil.nome || perfil.email || '').split(/[ @.]/)[0];
+    return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+  }
+
+  /* Interface do ADMINISTRADOR: barra lateral de vidro + painel com números e gráficos (core/admin.js) */
+  function montarAdmin(perm) {
+    var app = limparTela(); app.className = 'com-admin';
+    var tema = (typeof ADMIN_TEMA !== 'undefined' && ADMIN_TEMA === 'branco') ? 'branco' : 'vidro';
+    var adm = h('div', { class: 'adm tema-' + tema });
+    var ordem = ordemItens(perm);
+    var trilho = h('nav', { class: 'trilho', 'aria-label': 'Menu principal' });
+    trilho.appendChild(h('img', { class: 'marca', src: 'core/assets/logoW.png', alt: 'Mega', title: 'Visão geral', onclick: function () { abrir('inicio'); } }));
+    var folha = h('div', { class: 'folha', hidden: 'hidden' });
+    var viuSep = false;
+    ordem.forEach(function (id) {
+      var i = infoItem(id);
+      if (!viuSep && AREAS[id] && id !== 'inicio') { viuSep = true; trilho.appendChild(h('div', { class: 'sep-t' })); folha.appendChild(h('div', { class: 'linha' })); }
+      var b = h('button', { class: 'it', 'data-id': id, type: 'button', title: i.descricao, onclick: function () { abrir(id); } });
+      b.innerHTML = ADMIN.icone(id) + '<span>' + (id === 'inicio' ? 'Visão geral' : i.rotulo) + '</span>';
+      trilho.appendChild(b);
+      folha.appendChild(h('button', { class: 'opcao', 'data-id': id, type: 'button', onclick: function () { fecharFolha(); abrir(id); } }, [h('b', { text: id === 'inicio' ? 'Visão geral' : i.rotulo }), h('small', { text: i.descricao })]));
+    });
+    var sairT = h('button', { class: 'sair-t', type: 'button', title: 'Sair', onclick: function () { sair(); } }); sairT.innerHTML = ADMIN.icone('sair');
+    trilho.appendChild(h('div', { class: 'fim' }, [h('div', { class: 'avatar', title: (perfil.nome || perfil.email) + ' · ' + perm.rotulo, text: (primeiroNome() || 'A').charAt(0) }), sairT]));
+
+    folha.appendChild(h('div', { class: 'linha' }));
+    folha.appendChild(h('div', { class: 'quem', text: (perfil.nome || perfil.email) + ' · ' + perm.rotulo }));
+    folha.appendChild(h('button', { class: 'opcao sair-m', type: 'button', onclick: function () { sair(); } }, [h('b', { text: 'Sair' })]));
+    var menuM = h('button', { class: 'menu-m', type: 'button', 'aria-expanded': 'false', onclick: function (ev) {
+      ev.stopPropagation(); var abre = folha.hidden; folha.hidden = !abre; menuM.setAttribute('aria-expanded', String(abre));
+    } }, [h('span', { class: 'atual', text: 'Visão geral' }), h('span', { class: 'chev', text: '▾' })]);
+    document.addEventListener('click', function (ev) { if (!folha.hidden && !folha.contains(ev.target)) fecharFolha(); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fecharFolha(); });
+    var topoM = h('div', { class: 'topo-m' }, [h('img', { src: 'core/assets/logoW.png', alt: 'Mega', onclick: function () { abrir('inicio'); } }), menuM]);
+
+    adm.appendChild(h('div', { class: 'fundo' }));
+    adm.appendChild(trilho); adm.appendChild(topoM); adm.appendChild(folha);
+    adm.appendChild(h('div', { class: 'palco', id: 'palco' }));
+    app.appendChild(adm);
+
+    if (teste) {
+      document.body.appendChild(h('div', { class: 'faixa-teste' }, [
+        h('span', { text: 'Ambiente de testes · você está como ' + perm.rotulo }),
+        h('button', { text: 'Trocar de perfil', onclick: function () { sair(); } })
+      ]));
+    }
+    abrir(perm.inicial);
+  }
+
   function montarInterface(perm) {
+    if (perfil.papel === 'admin' && typeof ADMIN !== 'undefined') return montarAdmin(perm);
     var app = limparTela();
     var comBarra = perm.modulos.length > 1 || perm.areas.length > 0;   // só o administrador
     if (comBarra) app.className = 'com-barra';
@@ -322,8 +378,13 @@ var MEGA = (function () {
         f.addEventListener('load', function () { painel.classList.add('pronto'); if (aoPronto) aoPronto(f); });
         painel.appendChild(f);
       } else if (id === 'inicio') {
-        painel.classList.add('area', 'pronto', 'inicio-' + (typeof INICIO_ESTILO !== 'undefined' ? INICIO_ESTILO : 'claro'));
-        painel.appendChild(telaInicio(perm));
+        painel.classList.add('area', 'pronto');
+        if (perfil.papel === 'admin' && typeof ADMIN !== 'undefined') {
+          painel.appendChild(ADMIN.inicio({ h: h, client: client, primeiro: primeiroNome(), abrir: abrir, saudacao: saudacao, dataExtensa: dataExtensa, horaCurta: horaCurta }));
+        } else {
+          painel.classList.add('inicio-' + (typeof INICIO_ESTILO !== 'undefined' ? INICIO_ESTILO : 'claro'));
+          painel.appendChild(telaInicio(perm));
+        }
       } else if (id === 'backup') {
         painel.classList.add('area', 'pronto');
         painel.appendChild(BACKUP.tela(client));
