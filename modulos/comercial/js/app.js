@@ -2,6 +2,7 @@
 /* [id, rótulo, grupo, ícone] */
 var TABS_ADMIN=[['prop','Montar proposta','Proposta','tag'],['kit','Kit','Cadastro','kit'],['pontos','Pontos','Cadastro','pin'],['fotos','Melhoria de fotos','Cadastro','cam'],['sug','Sugestões','Cadastro','chat'],['mercado','Mercado Central','Cadastro','bag'],['guanabara','Parque Guanabara','Cadastro','leaf'],['brasilia','Brasília','Cadastro','bldg'],['kitp','Mídia Kit personalizado','Gerar','kit'],['precos','Preços base','Propostas','tag'],['hist','Propostas','Propostas','clock'],['usuarios',(function(){ try{ return window.parent!==window&&window.parent.MEGA?'Assinaturas':'Usuários'; }catch(e){ return 'Usuários'; } })(),'Administração','users']];
 var TABS_COM=[['prop','Montar proposta','Proposta','tag'],['kitp','Mídia Kit personalizado','Gerar','kit'],['minhas','Minhas sugestões','Meu histórico','chat'],['hist','Minhas propostas','Meu histórico','clock']];
+var TABS_GER=TABS_COM.slice(0,2).concat([['precos','Preços base','Propostas','tag']],TABS_COM.slice(2));
 var ICONES={cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.5"/>',dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
  kit:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',pin:'<path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
  chat:'<path d="M21 15a2 2 0 01-2 2H8l-5 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',bag:'<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18"/><path d="M16 10a4 4 0 01-8 0"/>',
@@ -11,6 +12,7 @@ var ICONES={cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 
 var TABS=TABS_ADMIN, uSub=[], unsubs=[], pendentes=0, ignorarRt=0, pollTimer=null;
 
 function showTab(t){
+  if(t==='precos'&&curTab!=='precos'&&ME.gerente) baseDoServidor();
   curTab=t; document.body.classList.remove('nav-open'); uSub.forEach(function(f){ try{f();}catch(e){} }); uSub=[];
   document.querySelectorAll('.tab,.bt').forEach(function(b){ if(b.dataset.t) b.classList.toggle('on',b.dataset.t===t); });
   var v=$('#view'); v.innerHTML='';
@@ -24,7 +26,7 @@ function montarCabecalho(){
   var who=$('#who'); who.innerHTML='';
   var ini=String(ME.nome||ME.email||'?').trim().charAt(0).toUpperCase();
   who.appendChild(h('span',{class:'av',text:ini}));
-  who.appendChild(h('div',{class:'who'},[h('b',{text:ME.nome||ME.email,title:ME.email}),h('span',{text:ME.admin?'Administrador':'Comercial'})]));
+  who.appendChild(h('div',{class:'who'},[h('b',{text:ME.nome||ME.email,title:ME.email}),h('span',{text:ME.admin?'Administrador':(ME.gerente?'Gerente comercial':'Comercial')})]));
   var bell=$('#bell'); bell.hidden=!ME.admin; bell.onclick=function(){ showTab('sug'); };
   $('#menu').onclick=function(){ document.body.classList.toggle('nav-open'); };
 }
@@ -42,9 +44,9 @@ function montarAbas(){
 }
 var BN_CURTO={fotos:'Fotos',kitp:'Mídia Kit',prop:'Montar',dash:'Início',pontos:'Pontos',sel:'Pontos',sug:'Sugestões',precos:'Preços',gerar:'Gerar',minhas:'Sugestões',hist:'Propostas'};
 function montarBarraInferior(){
-  var bn=$('#bnav'); bn.innerHTML=''; var ids=ME.admin?['prop','kitp','pontos','fotos']:['prop','kitp','minhas','hist'];
+  var bn=$('#bnav'); bn.innerHTML=''; var ids=ME.admin?['prop','kitp','pontos','fotos']:(ME.gerente?['prop','kitp','precos','minhas']:['prop','kitp','minhas','hist']);
   ids.forEach(function(id){ var t=TABS.filter(function(x){return x[0]===id})[0]; if(!t) return; var b=h('button',{type:'button',class:'bt',onclick:function(){ showTab(id); }}); b.dataset.t=id; b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(ICONES[t[3]]||'')+'</svg><span></span><b class="cnt" hidden></b>'; b.querySelector('span').textContent=BN_CURTO[id]||t[1]; bn.appendChild(b); });
-  if(ME.admin){ var m=h('button',{type:'button',class:'bt',onclick:function(){ document.body.classList.toggle('nav-open'); }}); m.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Mais</span>'; bn.appendChild(m); }
+  if(ME.admin||ME.gerente){ var m=h('button',{type:'button',class:'bt',onclick:function(){ document.body.classList.toggle('nav-open'); }}); m.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Mais</span>'; bn.appendChild(m); }
 }
 
 async function atualizarPendentes(){
@@ -76,7 +78,7 @@ function iniciarTempoReal(){
 }
 
 async function enterApp(){
-  TABS=ME.admin?TABS_ADMIN:TABS_COM; montarCabecalho(); montarAbas();
+  TABS=ME.admin?TABS_ADMIN:(ME.gerente?TABS_GER:TABS_COM); montarCabecalho(); montarAbas();
   if(!synced){
     gate('Carregando pontos…','Buscando os dados compartilhados.');
     try{ await carregarDados(); synced=true; }

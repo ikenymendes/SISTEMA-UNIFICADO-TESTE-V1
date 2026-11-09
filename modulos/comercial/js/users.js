@@ -13,7 +13,7 @@ function viewUsuarios(v){
     ps.forEach(function(u){ pend.appendChild(h('div',{class:'urow'},[h('span',{class:'t',text:u.email+(u.nome&&u.nome!==u.email.split('@')[0]?' · '+u.nome:'')}),h('button',{class:'btn',type:'button',text:'Liberar como comercial',onclick:function(){ mudar(u,'comercial'); }}),h('button',{class:'btn',type:'button',text:'Liberar como admin',onclick:function(){ mudar(u,'admin'); }}),h('button',{class:'mini del',type:'button',text:'bloquear',onclick:function(){ mudar(u,'bloqueado'); }})])); });
     tab.innerHTML=''; var t=h('table',{class:'ptab'}); t.appendChild(h('thead',{},[h('tr',{},['Nome','E-mail','Função','Assinatura','Senha','Cadastro'].map(function(x){ return h('th',{text:x}); }))])); var tb=h('tbody'); t.appendChild(tb);
     lista.forEach(function(u){
-      var eu=u.id===ME.uid, sel=h('select',{},[['admin','Administrador'],['comercial','Comercial'],['operacional','Operacional'],['manutencao','Manutenção'],['financeiro','Financeiro'],['pendente','Pendente'],['bloqueado','Bloqueado']].map(function(o){ var op=h('option',{value:o[0],text:o[1]}); if(u.papel===o[0]) op.selected=true; return op; }));
+      var eu=u.id===ME.uid, sel=h('select',{},[['admin','Administrador'],['comercial','Comercial'],['gerente_comercial','Gerente comercial'],['operacional','Operacional'],['manutencao','Manutenção'],['financeiro','Financeiro'],['pendente','Pendente'],['bloqueado','Bloqueado']].map(function(o){ var op=h('option',{value:o[0],text:o[1]}); if(u.papel===o[0]) op.selected=true; return op; }));
       if(eu){ sel.disabled=true; sel.title='Você não pode alterar a própria função.'; }
       sel.addEventListener('change',function(){ var novo=sel.value; if(u.papel==='admin'&&novo!=='admin'){ askPin('Remover acesso de administrador',u.email).then(function(ok){ if(ok) mudar(u,novo); else sel.value=u.papel; }); } else mudar(u,novo); });
       var temAss=!!(D.kit.assinaturas&&D.kit.assinaturas[u.id]&&ASS_CAMPOS.some(function(c){return String(D.kit.assinaturas[u.id][c[0]]||'').trim();}));
@@ -47,7 +47,7 @@ function textoAcesso(email,senha){ return 'Gerador de Mídia Kit · Mega Mídia 
 
 function formNovoUsuario(depois){
   var nome=h('input',{type:'text',placeholder:'Nome',autocomplete:'off'}), email=h('input',{type:'email',placeholder:'e-mail do usuário',autocomplete:'off'});
-  var sn=campoSenha('Senha (mínimo 6 caracteres)'), papel=h('select',{},[['comercial','Comercial'],['operacional','Operacional'],['manutencao','Manutenção'],['financeiro','Financeiro'],['admin','Administrador']].map(function(o){ return h('option',{value:o[0],text:o[1]}); }));
+  var sn=campoSenha('Senha (mínimo 6 caracteres)'), papel=h('select',{},[['comercial','Comercial'],['gerente_comercial','Gerente comercial'],['operacional','Operacional'],['manutencao','Manutenção'],['financeiro','Financeiro'],['admin','Administrador']].map(function(o){ return h('option',{value:o[0],text:o[1]}); }));
   var st=h('p',{class:'status'}), btn=h('button',{class:'btn pri',type:'button',text:'Criar usuário'});
   btn.onclick=async function(){
     var em=emailKey(email.value), se=sn.input.value;
@@ -57,7 +57,7 @@ function formNovoUsuario(depois){
     try{
       await Store.criarUsuario(em,se,nome.value.trim(),papel.value);
       var tx=textoAcesso(em,se); nome.value=''; email.value=''; sn.input.value=''; sn.input.type='password'; st.textContent='';
-      abrirModal('Usuário criado',[h('p',{class:'hint',text:em+' já pode entrar como '+({admin:'administrador',comercial:'comercial',operacional:'operacional',financeiro:'financeiro',manutencao:'manutenção'}[papel.value]||papel.value)+'.'}),h('div',{class:'cred'},[h('div',{},[h('span',{text:'E-mail'}),h('b',{text:em})]),h('div',{},[h('span',{text:'Senha'}),h('b',{text:'••••••••'})])]),h('p',{class:'hint',text:'A senha fica oculta. Use o botão para copiar o acesso e enviar ao usuário. Depois de fechar esta janela ela não aparece mais.'})],[
+      abrirModal('Usuário criado',[h('p',{class:'hint',text:em+' já pode entrar como '+({admin:'administrador',comercial:'comercial',gerente_comercial:'gerente comercial',operacional:'operacional',financeiro:'financeiro',manutencao:'manutenção'}[papel.value]||papel.value)+'.'}),h('div',{class:'cred'},[h('div',{},[h('span',{text:'E-mail'}),h('b',{text:em})]),h('div',{},[h('span',{text:'Senha'}),h('b',{text:'••••••••'})])]),h('p',{class:'hint',text:'A senha fica oculta. Use o botão para copiar o acesso e enviar ao usuário. Depois de fechar esta janela ela não aparece mais.'})],[
         function(){ return h('button',{class:'btn pri',type:'button',text:'Copiar acesso',onclick:function(e){ var b=e.target; copiarTexto(tx).then(function(){ b.textContent='Copiado ✓'; },function(){ b.textContent='Não foi possível copiar'; }); }}); },
         function(fechar){ return h('button',{class:'btn',type:'button',text:'Fechar',onclick:fechar}); }]);
       if(depois) depois();

@@ -28,6 +28,9 @@ var Store = (function(){
   /* ---------- kit: configuração e pontos ---------- */
   async function lerConfig(){ var r=await sb.from('config').select('data').eq('id','main').maybeSingle(); var d=must(r); return d?d.data:null; }
   async function gravarConfig(body){ must(await sb.from('config').upsert({id:'main',data:body})); }
+  /* Gerente comercial: só os preços base (config) e o valor líquido/produção de cada ponto; o banco recusa qualquer outra coisa. */
+  async function gravarPrecosBase(body){ must(await sb.rpc('gerente_gravar_precos',{p:body})); }
+  async function gravarValoresPontos(lista){ must(await sb.rpc('gerente_gravar_valores_pontos',{p:lista})); }
   async function lerPontos(){ var d=must(await sb.from('pontos').select('id,ord,data').order('ord',{ascending:true})); return d.map(function(r){ var p=Object.assign({},r.data,{id:r.id}); if(r.ord!=null) p.ord=r.ord; return p; }); }
   async function gravarPontos(lista){ if(!lista.length) return; must(await sb.from('pontos').upsert(lista.map(function(p){ return {id:p.id,ord:p.ord==null?null:p.ord,data:p}; }))); }
   async function apagarPontos(ids){ if(!ids.length) return; must(await sb.from('pontos').delete().in('id',ids)); }
@@ -71,7 +74,7 @@ var Store = (function(){
   }
 
   return { init:init, configurado:configurado, configOk:configOk, sessao:sessao, entrar:entrar, cadastrar:cadastrar, sair:sair, meuPerfil:meuPerfil,
-    lerConfig:lerConfig, gravarConfig:gravarConfig, lerPontos:lerPontos, gravarPontos:gravarPontos, apagarPontos:apagarPontos,
+    lerConfig:lerConfig, gravarConfig:gravarConfig, gravarPrecosBase:gravarPrecosBase, gravarValoresPontos:gravarValoresPontos, lerPontos:lerPontos, gravarPontos:gravarPontos, apagarPontos:apagarPontos,
     uploadPhoto:enviarFoto, photoUrl:urlFoto,
     criarSugestao:criarSugestao, listarSugestoes:listarSugestoes, contarPendentes:contarPendentes, resolverSugestao:resolverSugestao,
     salvarProposta:salvarProposta, listarPropostas:listarPropostas, listarUsuarios:listarUsuarios, criarUsuario:criarUsuario, redefinirSenha:redefinirSenha, mudarPapel:mudarPapel, assinar:assinar };

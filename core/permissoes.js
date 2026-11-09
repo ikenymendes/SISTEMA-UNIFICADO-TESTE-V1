@@ -54,6 +54,12 @@ var PERMISSOES = {
     areas: ['inicio'],
     inicial: 'inicio'
   },
+  gerente_comercial: {
+    rotulo: 'Gerente comercial',
+    modulos: ['comercial'],
+    areas: ['inicio'],
+    inicial: 'inicio'
+  },
   operacional: {
     rotulo: 'Operacional',
     modulos: ['operacional'],

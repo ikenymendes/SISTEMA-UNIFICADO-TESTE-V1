@@ -134,9 +134,9 @@ async function iniciarSessao(){
   gate('Verificando seu acesso…','Um instante.');
   var perfil; try{ perfil=await Store.meuPerfil(); }catch(e){ gate('Não foi possível verificar o acesso',erroMsg(e),[h('button',{class:'btn',text:'Tentar de novo',onclick:iniciarSessao}),h('button',{class:'btn',text:'Sair',onclick:sairDoGerador})]); return; }
   if(!perfil){ telaLogin('entrar'); return; }
-  ME.uid=perfil.id; ME.email=perfil.email; ME.nome=perfil.nome||perfil.email; ME.papel=perfil.papel; ME.admin=perfil.papel==='admin';
+  ME.uid=perfil.id; ME.email=perfil.email; ME.nome=perfil.nome||perfil.email; ME.papel=perfil.papel; ME.admin=perfil.papel==='admin'; ME.gerente=perfil.papel==='gerente_comercial';
   var l=lsGet(); if(l) L=Object.assign(L,l);
-  if(perfil.papel==='admin'||perfil.papel==='comercial'){ entered=true; enterApp(); return; }
+  if(perfil.papel==='admin'||perfil.papel==='comercial'||perfil.papel==='gerente_comercial'){ entered=true; enterApp(); return; }
   entered=false; telaPendente(perfil.papel);
 }
 var unsubPerfil=null;
