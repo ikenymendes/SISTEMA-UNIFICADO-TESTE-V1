@@ -52,6 +52,9 @@ function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!
 /* Valor de tabela é sempre UNITÁRIO (por painel/tela/banca): total = unitário × quantidade. Estáticos somam o valor de cada endereço escolhido. */
 /* Linhas de um estático: UMA por endereço (mensal + produção), cada uma com valor de tabela, desconto e negociado próprios (guardados em r.end[idDoPonto]). Sem valor digitado, a tabela parte do líquido/produção pré-definidos (inflados pela comissão/BV). */
 function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
+  if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; mM+=vlr(p.liq); mP+=vlr(p.prod); });
+    var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=num(e.pt)>0?num(e.pt):(pp?vlr(pp.prod)/f:0), dm=num(e.d), dp=num(e.pd);
+    return [{p:{id:'*',endereco:'Bancas estáticas · '+n+(n===1?' ponto':' pontos')},n:n,tu:tu,tpu:tpu,tm:tu*n,dm:dm,nm:tu*n*(1-dm/100),tp:tpu*n,dp:dp,np:tpu*n*(1-dp/100),minM:mM,minP:mP}]; }
   return (todos?ptsOf(D,r.auto):selEstaticos(D,r.auto)).map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod);
     var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d), tp=num(e.pt)>0?num(e.pt):(pr>0?pr/f:0), dp=num(e.pd);
     return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:tp,dp:dp,np:tp*(1-dp/100),minM:l,minP:pr}; }); }
