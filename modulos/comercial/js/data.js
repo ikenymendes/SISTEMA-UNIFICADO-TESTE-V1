@@ -56,7 +56,7 @@ function calcPreco(D,r){
   var pontos=r.pontos!==''&&r.pontos!=null?num(r.pontos):(r.auto?qtdPontos(D,r.auto):0);
   var tabU, tab;
   if(est){ tab=num(r.tabela); tabU=pontos>0?tab/pontos:0; }
-  else { tabU=num(r.tabela); var qtd=(r.pontos!==''&&r.pontos!=null)?num(r.pontos):(r.auto?qtdPreco(D,r.auto):1); tab=tabU*(qtd>0?qtd:0); }
+  else { tabU=num(r.tabela); var circ=!!r.auto&&r.auto.split(',').every(function(k){ return k==='mercado'||k==='guanabara'; }), qtd=circ?1:((r.pontos!==''&&r.pontos!=null)?num(r.pontos):(r.auto?qtdPreco(D,r.auto):1)); tab=tabU*(qtd>0?qtd:0); }
   var desc=num(r.desc), neg=tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
   if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+vlr(p.liq); },0); },0); }
