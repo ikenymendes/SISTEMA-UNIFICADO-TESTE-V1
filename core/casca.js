@@ -421,7 +421,7 @@ var MEGA = (function () {
       var painel = h('div', { class: 'painel' });
       if (ehModulo) {
         painel.appendChild(h('div', { class: 'carregando', text: 'Carregando ' + MODULOS[id].rotulo + '…' }));
-        var f = h('iframe', { src: MODULOS[id].url, title: MODULOS[id].rotulo, allow: 'clipboard-write; fullscreen' });
+        var f = h('iframe', { src: MODULOS[id].url, title: MODULOS[id].rotulo, allow: 'clipboard-write; fullscreen; geolocation' });
         f.addEventListener('load', function () { painel.classList.add('pronto'); if (aoPronto) aoPronto(f); });
         painel.appendChild(f);
       } else if (id === 'inicio') {

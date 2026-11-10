@@ -53,7 +53,7 @@ function mobNav() {
   nav.innerHTML =
     main.map(bt).join("") +
     `<button id="mmais" class="${main.includes(view) ? "" : "on"}"><span>☰</span>Mais</button>`;
-  const rest = ["fp", "m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
+  const rest = ["fp", "pm", "m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
     T.querySelector('button[data-v="' + v + '"]'),
   );
   sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !HOST ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
@@ -97,6 +97,7 @@ function render() {
         ["fp", "Fotos por ponto" + ((n) => (n ? " (" + n + ")" : ""))(fpPend())],
         ["r", "Rotas"],
         ["m", "Motoboy"],
+        ["pm", "Perto de mim"],
         ["k", "Checking (" + ckLista().length + ")"],
         ["c", "Concluídos (" + S.vts.filter(isConc).length + ")"],
       ],
@@ -132,6 +133,7 @@ function render() {
       fp: fotosPonto,
       r: rotas,
       m: motoboy,
+      pm: pertoDeMim,
       t: manut,
       pl: plview,
       x: fixosMes,
@@ -304,7 +306,7 @@ document.addEventListener("click", async (ev) => {
   if (!el) return;
   const a = el.dataset.a,
     v = el.dataset.v;
-  if (/^(mt|base|moto|msel|pi|x_\w+)$/.test(a)) return;
+  if (/^(mt|base|moto|msel|pmsim|pi|x_\w+)$/.test(a)) return;
   if (el.tagName === "A") ev.preventDefault();
   keep();
   if (eMan() && !MAN_OK.has(a)) {
@@ -313,6 +315,29 @@ document.addEventListener("click", async (ev) => {
   if (CLD && !eAdm() && ADMIN_ONLY.has(a)) {
     $("warn").innerHTML =
       '<div class="warn">Só o administrador pode alterar ou apagar pontos e configurações.</div>';
+    return;
+  }
+  if (a === "pmmodo" || a === "pmraio") {
+    if (a === "pmmodo") PM.modo = v;
+    else PM.raio = +v;
+    try {
+      localStorage.setItem("pm_" + (a === "pmmodo" ? "modo" : "raio"), String(a === "pmmodo" ? PM.modo : PM.raio));
+    } catch (_) {}
+    render();
+    return;
+  }
+  if (a === "pmfez") {
+    const L = tasks().filter((t) => t.p.id === v && vig(t.vt) && (t.status === "pendente" || t.status === "refazer"));
+    const falta = [];
+    L.forEach((t) => {
+      const fi = fotoInfo(t);
+      if (fi && !fi.ok) falta.push(t.vt.cliente);
+      else setF(t.key, { status: "feita", nota: "", by: moto });
+    });
+    $("warn").innerHTML = falta.length
+      ? '<div class="warn">' + e(falta.join(", ")) + ": este cliente exige fotos de início e fim. Marque Início/Fim na Gestão.</div>"
+      : "";
+    render();
     return;
   }
   if (a === "fpst") {
@@ -1276,6 +1301,9 @@ document.addEventListener("change", (ev) => {
   }
   if (a === "moto") {
     setF(el.dataset.v, { moto: el.value });
+    render();
+  } else if (a === "pmsim") {
+    PM.sim = el.value;
     render();
   } else if (a === "msel") {
     moto = el.value;
