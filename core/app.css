@@ -1,0 +1,14 @@
+/* Convite para instalar o app (só aparece no celular, fora do app) */
+.app-convite{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99999;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 12px;border-radius:20px;color:#fff;
+  background:linear-gradient(135deg,#10107af2,#3a2a9af2);border:1px solid #ffffff40;box-shadow:0 22px 48px -14px #00003dcc;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  font-family:Poppins,system-ui,sans-serif;animation:appConv .3s ease}
+@keyframes appConv{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.app-convite img{width:46px;height:46px;border-radius:13px;flex:none}
+.app-convite .txt{flex:1;min-width:0;line-height:1.35}
+.app-convite b{display:block;font-size:14px}
+.app-convite small{display:block;font-size:12px;color:#ffffffc8}
+.app-convite small b{display:inline;font-size:12px;color:#fff}
+.app-convite .ico-share{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#ffffff26;font-size:11px}
+.app-convite button{border:0;cursor:pointer;font-family:inherit}
+.app-convite .ok{background:#ff0066;color:#fff;border-radius:12px;padding:9px 14px;font-weight:700;font-size:13px;flex:none}
+.app-convite .x{background:transparent;color:#ffffffa0;font-size:22px;padding:2px 4px;flex:none}
