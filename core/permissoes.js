@@ -34,6 +34,7 @@ var MODULOS = {
 var AREAS = {
   inicio:   { rotulo: 'Início',   descricao: 'Tela inicial com atalhos' },
   usuarios: { rotulo: 'Usuários', descricao: 'Criar usuários e definir o perfil de cada um' },
+  avisos:   { rotulo: 'Avisos',   descricao: 'Enviar aviso (notificação do navegador) para a equipe' },
   backup:   { rotulo: 'Backup',   descricao: 'Backup completo dos dois sistemas' }
 };
 
@@ -48,7 +49,7 @@ var PERMISSOES = {
   admin: {
     rotulo: 'Administrador',
     modulos: ['comercial', 'operacional', 'financeiro'],
-    areas: ['inicio', 'usuarios', 'backup'],
+    areas: ['inicio', 'avisos', 'usuarios', 'backup'],
     inicial: 'inicio'
   },
   comercial: {

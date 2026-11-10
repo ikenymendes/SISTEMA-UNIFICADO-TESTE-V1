@@ -437,7 +437,9 @@ var MEGA = (function () {
         painel.appendChild(BACKUP.tela(client));
       } else if (id === 'usuarios') {
         painel.classList.add('area', 'pronto');
-        painel.appendChild(USUARIOS.tela(client, perfil.id));
+        painel.appendChild(USUARIOS.tela(client, perfil.id));      } else if (id === 'avisos' && typeof AVISOS !== 'undefined') {
+        painel.classList.add('area', 'pronto');
+        painel.appendChild(AVISOS.tela(client, perfil));
       }
       painéis[id] = painel;
       $('#palco').appendChild(painel);
@@ -446,6 +448,7 @@ var MEGA = (function () {
     }
     if (id === 'backup') BACKUP.atualizar && BACKUP.atualizar();
     if (id === 'usuarios') USUARIOS.atualizar();
+    if (id === 'avisos' && typeof AVISOS !== 'undefined') AVISOS.atualizar();
   }
 
   /* ---------- início ---------- */

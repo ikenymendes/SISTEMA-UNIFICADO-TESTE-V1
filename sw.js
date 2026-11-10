@@ -5,7 +5,7 @@
    - Sem internet, mostra uma tela simples avisando.
    - Já preparado para receber notificações (push) na próxima etapa.
    ===================================================================== */
-const VERSAO = "mega-app-20261110a";
+const VERSAO = "mega-app-20261110b";
 const OFFLINE = "offline.html";
 
 self.addEventListener("install", (ev) => {
@@ -51,10 +51,17 @@ self.addEventListener("push", (ev) => {
 
 self.addEventListener("notificationclick", (ev) => {
   ev.notification.close();
-  const url = new URL((ev.notification.data && ev.notification.data.url) || "./", self.registration.scope).href;
+  const d = ev.notification.data || {},
+    abrir = d.abrir || "",
+    url = new URL(d.url || (abrir ? "./?abrir=" + encodeURIComponent(abrir) : "./"), self.registration.scope).href;
   ev.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ws) => {
-      for (const w of ws) if (w.url.startsWith(self.registration.scope)) return w.focus();
+      /* sistema aberto: traz para a frente e pede para abrir a tela do aviso */
+      const w = ws.find((x) => x.url.startsWith(self.registration.scope) && !/\/modulos\//.test(x.url)) || ws.find((x) => x.url.startsWith(self.registration.scope));
+      if (w) {
+        if (abrir) w.postMessage({ tipo: "abrir", abrir });
+        return w.focus();
+      }
       return self.clients.openWindow(url);
     }),
   );

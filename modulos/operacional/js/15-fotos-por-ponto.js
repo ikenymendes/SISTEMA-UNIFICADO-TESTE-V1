@@ -159,7 +159,8 @@ function fpAvisos() {
     .join("")}${L.length > 8 ? `<div class="fp-av-mais">e mais ${L.length - 8} ponto(s) no filtro "A validar"</div>` : ""}</div>`;
 }
 /* aviso para admin/operacional quando chega foto nova feita (ex.: motoboy na rua) */
-let fpVisto = 0;
+let fpVisto = 0,
+  fpNotif = Date.now(); /* só notifica fotos que chegarem depois de abrir o sistema */
 try {
   fpVisto = +localStorage.getItem("fp_visto") || 0;
 } catch (_) {}
@@ -181,6 +182,23 @@ function fpNotifica() {
     return;
   }
   if (!novo.length) return;
+  /* notificação do navegador (uma vez por foto nova), se a pessoa ativou os avisos */
+  const g0 = novo[0];
+  if (g0.ts > fpNotif) {
+    fpNotif = g0.ts;
+    try {
+      if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)
+        navigator.serviceWorker.getRegistration().then((rg) => {
+          if (rg)
+            rg.showNotification("Mega · 📷 " + ([...g0.by].join(" e ") || "Alguém") + " fez as fotos", {
+              body: g0.p.nome + " · " + g0.L.map((t) => t.vt.cliente).join(", ") + " · " + fpQuando(g0.ts),
+              icon: "../../core/assets/app/icone-192.png",
+              tag: "fp-" + g0.p.id,
+              data: { abrir: "fp" },
+            });
+        });
+    } catch (_) {}
+  }
   let t = $("fptoast");
   if (!t) {
     t = document.createElement("div");
