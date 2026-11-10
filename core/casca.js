@@ -106,35 +106,50 @@ var MEGA = (function () {
     ]));
   }
 
+  function marcaMega(cls) {
+    return h('div', { class: cls || 'mg-logo' }, [
+      h('img', { class: 'm', src: 'core/assets/marca.png', alt: '' }),
+      h('img', { class: 'p', src: 'core/assets/palavra.png', alt: 'Mega Mídia OOH' })
+    ]);
+  }
+
   function telaLogin(mensagem) {
     var app = limparTela();
     var emailSalvo = ''; try { emailSalvo = localStorage.getItem('mega_email') || ''; } catch (e) {}
-    var inEmail = h('input', { type: 'email', id: 'em', autocomplete: 'username', required: 'required', value: emailSalvo, placeholder: 'voce@megamidiaooh.com.br' });
-    var inSenha = h('input', { type: 'password', id: 'se', autocomplete: 'current-password', required: 'required', placeholder: '••••••••' });
-    var lembrar = h('input', { type: 'checkbox', id: 'lb' }); lembrar.checked = !!emailSalvo;
-    var erro = h('div', { class: 'erro', hidden: 'hidden' });
-    var btn = h('button', { class: 'btn', type: 'submit', text: 'Entrar' });
+    var inEmail = h('input', { type: 'email', id: 'em', autocomplete: 'username', required: 'required', value: emailSalvo, placeholder: 'seu e-mail', 'aria-label': 'E-mail', inputmode: 'email', autocapitalize: 'off', spellcheck: 'false' });
+    var inSenha = h('input', { type: 'password', id: 'se', autocomplete: 'current-password', required: 'required', placeholder: 'sua senha', 'aria-label': 'Senha' });
+    var lembrar = h('input', { type: 'checkbox', id: 'lb' }); var lx = ''; try { lx = localStorage.getItem('mega_email_x'); } catch (e) {} lembrar.checked = !!emailSalvo || !lx;
+    var erro = h('div', { class: 'erro', hidden: 'hidden', role: 'alert' });
+    var btn = h('button', { class: 'btn', type: 'submit' }, [h('span', { text: 'Entrar' }), h('span', { class: 'seta', text: '→' })]);
+    var olho = h('button', { class: 'olho', type: 'button', title: 'Mostrar senha', 'aria-label': 'Mostrar senha', text: '👁', onclick: function () {
+      var ver = inSenha.type === 'password'; inSenha.type = ver ? 'text' : 'password'; olho.classList.toggle('on', ver); olho.title = ver ? 'Esconder senha' : 'Mostrar senha'; inSenha.focus();
+    } });
 
     async function entrar(email, senha) {
-      btn.disabled = true; btn.textContent = 'Entrando…'; erro.hidden = true;
+      btn.disabled = true; btn.firstChild.textContent = 'Entrando…'; erro.hidden = true;
       try {
         var r = await client.auth.signInWithPassword({ email: email.trim(), password: senha });
         if (r.error) throw r.error;
-        try { if (lembrar.checked) localStorage.setItem('mega_email', email.trim()); else localStorage.removeItem('mega_email'); } catch (e) {}
+        try {
+          if (lembrar.checked) { localStorage.setItem('mega_email', email.trim()); localStorage.removeItem('mega_email_x'); }
+          else { localStorage.removeItem('mega_email'); localStorage.setItem('mega_email_x', '1'); }
+        } catch (e) {}
         sessaoAtual = r.data.session;
         await depoisDoLogin();
       } catch (e) {
         erro.textContent = msgErro(e); erro.hidden = false;
-        btn.disabled = false; btn.textContent = 'Entrar';
+        btn.disabled = false; btn.firstChild.textContent = 'Entrar';
+        cartao.classList.remove('treme'); void cartao.offsetWidth; cartao.classList.add('treme');
       }
     }
 
+    var campo = function (ico, input, extra) { return h('label', { class: 'campo' }, [h('span', { class: 'ico', text: ico, 'aria-hidden': 'true' }), input].concat(extra || [])); };
     var form = h('form', { onsubmit: function (ev) { ev.preventDefault(); entrar(inEmail.value, inSenha.value); } }, [
-      h('h1', { text: 'Entrar' }),
-      h('p', { class: 'sub', text: 'Use o e-mail e a senha criados pelo administrador.' }),
-      h('label', { for: 'em', text: 'E-mail' }), inEmail,
-      h('label', { for: 'se', text: 'Senha' }), inSenha,
-      h('label', { class: 'lembrar' }, [lembrar, h('span', { text: 'Lembrar meu e-mail' })]),
+      h('h1', {}, [document.createTextNode('Olá! '), h('i', { text: 'Bem-vindo' })]),
+      h('p', { class: 'sub', text: 'Entre com o e-mail e a senha que o administrador criou para você.' }),
+      campo('✉️', inEmail),
+      campo('🔒', inSenha, [olho]),
+      h('label', { class: 'lembrar' }, [lembrar, h('span', { class: 'caixa', 'aria-hidden': 'true' }), h('span', { text: 'Lembrar meu e-mail' })]),
       erro, btn
     ]);
 
@@ -148,8 +163,14 @@ var MEGA = (function () {
       extra.push(h('div', { class: 'teste-box' }, [h('b', { text: 'Ambiente de testes · entrar como' }), grade]));
     }
 
+    var cartao = h('div', { class: 'cartao' }, [form].concat(extra));
     app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'cartao' }, [logo('branca'), form].concat(extra).concat([h('div', { class: 'versao', text: 'versão 09/11 · 02:10' })]))
+      h('div', { class: 'lg-bl b1' }), h('div', { class: 'lg-bl b2' }), h('div', { class: 'lg-bl b3' }), h('div', { class: 'lg-grade' }),
+      h('div', { class: 'lg-in' }, [
+        marcaMega('mg-logo'),
+        cartao,
+        h('div', { class: 'versao', text: 'Mega Mídia OOH · sistema unificado · versão 10/11' })
+      ])
     ]));
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }
@@ -261,22 +282,81 @@ var MEGA = (function () {
   /* Boas-vindas rápida (~2 s): saudação, data e hora, em vidro suave com as cores Mega. Uma vez por entrada. */
   function boasVindas() {
     try { if (sessionStorage.getItem('mega_bv')) return; sessionStorage.setItem('mega_bv', '1'); } catch (e) {}
-    var d = new Date(), pn = primeiroNome();
-    var el = h('div', { class: 'bv', role: 'status' }, [
-      h('div', { class: 'bv-bg' }),
-      h('div', { class: 'bv-card' }, [
-        logo('branca'),
-        h('div', { class: 'bv-sau', text: saudacao() + (pn ? ', ' + pn : '') }),
+    var d = new Date(), pn = primeiroNome(), moto = perfil && perfil.papel === 'motoboy';
+    var dem = h('div', { class: 'bv-dem' });
+    var el = h('div', { class: 'bv' + (moto ? ' moto' : ''), role: 'status' }, [
+      h('div', { class: 'bv-bg' }), h('div', { class: 'lg-grade' }),
+      h('div', { class: 'bv-top' }, [
+        h('div', { class: 'bv-mk' }, [h('img', { src: 'core/assets/marca.png', alt: '' })]),
+        h('img', { class: 'bv-pl', src: 'core/assets/palavra.png', alt: 'Mega Mídia OOH' }),
+        h('div', { class: 'bv-sau' }, pn ? [document.createTextNode((moto ? 'Bem-vindo' : saudacao()) + ', '), h('i', { text: pn }), document.createTextNode(' 👋')] : [document.createTextNode(saudacao() + ' 👋')]),
         h('div', { class: 'bv-hora', text: horaCurta(d) }),
         h('div', { class: 'bv-data', text: dataExtensa(d) }),
-        climaEl('bv-local'),
-        h('div', { class: 'bv-barra' }, [h('i')])
-      ])
+        climaEl('bv-local')
+      ]),
+      moto ? dem : h('div', { class: 'bv-barra' }, [h('i')])
     ]);
     document.body.appendChild(el);
     var fim = function () { if (!el.parentNode) return; el.classList.add('sai'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 450); };
-    el.addEventListener('click', fim);
-    setTimeout(fim, 2000);
+    if (!moto) { el.addEventListener('click', fim); setTimeout(fim, 2600); return; }
+
+    /* motoboy: depois da animação mostra as demandas do dia */
+    var kpi = function (cls, rot) { var b = h('b', { text: '–' }); return { el: h('div', { class: 'k ' + cls }, [b, h('span', { text: rot })]), b: b }; };
+    var kp = kpi('p', 'pontos para visitar'), kf = kpi('f', 'fotos pendentes'), ka = kpi('a', '⚠ atrasadas (3+ dias)'), kr = kpi('r', 'para refazer');
+    var tit = h('h3', { text: 'Bora fazer as fotos? 📸' });
+    var go = h('button', { class: 'go', type: 'button', text: 'Começar pelo mais perto →', onclick: fim });
+    dem.appendChild(h('small', { text: 'SUAS DEMANDAS DE HOJE' }));
+    dem.appendChild(tit);
+    dem.appendChild(h('div', { class: 'g' }, [kp.el, kf.el, ka.el, kr.el]));
+    dem.appendChild(go);
+    var conta = function (k, n) {
+      var i = 0, passo = Math.max(1, Math.ceil(n / 25));
+      if (!n) { k.b.textContent = '0'; return; }
+      var t = setInterval(function () { i = Math.min(n, i + passo); k.b.textContent = i; if (i >= n) clearInterval(t); }, Math.max(30, 700 / Math.min(n, 25)));
+    };
+    var dados = demandasMotoboy();
+    setTimeout(function () {
+      el.classList.add('fase2');
+      dados.then(function (r) {
+        if (!r) { tit.textContent = 'Suas fotos estão te esperando 📸'; [kp, kf, ka, kr].forEach(function (k) { k.b.textContent = '·'; }); return; }
+        if (!r.fotos) { tit.textContent = 'Tudo em dia por aqui! 🎉'; go.textContent = 'Ver minhas fotos →'; }
+        conta(kp, r.pontos); conta(kf, r.fotos); conta(ka, r.atr); conta(kr, r.rf);
+        if (!r.atr) ka.el.classList.add('zero');
+      });
+    }, 2700);
+  }
+
+  /* mesmas regras da tela "Fotos perto de você": cliente no ar hoje, foto pendente ou para refazer, sem problema relatado */
+  async function demandasMotoboy() {
+    try {
+      var hoje = (function () { var x = new Date(); return new Date(x - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); })();
+      var rs = await Promise.all([
+        client.from('registros').select('chave,tipo,dados').in('tipo', ['vt', 'ft']).eq('excluido', false),
+        client.from('registros').select('chave').in('tipo', ['fx', 'vr']).eq('excluido', false)
+      ]);
+      if (rs[0].error || rs[1].error) return null;
+      var pontos = {}, fotos = {}, ok = {};
+      rs[1].data.forEach(function (r) { ok[r.chave.split(':').slice(1).join(':')] = 1; });
+      rs[0].data.forEach(function (r) { if (r.tipo === 'ft') fotos[r.chave.slice(3)] = r.dados || {}; });
+      var res = { pontos: 0, fotos: 0, atr: 0, rf: 0 };
+      rs[0].data.forEach(function (r) {
+        if (r.tipo !== 'vt') return;
+        var v = r.dados || {};
+        if (v.man && v.conc) return;
+        if ((v.ini && v.ini > hoje) || (v.fim && v.fim < hoje)) return;
+        var dias = v.ini ? Math.round((new Date(hoje + 'T12:00:00') - new Date(v.ini + 'T12:00:00')) / 864e5) : 0;
+        (v.paineis || []).forEach(function (pid) {
+          if (!ok[pid]) return;
+          var f = fotos[v.id + '__' + pid] || {}, st = f.status || 'pendente';
+          if ((st !== 'pendente' && st !== 'refazer') || f.prob) return;
+          res.fotos++; pontos[pid] = 1;
+          if (st === 'refazer') res.rf++;
+          if (dias >= 3) res.atr++;
+        });
+      });
+      res.pontos = Object.keys(pontos).length;
+      return res;
+    } catch (e) { return null; }
   }
 
   function telaInicio(perm) {
@@ -357,7 +437,8 @@ var MEGA = (function () {
   function montarInterface(perm) {
     if (perfil.papel === 'admin' && typeof ADMIN !== 'undefined') return montarAdmin(perm);
     var app = limparTela();
-    var comBarra = perm.modulos.length > 1 || perm.areas.length > 0;   // só o administrador
+    /* motoboy: o módulo ocupa a tela inteira (tem o próprio topo com Sair) */
+    var comBarra = perfil.papel !== 'motoboy' && (perm.modulos.length > 1 || perm.areas.length > 0);
     if (comBarra) app.className = 'com-barra';
 
     var palco = h('div', { class: 'palco', id: 'palco' });

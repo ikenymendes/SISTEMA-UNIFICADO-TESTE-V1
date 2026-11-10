@@ -100,7 +100,7 @@ function fpCard(g, q) {
           ? `<span class="fp-atr">⚠ ${dn} dias no ar ${c.st === "feita" ? "sem verificar" : "sem foto"}</span>`
           : "",
         urg = k === "p" && d <= 3 ? ` <span class="fp-urg">⏱ ${d <= 0 ? "sai do ar hoje" : "faltam " + d + (d === 1 ? " dia" : " dias")}</span>` : "";
-      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && (c.by || c.fts) ? ` · <span class="fp-fez">📷 ${c.by ? e(c.by) + " " : ""}${fpQuando(c.fts)}</span>` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
+      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${(S.fotos[c.key] || {}).prob && c.st !== "validada" ? `<span class="fp-pb">⚠ problema relatado</span>` : ""}${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && (c.by || c.fts) ? ` · <span class="fp-fez">📷 ${c.by ? e(c.by) + " " : ""}${fpQuando(c.fts)}</span>` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
     })
     .join("");
   return `<div class="fp-pt ${g.k}${g.atr ? " atrasado" : ""}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span>${g.atr ? `<div class="fp-alerta">⚠ ${g.atr} ${g.atr === 1 ? "foto atrasada" : "fotos atrasadas"}</div>` : ""}<h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
@@ -158,15 +158,76 @@ function fpAvisos() {
     )
     .join("")}${L.length > 8 ? `<div class="fp-av-mais">e mais ${L.length - 8} ponto(s) no filtro "A validar"</div>` : ""}</div>`;
 }
+/* "Tenho um problema" enviados pelo motoboy */
+function fpProblemas() {
+  return tasks(true)
+    .filter((t) => (S.fotos[t.key] || {}).prob && t.status !== "validada")
+    .map((t) => ((t.f = S.fotos[t.key]), t))
+    .sort((a, b) => (b.f.probTs || 0) - (a.f.probTs || 0));
+}
+function fpProbPainel() {
+  const L = fpProblemas();
+  if (!L.length) return "";
+  return `<div class="fp-probs"><h3>⚠ Problemas relatados <em>${L.length}</em></h3>${L.map(
+    (t) =>
+      `<div class="fp-pr"><div><b>${e(t.f.probBy || "Motoboy")}</b> · ${e(t.vt.cliente)} em <b>${e(t.p.nome)}</b><q>${e(typeof pmProbTxt === "function" ? pmProbTxt(t.f.prob) : t.f.prob)}${t.f.probTxt ? " — “" + e(t.f.probTxt) + "”" : ""}</q><small>${t.f.probTs ? fpQuando(t.f.probTs) : ""}</small></div><div class="bt"><button type="button" class="ok" data-a="fpprobok" data-v="${t.key}" title="Resolvido: a foto volta a ficar pendente para o motoboy">✓ Resolvido</button><button type="button" data-a="fpprobman" data-v="${t.key}" title="Abrir manutenção já preenchida">🔧 Abrir manutenção</button></div></div>`,
+  ).join("")}</div>`;
+}
 /* aviso para admin/operacional quando chega foto nova feita (ex.: motoboy na rua) */
 let fpVisto = 0,
   fpNotif = Date.now(); /* só notifica fotos que chegarem depois de abrir o sistema */
 try {
   fpVisto = +localStorage.getItem("fp_visto") || 0;
 } catch (_) {}
+/* problema novo relatado pelo motoboy: aviso na tela + notificação do navegador */
+let fpPVisto = 0,
+  fpPNotif = Date.now();
+try {
+  fpPVisto = +localStorage.getItem("fp_pvisto") || 0;
+} catch (_) {}
+function fpProbAviso() {
+  const P = fpProblemas(),
+    mx = Math.max(0, ...P.map((t) => t.f.probTs || 0));
+  if (view === "fp") {
+    if (mx > fpPVisto) {
+      fpPVisto = mx;
+      try {
+        localStorage.setItem("fp_pvisto", String(mx));
+      } catch (_) {}
+    }
+    return false;
+  }
+  const novo = P.filter((t) => (t.f.probTs || 0) > fpPVisto);
+  if (!novo.length) return false;
+  const t0 = novo[0];
+  if ((t0.f.probTs || 0) > fpPNotif) {
+    fpPNotif = t0.f.probTs;
+    try {
+      if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)
+        navigator.serviceWorker.getRegistration().then((rg) => {
+          if (rg)
+            rg.showNotification("Mega · ⚠ " + (t0.f.probBy || "Motoboy") + " relatou um problema", {
+              body: t0.vt.cliente + " · " + t0.p.nome + " · " + pmProbTxt(t0.f.prob),
+              icon: "../../core/assets/app/icone-192.png",
+              tag: "fpp-" + t0.key,
+              data: { abrir: "fp" },
+            });
+        });
+    } catch (_) {}
+  }
+  let t = $("fptoast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "fptoast";
+    document.body.appendChild(t);
+  }
+  t.innerHTML = `<span class="fp-t-ico">⚠</span><div><b>${e(t0.f.probBy || "Motoboy")} relatou um problema</b><small>${e(t0.vt.cliente)} · ${e(t0.p.nome)} · ${e(pmProbTxt(t0.f.prob))}</small></div><button type="button" data-a="tab" data-v="fp">Ver</button><button type="button" class="x" data-a="fptx" aria-label="Fechar">×</button>`;
+  return true;
+}
 function fpNotifica() {
   if (typeof eMoto === "function" && eMoto()) return;
   if (typeof eMan === "function" && eMan()) return;
+  if (fpProbAviso()) return;
   const L = fpParaValidar(),
     novo = L.filter((g) => g.ts > fpVisto);
   if (view === "fp") {
@@ -220,6 +281,6 @@ function fotosPonto() {
 <div class="fp-cab"><div><small>Fluxo do VT</small><h1>📸 Fotos <i>por ponto</i></h1></div>
 <div class="fp-kp">${na ? `<div class="a" data-a="fpf" data-v="a"><b>${na}</b><span>⚠ fotos atrasadas</span></div>` : ""}<div class="p"><b>${c.p}</b><span>precisam de foto</span></div><div class="f"><b>${c.f}</b><span>a validar</span></div><div class="v"><b>${c.v}</b><span>em dia</span></div></div></div>
 <label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fpq" type="search" autocomplete="off" placeholder="Buscar endereço, ponto, região ou cliente…" value="${e(fpQ)}"><em id="fpc">${tot} ${tot == 1 ? "ponto" : "pontos"}</em></label>
-${fpAvisos()}<div id="fpl">${n}</div></div></div>`;
+${fpProbPainel()}${fpAvisos()}<div id="fpl">${n}</div></div></div>`;
 }
 const fpPend = () => fpPontos().filter((g) => g.k === "p").length;

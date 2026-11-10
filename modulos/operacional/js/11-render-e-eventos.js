@@ -41,6 +41,7 @@ function mobNav() {
     });
   }
   if (eMoto()) {
+    document.body.classList.add("rmoto");
     bar.innerHTML = `<img src="${LOGO_W}" alt="Mega OOH"><b>Fotos perto de você</b><span>👤 ${e(mtUser())}</span>${HOST ? "" : `<a href="#" data-a="sair">Sair</a>`}`;
     nav.innerHTML = "";
     sh.innerHTML = "";
@@ -360,6 +361,10 @@ document.addEventListener("click", async (ev) => {
     const t = $("fptoast");
     if (t) t.remove();
     fpVisto = Math.max(fpVisto, ...fpParaValidar().map((g) => g.ts));
+    fpPVisto = Math.max(fpPVisto, ...fpProblemas().map((t) => t.f.probTs || 0));
+    try {
+      localStorage.setItem("fp_pvisto", String(fpPVisto));
+    } catch (_) {}
     try {
       localStorage.setItem("fp_visto", String(fpVisto));
     } catch (_) {}
@@ -373,18 +378,88 @@ document.addEventListener("click", async (ev) => {
     render();
     return;
   }
-  if (a === "pmfez") {
-    const L = tasks().filter((t) => t.p.id === v && vig(t.vt) && (t.status === "pendente" || t.status === "refazer"));
-    const falta = [];
-    L.forEach((t) => {
-      const fi = fotoInfo(t);
-      if (fi && !fi.ok) falta.push(t.vt.cliente);
-      else setF(t.key, { status: "feita", nota: "", by: moto, fts: Date.now() });
-    });
-    $("warn").innerHTML = falta.length
-      ? '<div class="warn">' + e(falta.join(", ")) + ": este cliente exige fotos de início e fim. Marque Início/Fim na Gestão.</div>"
-      : "";
+  if (a === "pmfez" || a === "pmfez1") {
+    /* "Fiz todas" (ponto inteiro) ou "✓ Fiz" (um cliente) */
+    const L = tasks(true).filter(
+      (t) =>
+        (a === "pmfez" ? t.p.id === v : t.key === v) &&
+        vig(t.vt) &&
+        !(t.vt.man && t.vt.conc) &&
+        (t.status === "pendente" || t.status === "refazer") &&
+        !(S.fotos[t.key] || {}).prob,
+    );
+    pmMarcar(L);
     render();
+    return;
+  }
+  if (a === "pmdesf") {
+    pmDesfazer([v]);
+    PM.toast = null;
+    render();
+    return;
+  }
+  if (a === "pmundo") {
+    const u = PM.toast && PM.toast.undo;
+    if (u && u.tipo === "fez") pmDesfazer(u.keys);
+    if (u && u.tipo === "prob") setF(u.key, { prob: "", probTxt: "", probBy: "", probTs: 0 });
+    PM.toast = null;
+    render();
+    return;
+  }
+  if (a === "pmprob") {
+    PM.sheet = v;
+    PM.motivo = "video";
+    PM.probTxt = "";
+    pmPinta();
+    return;
+  }
+  if (a === "pmmot") {
+    const tx = $("pmtx");
+    if (tx) PM.probTxt = tx.value;
+    PM.motivo = v;
+    pmPinta();
+    return;
+  }
+  if (a === "pmprobc") {
+    PM.sheet = null;
+    pmPinta();
+    return;
+  }
+  if (a === "pmprobok") {
+    const tx = $("pmtx"),
+      k = PM.sheet;
+    if (k) {
+      setF(k, { prob: PM.motivo || "outro", probTxt: tx ? tx.value.trim().slice(0, 300) : "", probBy: moto || "", probTs: Date.now() });
+      PM.toast = { txt: "⚠ Problema enviado ao escritório", cor: "pb", undo: { tipo: "prob", key: k }, ts: Date.now() };
+      clearTimeout(PM.tt);
+      PM.tt = setTimeout(pmPinta, 8100);
+    }
+    PM.sheet = null;
+    render();
+    return;
+  }
+  if (a === "pmprobx") {
+    setF(v, { prob: "", probTxt: "", probBy: "", probTs: 0 });
+    render();
+    return;
+  }
+  if (a === "fpprobok") {
+    /* escritório: problema resolvido, a foto volta a ficar pendente para o motoboy */
+    setF(v, { prob: "", probTxt: "", probBy: "", probTs: 0, probOk: Date.now() });
+    render();
+    return;
+  }
+  if (a === "fpprobman") {
+    /* escritório: abre manutenção já preenchida com o problema relatado */
+    const f = S.fotos[v] || {},
+      t = tasks(true).find((x) => x.key === v);
+    if (t) {
+      mf.pid = t.p.id;
+      mf.def = "Relatado por " + (f.probBy || "motoboy") + " (" + t.vt.cliente + "): " + pmProbTxt(f.prob) + (f.probTxt ? " — " + f.probTxt : "");
+      view = "t";
+      render();
+      window.scrollTo(0, 0);
+    }
     return;
   }
   if (a === "fpst") {
@@ -1057,6 +1132,13 @@ document.addEventListener("click", async (ev) => {
   } else if (a === "mresp") mf.resp = v;
   else if (a === "mwsel") mwa = v;
   else if (a === "sair") {
+    if (HOST && HOST.sair) {
+      /* dentro da casca (motoboy em tela cheia): manda o que falta e sai pela casca */
+      await lock(() => cloudCycle(false)).catch(() => {});
+      if (CLERR && !(await ask4("Há alterações que não foram enviadas à nuvem. Sair mesmo assim?"))) return;
+      HOST.sair();
+      return;
+    }
     if (CLD && SES) {
       await lock(() => cloudCycle(false)).catch(() => {});
       if (CLERR && !(await ask4("Há alterações que não foram enviadas à nuvem. Sair mesmo assim?"))) return;
@@ -1297,6 +1379,10 @@ document.addEventListener("click", async (ev) => {
   render();
 });
 document.addEventListener("input", (ev) => {
+  if (ev.target.id === "pmtx") {
+    PM.probTxt = ev.target.value;
+    return;
+  }
   if (ev.target.id === "fvq" || ev.target.id === "fvde" || ev.target.id === "fvate") {
     if (ev.target.id === "fvq") fvQ = ev.target.value;
     else if (ev.target.id === "fvde") fvDe = ev.target.value;
