@@ -124,7 +124,7 @@ var ADMIN = (function () {
 
     var raiz = h('div', { class: 'adm-pg' }, [
       h('div', { class: 'adm-cab anim' }, [
-        h('div', { class: 'adm-tit' }, [sau, h('h1', { text: 'Visão geral' }), data]),
+        h('div', { class: 'adm-tit' }, [sau, h('h1', { text: 'Visão geral' }), data, ctx.climaEl ? ctx.climaEl('adm-local') : null]),
         h('div', { class: 'adm-dir' }, [hora, h('div', { class: 'adm-btns' }, [botao('Comercial', 'comercial', 'vidro', 'comercial'), botao('Operacional', 'operacional', 'rosa', 'operacional')])])
       ]),
       h('div', { class: 'adm-atalhos anim' }, [

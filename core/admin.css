@@ -256,3 +256,6 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 }
 @media(max-width:520px){.usr-grade{grid-template-columns:1fr}.usr-caixa{padding:16px}.usr-bar .usr-btn{flex:1}}
 .conteudo.usr h1{color:#fff}.conteudo.usr>.sub{color:rgba(255,255,255,.8)}
+
+.adm-local { color: var(--tx2); font-size: 14px; margin-top: 4px; opacity: 0; transition: opacity .5s ease; }
+.adm-local.ok { opacity: 1; }

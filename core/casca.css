@@ -254,3 +254,10 @@ button, input { font: inherit; color: inherit; }
 .login .versao { color: #ffffff80; }
 .login .teste-box { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .login::before, .login::after, .login .cartao { animation: none; } }
+
+/* cidade e temperatura (boas-vindas e início) */
+.bv-local, .ini-local { opacity: 0; transition: opacity .5s ease; }
+.bv-local.ok, .ini-local.ok { opacity: 1; }
+.bv-local { margin-top: 10px; font-size: 14px; color: #ffffffd9; font-weight: 500; }
+.ini-local { margin-top: 6px; font-size: 14px; opacity: 0; }
+.ini-local.ok { opacity: .85; }

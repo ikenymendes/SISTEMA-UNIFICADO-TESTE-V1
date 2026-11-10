@@ -441,7 +441,7 @@ function gerencia() {
       ["todas", "Todas", L.length],
       ["ar", "No ar agora", L.filter(noAr).length],
       ["enc", "Encerradas", L.filter((v) => !noAr(v)).length],
-      ["afat", "A faturar", L.filter((v) => !v.fat).length],
+      ["afat", "A faturar", L.filter((v) => !v.fat && !v.nfat).length],
       ["fat", "Faturadas", L.filter((v) => v.fat).length],
     ];
   const R = L.filter((v) =>
@@ -450,7 +450,7 @@ function gerencia() {
       : gof === "enc"
         ? !noAr(v)
         : gof === "afat"
-          ? !v.fat
+          ? !v.fat && !v.nfat
           : gof === "fat"
             ? v.fat
             : true,
@@ -459,7 +459,7 @@ function gerencia() {
   <div class="kpis">${[
     ["", L.length, "Campanhas que foram ao ar"],
     ["gr", L.filter((v) => v.fat).length, "Faturadas"],
-    ["am", L.filter((v) => !v.fat).length, "A faturar"],
+    ["am", L.filter((v) => !v.fat && !v.nfat).length, "A faturar"],
     ["pk", L.filter((v) => noAr(v)).length, "No ar agora"],
   ]
     .map(([c, n, l]) => `<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`)
@@ -471,9 +471,9 @@ function gerencia() {
       const ids = vIds(v),
         val = ids.filter((i) => (S.fotos[v.id + "__" + i] || {}).status === "validada").length,
         open = S.col["go|" + v.id];
-      return `<div class="dv ${v.fat ? "ok" : noAr(v) ? "bl" : "am"}"><div class="dvh"><b>${e(v.cliente)}</b>${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}${v.ag ? `<span class="mu">· Ag. ${e(v.ag)}</span>` : ""}<span class="mu">${e(fmt(v.ini) || "—")} → ${e(fmt(v.fim) || "—")}</span><span class="pill ${noAr(v) ? "b" : "a"}">${noAr(v) ? "No ar" : "Encerrada"}</span><span class="sp"></span><span class="pill ${v.chk ? "g" : "b"}">${v.chk ? "✔ Checking" : "Checking pendente"}</span><span class="pill ${v.fat ? "g" : "p"}">${v.fat ? "✔ Faturado" : "A faturar"}</span></div>
+      return `<div class="dv ${v.fat || v.nfat ? "ok" : noAr(v) ? "bl" : "am"}"><div class="dvh"><b>${e(v.cliente)}</b>${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}${v.ag ? `<span class="mu">· Ag. ${e(v.ag)}</span>` : ""}<span class="mu">${e(fmt(v.ini) || "—")} → ${e(fmt(v.fim) || "—")}</span><span class="pill ${noAr(v) ? "b" : "a"}">${noAr(v) ? "No ar" : "Encerrada"}</span><span class="sp"></span><span class="pill ${v.chk ? "g" : "b"}">${v.chk ? "✔ Checking" : "Checking pendente"}</span><span class="pill ${v.fat ? "g" : "p"}">${v.fat ? "✔ Faturado" : "A faturar"}</span></div>
    <div class="row" style="margin-top:8px;align-items:center"><span class="mu" style="font-size:13px">${ids.length} endereço(s) · fotos ${val}/${ids.length}</span><button class="sm" data-a="col" data-v="go|${v.id}">${open ? "▾ Ocultar endereços" : "▸ Ver endereços"}</button><span class="sp"></span>
-    <button class="sm ${v.fat ? "" : "pri"}" data-a="vfat" data-v="${v.id}">${v.fat ? "Desfazer faturamento" : "Marcar faturado"}</button>
+    ${v.nfat ? `<span class="b s-validada">Não faturável</span>` : `<button class="sm ${v.fat ? "" : "pri"}" data-a="vfat" data-v="${v.id}">${v.fat ? "Desfazer faturamento" : "Marcar faturado"}</button>`}
     <input type="date" data-a="x_vd" data-v="${v.id}" value="${e(v.fdt || "")}" title="Data do faturamento" style="flex:0 0 150px"><input data-a="x_vn" data-v="${v.id}" placeholder="Nº NF" value="${e(v.nfn || "")}" style="flex:0 0 110px"></div>
    ${
      open

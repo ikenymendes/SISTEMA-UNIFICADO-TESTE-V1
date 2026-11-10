@@ -231,6 +231,32 @@ var MEGA = (function () {
   function dataExtensa(d) { return DIAS[d.getDay()].replace(/^./, function (c) { return c.toUpperCase(); }) + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]; }
   function horaCurta(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 
+  /* Cidade (pelo IP) e temperatura agora. Quem estiver em Contagem ganha a brincadeira 🎃.
+     Fica guardado por 30 min na sessão para não consultar a cada tela. */
+  var CLIMA_EMO = function (c, dia) {
+    if (c === 0) return dia ? '☀️' : '🌙'; if (c <= 2) return dia ? '🌤️' : '☁️'; if (c === 3) return '☁️';
+    if (c === 45 || c === 48) return '🌫️'; if (c >= 51 && c <= 67) return '🌧️'; if (c >= 71 && c <= 77) return '❄️';
+    if (c >= 80 && c <= 82) return '🌦️'; if (c >= 95) return '⛈️'; return '🌡️';
+  };
+  var climaPend = null;
+  function clima(cb) {
+    try { var c = JSON.parse(sessionStorage.getItem('mega_clima') || 'null'); if (c && Date.now() - c.t < 18e5) { cb(c.txt); return; } } catch (e) {}
+    if (!climaPend) climaPend = (async function () {
+      var loc = null;
+      try { var r = await fetch('https://ipwho.is/?fields=success,city,latitude,longitude&lang=pt-BR'); var j = await r.json(); if (j && j.success !== false && j.city) loc = { cidade: j.city, lat: j.latitude, lng: j.longitude }; } catch (e) {}
+      if (!loc) { try { var r2 = await fetch('https://ipapi.co/json/'); var j2 = await r2.json(); if (j2 && j2.city) loc = { cidade: j2.city, lat: j2.latitude, lng: j2.longitude }; } catch (e) {} }
+      if (!loc) return '';
+      var nome = /^contagem$/i.test(String(loc.cidade).trim()) ? 'CONTAGEM DAS ABÓBORAS 🎃' : loc.cidade, temp = '';
+      try { var w = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lng + '&current=temperature_2m,weather_code,is_day&timezone=auto')).json();
+        if (w && w.current && w.current.temperature_2m != null) temp = Math.round(w.current.temperature_2m) + '°C ' + CLIMA_EMO(w.current.weather_code, w.current.is_day); } catch (e) {}
+      var txt = '📍 ' + nome + (temp ? '  ·  ' + temp : '');
+      try { sessionStorage.setItem('mega_clima', JSON.stringify({ t: Date.now(), txt: txt })); } catch (e) {}
+      return txt;
+    })();
+    climaPend.then(function (t) { if (t) cb(t); });
+  }
+  function climaEl(cls) { var el = h('div', { class: cls }); clima(function (t) { el.textContent = t; el.classList.add('ok'); }); return el; }
+
   /* Início: a MESMA tela para todos os perfis (muda só o que aparece nos atalhos) */
   /* Boas-vindas rápida (~2 s): saudação, data e hora, em vidro suave com as cores Mega. Uma vez por entrada. */
   function boasVindas() {
@@ -243,6 +269,7 @@ var MEGA = (function () {
         h('div', { class: 'bv-sau', text: saudacao() + (pn ? ', ' + pn : '') }),
         h('div', { class: 'bv-hora', text: horaCurta(d) }),
         h('div', { class: 'bv-data', text: dataExtensa(d) }),
+        climaEl('bv-local'),
         h('div', { class: 'bv-barra' }, [h('i')])
       ])
     ]);
@@ -272,7 +299,7 @@ var MEGA = (function () {
     relogio();
     var timer = setInterval(function () { if (!document.body.contains(hora)) { clearInterval(timer); return; } relogio(); }, 15000);
     return h('div', { class: 'conteudo inicio' + (cartoes.length === 1 ? ' um' : '') }, [
-      h('div', { class: 'topo-inicio' }, [sau, hora, data]),
+      h('div', { class: 'topo-inicio' }, [sau, hora, data, climaEl('ini-local')]),
       h('div', { class: 'atalhos' }, cartoes)
     ]);
   }
@@ -400,7 +427,7 @@ var MEGA = (function () {
       } else if (id === 'inicio') {
         painel.classList.add('area', 'pronto');
         if (perfil.papel === 'admin' && typeof ADMIN !== 'undefined') {
-          painel.appendChild(ADMIN.inicio({ h: h, client: client, primeiro: primeiroNome(), abrir: abrir, saudacao: saudacao, dataExtensa: dataExtensa, horaCurta: horaCurta }));
+          painel.appendChild(ADMIN.inicio({ h: h, client: client, primeiro: primeiroNome(), abrir: abrir, saudacao: saudacao, dataExtensa: dataExtensa, horaCurta: horaCurta, climaEl: climaEl }));
         } else {
           painel.classList.add('inicio-' + (typeof INICIO_ESTILO !== 'undefined' ? INICIO_ESTILO : 'claro'));
           painel.appendChild(telaInicio(perm));

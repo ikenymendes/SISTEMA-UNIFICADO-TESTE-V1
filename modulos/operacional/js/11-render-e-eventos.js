@@ -153,6 +153,8 @@ function keep() {
     {
       const o = $("dvok");
       if (o) draft.vok = o.value;
+      const fv = $("dfatv");
+      if (fv) draft.fatv = fv.value;
     }
     const ff = $("dfif");
     if (ff) {
@@ -354,6 +356,7 @@ document.addEventListener("click", async (ev) => {
         tp: x.tp || "",
         fm: x.fm || "",
         vok: x.vok || "",
+        fatv: x.nfat ? "nao" : "sim",
       };
       view = "g";
       scrollTo(0, 0);
@@ -415,6 +418,10 @@ document.addEventListener("click", async (ev) => {
       return;
     }
     const isEv = draft.tipo === "evento";
+    if (!draft.fatv) {
+      $("warn").innerHTML = '<div class="warn">Diga se é faturável (Sim ou Não) antes de salvar.</div>';
+      return;
+    }
     if (isEv && !draft.evd) {
       $("warn").innerHTML = '<div class="warn">Informe a data do evento.</div>';
       return;
@@ -445,6 +452,7 @@ document.addEventListener("click", async (ev) => {
         tp: (draft.tp || "").trim(),
         fm: (draft.fm || "").trim(),
         vok: draft.vok || "",
+        nfat: draft.fatv === "nao",
       },
       x = draft.edit && S.vts.find((q) => q.id === draft.edit);
     {
@@ -484,6 +492,12 @@ document.addEventListener("click", async (ev) => {
       x.man = false;
       x.conc = 0;
       x.aberto = true;
+      save();
+    }
+  } else if (a === "vnfat") {
+    const x = S.vts.find((q) => q.id === v);
+    if (x) {
+      x.nfat = !x.nfat;
       save();
     }
   } else if (a === "vchk") {

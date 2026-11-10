@@ -137,6 +137,7 @@ const novoDraft = () => ({
   tp: "",
   fm: "",
   vok: "",
+  fatv: "",
 });
 function defPrio() {
   return [

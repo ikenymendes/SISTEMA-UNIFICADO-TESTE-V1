@@ -34,6 +34,7 @@ const MP_PONTO = {
     chka: "checking_automatico",
     vok: "vt_correto",
     fat: "faturado",
+    nfat: "nao_faturavel",
     fdt: "faturamento_data",
     nfn: "nota_fiscal",
     evc: "evento_concluido_em",

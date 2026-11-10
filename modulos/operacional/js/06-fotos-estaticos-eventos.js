@@ -33,9 +33,9 @@ let cfl = "todos",
   ctab = "ag";
 const fatOk = (v) => !!(v.fat && v.fdt && (v.nfn || "").trim()),
   isEv = (v) => v.tipo === "evento",
-  fechado = (v) => !!(v.chk && (fatOk(v) || (isEv(v) && v.evc)));
+  fechado = (v) => !!(v.chk && (fatOk(v) || v.nfat || (isEv(v) && v.evc)));
 const falta = (v) =>
-  isEv(v)
+  isEv(v) || v.nfat
     ? [!v.chk && "checking"].filter(Boolean)
     : [
         !v.chk && "checking",
@@ -43,20 +43,20 @@ const falta = (v) =>
         v.fat && !v.fdt && "data do faturamento",
         v.fat && !(v.nfn || "").trim() && "Nº da NF",
       ].filter(Boolean);
-const cflt = (v) => ctab !== "ag" || cfl === "todos" || (cfl === "chk" ? !v.chk : !fatOk(v) && !isEv(v));
+const cflt = (v) => ctab !== "ag" || cfl === "todos" || (cfl === "chk" ? !v.chk : !fatOk(v) && !isEv(v) && !v.nfat);
 const cflBar = () => {
   const c = S.vts.filter(isConc).filter((v) => !fechado(v)),
     n = (f) => c.filter(f).length;
   return [
     ["todos", "Todos (" + c.length + ")"],
     ["chk", "Sem checking (" + n((v) => !v.chk) + ")"],
-    ["fat", "Faturamento incompleto (" + n((v) => !fatOk(v) && !isEv(v)) + ")"],
+    ["fat", "Faturamento incompleto (" + n((v) => !fatOk(v) && !isEv(v) && !v.nfat) + ")"],
   ]
     .map(([k, t]) => `<span class="chip ${cfl === k ? "sel" : ""}" data-a="cfl" data-v="${k}">${t}</span>`)
     .join("");
 };
 const finPanel = (v) =>
-  `<div class="fin"><div class="${v.chk ? "done" : ""}"><div><b>Checking</b> <span class="b ${v.chk ? "s-validada" : "s-pendente"}">${v.chk ? "Feito" + (v.chkd ? " em " + e(fmt(v.chkd)) : "") + (v.chka ? " (automático)" : "") : "Ainda não"}</span></div><div class="row" style="margin-top:8px"><button class="sm ${v.chk ? "" : "pri"}" data-a="vchk" data-v="${v.id}">${v.chk ? "Desfazer checking" : "Marcar checking feito"}</button><button class="sm" data-a="ckopen" data-v="${v.id}">${v.chk ? "Refazer checking" : "Fazer checking"}</button>${v.chk ? `<button class="sm" data-a="cknovo" data-v="${v.id}" title="Gera um checking novo com os mesmos dados, para quando o vídeo da campanha é trocado. Não altera o checking original nem o faturamento.">🎬 Novo checking (troca de vídeo)</button>` : ""}</div>${(v.rck || []).length ? `<div class="mu" style="margin-top:8px;font-size:13px">Checkings de troca de vídeo: ${v.rck.map((r) => e(fmt(r.d)) + (r.nome ? " — " + e(r.nome) : "") + (r.ini ? " (vídeo a partir de " + e(fmt(r.ini)) + ")" : "")).join(" · ")}</div>` : ""}</div><div class="${v.fat ? "done" : ""}"><div><b>Faturamento${isEv(v) ? " (opcional)" : ""}</b> <span class="b ${v.fat ? "s-validada" : "s-pendente"}">${v.fat ? "Faturado" : "Não faturado"}</span></div><div class="row" style="margin-top:8px"><button class="sm ${v.fat ? "" : "pri"}" data-a="vfat" data-v="${v.id}">${v.fat ? "Desfazer faturamento" : "Marcar faturado"}</button></div><div class="row" style="margin-top:8px"><div><div class="mu">Data do faturamento</div><input type="date" data-a="x_vd" data-v="${v.id}" value="${e(v.fdt || "")}"></div><div><div class="mu">Nº da nota fiscal</div><input data-a="x_vn" data-v="${v.id}" placeholder="Ex.: 12345" value="${e(v.nfn || "")}"></div></div></div></div>`;
+  `<div class="fin"><div class="${v.chk ? "done" : ""}"><div><b>Checking</b> <span class="b ${v.chk ? "s-validada" : "s-pendente"}">${v.chk ? "Feito" + (v.chkd ? " em " + e(fmt(v.chkd)) : "") + (v.chka ? " (automático)" : "") : "Ainda não"}</span></div><div class="row" style="margin-top:8px"><button class="sm ${v.chk ? "" : "pri"}" data-a="vchk" data-v="${v.id}">${v.chk ? "Desfazer checking" : "Marcar checking feito"}</button><button class="sm" data-a="ckopen" data-v="${v.id}">${v.chk ? "Refazer checking" : "Fazer checking"}</button>${v.chk ? `<button class="sm" data-a="cknovo" data-v="${v.id}" title="Gera um checking novo com os mesmos dados, para quando o vídeo da campanha é trocado. Não altera o checking original nem o faturamento.">🎬 Novo checking (troca de vídeo)</button>` : ""}</div>${(v.rck || []).length ? `<div class="mu" style="margin-top:8px;font-size:13px">Checkings de troca de vídeo: ${v.rck.map((r) => e(fmt(r.d)) + (r.nome ? " — " + e(r.nome) : "") + (r.ini ? " (vídeo a partir de " + e(fmt(r.ini)) + ")" : "")).join(" · ")}</div>` : ""}</div>${v.nfat ? `<div class="done"><div><b>Faturamento</b> <span class="b s-validada">Não faturável</span></div><div class="mu" style="margin-top:6px">Permuta, cortesia ou evento sem cobrança: não vai para o financeiro e se conclui só com o checking.</div><div class="row" style="margin-top:8px"><button class="sm" data-a="vnfat" data-v="${v.id}">É faturável</button></div></div></div>` : `<div class="${v.fat ? "done" : ""}"><div><b>Faturamento${isEv(v) ? " (opcional)" : ""}</b> <span class="b ${v.fat ? "s-validada" : "s-pendente"}">${v.fat ? "Faturado" : "Não faturado"}</span></div><div class="row" style="margin-top:8px"><button class="sm ${v.fat ? "" : "pri"}" data-a="vfat" data-v="${v.id}">${v.fat ? "Desfazer faturamento" : "Marcar faturado"}</button>${v.fat ? "" : `<button class="sm" data-a="vnfat" data-v="${v.id}" title="Permuta, cortesia ou evento sem cobrança">Não é faturável</button>`}</div><div class="row" style="margin-top:8px"><div><div class="mu">Data do faturamento</div><input type="date" data-a="x_vd" data-v="${v.id}" value="${e(v.fdt || "")}"></div><div><div class="mu">Nº da nota fiscal</div><input data-a="x_vn" data-v="${v.id}" placeholder="Ex.: 12345" value="${e(v.nfn || "")}"></div></div></div>`}</div>`;
 let cq = "",
   eed = null,
   efl = "todos",
