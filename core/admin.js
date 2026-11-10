@@ -123,13 +123,45 @@ var ADMIN = (function () {
     cSug.innerHTML = '<header><div><h2>Sugestões aguardando você</h2><p>Pedidos do time comercial</p></div></header><ul class="lst"><li class="vazio">carregando…</li></ul>';
 
     /* LEDs por propriedade: Mercado Central e Parque Guanabara são circuitos = 1 LED cada */
+    /* LED por propriedade: Mercado Central (MEGA) e Parque Guanabara (MEGA/R2) são circuitos = 1 LED cada.
+       Passando o mouse (ou tocando, no celular) abre a lista dos pontos. */
+    var pop = null;
+    function fechaPop() { if (pop) { pop.remove(); pop = null; } }
+    function abrePop(box) {
+      fechaPop();
+      if (!box._lista) return;
+      var base = box.closest('.adm') || document.body, rc = box.getBoundingClientRect();
+      pop = h('div', { class: 'tl-pop ' + (box.classList.contains('t3') ? 't3' : box.classList.contains('t2') ? 't2' : 't1') });
+      pop.innerHTML = '<div class="tl-pop-cab">' + esc(box.querySelector('.tl-rot').textContent) + ' · ' + esc(box.querySelector('.tl-val').textContent) + ' LED</div><div class="tl-pop-corpo">' + box._lista + '</div>';
+      pop.addEventListener('pointerenter', function () { clearTimeout(box._t); });
+      pop.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') box._t = setTimeout(fechaPop, 150); });
+      base.appendChild(pop);
+      var w = Math.min(360, window.innerWidth - 24), x = Math.max(12, Math.min(rc.left, window.innerWidth - w - 12));
+      pop.style.width = w + 'px'; pop.style.left = x + 'px'; pop.style.top = (rc.bottom + 8) + 'px';
+      pop.style.maxHeight = Math.max(160, window.innerHeight - rc.bottom - 24) + 'px';
+      pop._dono = box;
+    }
     function telaBox(cls, rot) {
-      var b = h('div', { class: 'tl-box ' + cls });
+      var b = h('div', { class: 'tl-box ' + cls, tabindex: '0' });
       b.innerHTML = '<span class="tl-ico">' + icone('tv') + '</span><span class="tl-txt"><span class="tl-rot">' + rot + '</span><span class="tl-val">—</span><span class="tl-sub">carregando…</span></span>';
+      b.addEventListener('pointerenter', function (ev) { if (ev.pointerType !== 'mouse') return; clearTimeout(b._t); if (!pop || pop._dono !== b) { abrePop(b); b._abriu = Date.now(); } });
+      b.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') b._t = setTimeout(fechaPop, 150); });
+      b.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var aberto = pop && pop._dono === b;
+        if (!aberto) { abrePop(b); b._abriu = Date.now(); }
+        else if (Date.now() - (b._abriu || 0) > 450) fechaPop(); /* segundo toque fecha */
+      });
       return b;
     }
-    var tMega = telaBox('t1', 'LED MEGA'), tR2 = telaBox('t2', 'LED MEGA/R2');
-    var telas = h('div', { class: 'adm-telas', title: 'Mercado Central e Parque Guanabara contam como 1 LED cada (são circuitos)' }, [tMega, tR2]);
+    document.addEventListener('click', function fora(ev) {
+      if (!document.body.contains(telas)) { document.removeEventListener('click', fora); fechaPop(); return; }
+      if (pop && !pop.contains(ev.target)) fechaPop();
+    });
+    var tMega = telaBox('t1', 'LED MEGA'), tR2 = telaBox('t2', 'LED MEGA/R2'), tSem = telaBox('t3', 'LED TERCEIROS');
+    tSem.style.display = 'none';
+    var telas = h('div', { class: 'adm-telas' }, [tMega, tR2, tSem]);
+    window.addEventListener('resize', fechaPop);
 
     var raiz = h('div', { class: 'adm-pg' }, [
       h('div', { class: 'adm-cab anim' }, [
@@ -195,30 +227,63 @@ var ADMIN = (function () {
     })();
 
     (async function contarTelas() {
-      var LED = { led_bh: 'p', led_rm: 'p', df_painel: 'p', banca_led: 'b' }, CIRC = { mercado: 1, guanabara: 1 };
-      function sub(c) {
-        var t = [];
-        if (c.p) t.push(c.p + (c.p === 1 ? ' painel' : ' painéis'));
-        if (c.b) t.push(c.b + (c.b === 1 ? ' banca' : ' bancas'));
-        if (c.c) t.push(c.c + (c.c === 1 ? ' circuito' : ' circuitos'));
-        return t.join(' · ') || 'nenhum LED';
+      /* Ordem em cada quadro: Mercado Central, painéis, bancas, Parque Guanabara (cada um aparece no quadro da sua propriedade) */
+      var LED = { led_bh: 'p', led_rm: 'p', df_painel: 'p', banca_led: 'b' };
+      /* Circuitos: 1 LED cada; o quadro (MEGA, MEGA/R2 ou Terceiros) vem da Propriedade do ponto cadastrada */
+      var CIRC = { mercado: { nome: 'Circuito Mercado Central', faces: 8, ini: true }, guanabara: { nome: 'Parque Guanabara', faces: 10, ini: false } };
+      function caixa(dono) { return dono === 'mega' ? 'm' : dono === 'mega_r2' ? 'r2' : 'sem'; }
+      function novo() { return { p: [], b: [], ci: [], cf: [] }; }
+      function nomePt(p) {
+        var t = String(p.endereco || '').trim() || '(sem endereço)';
+        if (p.bairro) t += ' · ' + p.bairro;
+        if (p.cidade && !/belo horizonte/i.test(p.cidade)) t += ' · ' + p.cidade;
+        return t;
+      }
+      function sub(c) { /* 2 linhas: MEGA = circuito em cima; MEGA/R2 = circuito embaixo */
+        var q = [];
+        if (c.p.length) q.push(c.p.length + (c.p.length === 1 ? ' painel' : ' painéis'));
+        if (c.b.length) q.push(c.b.length + (c.b.length === 1 ? ' banca' : ' bancas'));
+        var l = c.ci.map(esc).concat(q.length ? [q.join(' · ')] : []).concat(c.cf.map(esc));
+        return l.map(function (x) { return x.replace('Circuito ', ''); }).join('<br>') || 'nenhum LED';
+      }
+      function lista(c) {
+        var g = [];
+        function circ(n) { var f = n === CIRC.mercado.nome ? CIRC.mercado.faces : CIRC.guanabara.faces; g.push('<div class="tl-g"><b>' + esc(n) + '</b><span class="tl-n">1 LED · circuito de ' + f + ' faces</span></div>'); }
+        function bloco(rot, arr) {
+          if (!arr.length) return;
+          g.push('<div class="tl-g"><b>' + rot + '</b><span class="tl-n">' + arr.length + '</span><ol>' + arr.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol></div>');
+        }
+        c.ci.forEach(circ); bloco('Painéis de LED', c.p); bloco('Bancas de LED', c.b); c.cf.forEach(circ);
+        return g.join('') || '<div class="tl-g"><span class="tl-n">Nenhum LED cadastrado.</span></div>';
       }
       function pinta(box, c) {
-        contar(box.querySelector('.tl-val'), c.p + c.b + c.c);
-        box.querySelector('.tl-sub').textContent = sub(c);
+        contar(box.querySelector('.tl-val'), c.p.length + c.b.length + c.ci.length + c.cf.length);
+        box.querySelector('.tl-sub').innerHTML = sub(c);
+        box._lista = lista(c);
       }
       try {
-        var r = await client.from('pontos').select('data');
+        var r = await client.from('pontos').select('ord,data').order('ord', { ascending: true });
         if (r.error) throw r.error;
-        var m = { p: 0, b: 0, c: 0 }, r2 = { p: 0, b: 0, c: 0 }, circ = {};
+        var t = { m: novo(), r2: novo(), sem: novo() }, votos = {};
         (r.data || []).forEach(function (x) {
           var p = x.data || {}, sec = p.secao || '', dono = p.dono || 'padrao';
-          if (dono === 'terceiros') return;
-          var alvo = dono === 'mega_r2' ? r2 : m;
-          if (CIRC[sec]) { if (!circ[sec]) { circ[sec] = 1; m.c++; } return; } /* circuito: 1 LED, sempre MEGA */
-          if (LED[sec]) alvo[LED[sec]]++;
+          var c = CIRC[sec];
+          if (c) { var v = votos[sec] || (votos[sec] = {}); v[caixa(dono)] = (v[caixa(dono)] || 0) + 1; return; } /* circuito: decide depois */
+          if (!LED[sec]) return;
+          /* pela Propriedade do ponto: MEGA, MEGA/R2; Terceiros e "Padrão" entram em LED TERCEIROS */
+          t[caixa(dono)][LED[sec]].push(nomePt(p));
         });
-        pinta(tMega, m); pinta(tR2, r2);
+        Object.keys(CIRC).forEach(function (sec) {
+          var v = votos[sec]; if (!v) return;
+          var k = Object.keys(v).sort(function (a, b) { return v[b] - v[a]; })[0]; /* propriedade da maioria das faces */
+          t[k][CIRC[sec].ini ? 'ci' : 'cf'].push(CIRC[sec].nome);
+        });
+        pinta(tMega, t.m); pinta(tR2, t.r2);
+        var nSem = t.sem.p.length + t.sem.b.length + t.sem.ci.length + t.sem.cf.length;
+        if (nSem) {
+          pinta(tSem, t.sem);
+          tSem.style.display = ''; telas.classList.add('tres');
+        }
       } catch (e) {
         [tMega, tR2].forEach(function (b) { b.querySelector('.tl-val').textContent = '—'; b.querySelector('.tl-sub').textContent = 'não consegui ler'; });
       }
