@@ -59,7 +59,7 @@ function mobNav() {
   nav.innerHTML =
     main.map(bt).join("") +
     `<button id="mmais" class="${main.includes(view) ? "" : "on"}"><span>☰</span>Mais</button>`;
-  const rest = ["fp", "pm", "m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
+  const rest = ["fp", "fv", "pm", "m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
     T.querySelector('button[data-v="' + v + '"]'),
   );
   sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !HOST ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
@@ -105,6 +105,7 @@ function render() {
     const T1 = [
         ["g", "Gestão"],
         ["fp", "Fotos por ponto" + ((n) => (n ? " (" + n + ")" : ""))(fpPend())],
+        ["fv", "Fotos validadas"],
         ["r", "Rotas"],
         ["m", "Motoboy"],
         ["pm", "Perto de mim"],
@@ -141,6 +142,7 @@ function render() {
       o: gerencia,
       g: gestao,
       fp: fotosPonto,
+      fv: fotosValidadas,
       r: rotas,
       m: motoboy,
       pm: pertoDeMim,
@@ -339,6 +341,21 @@ document.addEventListener("click", async (ev) => {
     render();
     return;
   }
+  if (a === "fvper") {
+    fvP = v;
+    fvN = 150;
+    render();
+    return;
+  }
+  if (a === "fvxls") {
+    fvExcel();
+    return;
+  }
+  if (a === "fvmais") {
+    fvN += 150;
+    fvPinta();
+    return;
+  }
   if (a === "fptx") {
     const t = $("fptoast");
     if (t) t.remove();
@@ -352,7 +369,7 @@ document.addEventListener("click", async (ev) => {
     /* valida de uma vez todas as fotos "feitas" daquele ponto */
     tasks(true)
       .filter((t) => t.p.id === v && t.status === "feita")
-      .forEach((t) => setF(t.key, { status: "validada" }));
+      .forEach((t) => setF(t.key, { status: "validada", vts: Date.now() }));
     render();
     return;
   }
@@ -854,7 +871,7 @@ document.addEventListener("click", async (ev) => {
       return;
     }
     $("warn").innerHTML = "";
-    setF(v, a === "feita" ? { status: "feita", nota: "", by: moto, fts: Date.now() } : { status: "validada" });
+    setF(v, a === "feita" ? { status: "feita", nota: "", by: moto, fts: Date.now() } : { status: "validada", vts: Date.now() });
   } else if (a === "rf") refazerOpen = v;
   else if (a === "rfok") {
     const n = $("rfn").value;
@@ -1280,6 +1297,14 @@ document.addEventListener("click", async (ev) => {
   render();
 });
 document.addEventListener("input", (ev) => {
+  if (ev.target.id === "fvq" || ev.target.id === "fvde" || ev.target.id === "fvate") {
+    if (ev.target.id === "fvq") fvQ = ev.target.value;
+    else if (ev.target.id === "fvde") fvDe = ev.target.value;
+    else fvAte = ev.target.value;
+    fvN = 150;
+    fvPinta();
+    return;
+  }
   if (ev.target.id === "fpq") {
     fpQ = ev.target.value;
     const l = $("fpl");
