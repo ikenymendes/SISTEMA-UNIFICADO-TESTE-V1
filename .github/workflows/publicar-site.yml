@@ -1,0 +1,61 @@
+# PUBLICAR SITE (GitHub Pages) — substitui a publicação automática do GitHub.
+# - Fila: nunca roda duas publicações ao mesmo tempo (acaba o erro "in progress deployment").
+# - Se a publicação falhar, espera 1 minuto e tenta de novo sozinho.
+# - Não publica arquivos que não fazem parte do site (.github, ZIPs, pasta "Claude outputs").
+# Requer: Settings → Pages → Build and deployment → Source = "GitHub Actions".
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # permite publicar na mão (Actions → Publicar site → Run workflow)
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false # espera a anterior terminar; só a mais recente fica na fila
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy2.outputs.page_url || steps.deploy1.outputs.page_url }}
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Montar a pasta do site
+        run: |
+          mkdir -p _site
+          rsync -a ./ _site/ \
+            --exclude='.git' --exclude='.github' --exclude='_site' \
+            --exclude='Claude outputs' --exclude='*.zip'
+          touch _site/.nojekyll
+          du -sh _site
+
+      - name: Preparar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar o site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Publicar
+        id: deploy1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Aguardar antes de tentar de novo
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 60
+
+      - name: Publicar (2ª tentativa)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
