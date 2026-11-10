@@ -53,12 +53,36 @@ function mobNav() {
   nav.innerHTML =
     main.map(bt).join("") +
     `<button id="mmais" class="${main.includes(view) ? "" : "on"}"><span>☰</span>Mais</button>`;
-  const rest = ["m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
+  const rest = ["fp", "m", "c", "t", "pl", "x", "i", "e", "ev", "o", "a"].filter((v) =>
     T.querySelector('button[data-v="' + v + '"]'),
   );
   sh.innerHTML = `<div class="gr"></div>${CLD && SES && PERFIL ? `<div class="us">👤 ${e(PERFIL.nome || PERFIL.email || "")} · ${ROLE === "admin" ? "admin" : "operacional"}</div>` : ""}<div class="gd">${rest.map((v) => `<button data-a="tab" data-v="${v}" class="${view === v ? "on" : ""}"><span>${MV_ICO[v]}</span>${MV_NAME[v]}${cnt[v] ? ` (${cnt[v]})` : ""}</button>`).join("")}</div>${CLD && SES && !HOST ? `<a href="#" class="sair" data-a="sair">Sair da conta</a>` : ""}`;
 }
+/* Informações do VT sempre em CAIXA ALTA: padroniza os VTs já cadastrados (só altera o que tiver minúscula) */
+let upFeito = false;
+function vtsCaixaAlta() {
+  if (upFeito || !S || !Array.isArray(S.vts) || !S.vts.length) return;
+  if (typeof PERFIL === "undefined" || !PERFIL || !/^(admin|operacional)$/.test(PERFIL.papel || "")) return;
+  let mud = 0;
+  const U = (o, k) => {
+    if (o && typeof o[k] === "string" && o[k] !== o[k].toUpperCase()) {
+      o[k] = o[k].toUpperCase();
+      mud++;
+      return true;
+    }
+    return false;
+  };
+  S.vts.forEach((v) => {
+    ["cliente", "pi", "ag", "oc", "tp", "fm"].forEach((k) => U(v, k));
+    if (v.ev) U(v.ev, "nome");
+  });
+  upFeito = true;
+  if (mud) save();
+}
 function render() {
+  try {
+    vtsCaixaAlta();
+  } catch (_) {}
   PEND = false;
   if (view === "pl" && CLD && ROLE !== "admin") view = "d";
   S.col = S.col || {};
@@ -70,6 +94,7 @@ function render() {
   {
     const T1 = [
         ["g", "Gestão"],
+        ["fp", "Fotos por ponto" + ((n) => (n ? " (" + n + ")" : ""))(fpPend())],
         ["r", "Rotas"],
         ["m", "Motoboy"],
         ["k", "Checking (" + ckLista().length + ")"],
@@ -104,6 +129,7 @@ function render() {
       d: dashboard,
       o: gerencia,
       g: gestao,
+      fp: fotosPonto,
       r: rotas,
       m: motoboy,
       t: manut,
@@ -289,6 +315,12 @@ document.addEventListener("click", async (ev) => {
       '<div class="warn">Só o administrador pode alterar ou apagar pontos e configurações.</div>';
     return;
   }
+  if (a === "fpf") {
+    fpF = v;
+    const l = $("fpl");
+    if (l) l.innerHTML = fpList();
+    return;
+  }
   if (a === "tab") {
     view = v;
     RT.info = "";
@@ -431,26 +463,27 @@ document.addEventListener("click", async (ev) => {
       return;
     }
     $("warn").innerHTML = "";
+    const U = (x) => String(x || "").trim().toUpperCase();
     const d = {
-        cliente: draft.cliente.trim(),
+        cliente: U(draft.cliente),
         tipo: isEv ? "evento" : "pi",
         ev: isEv
           ? {
-              nome: draft.evn.trim(),
+              nome: U(draft.evn),
               dt: draft.evd,
               dtf: draft.evf && draft.evf !== draft.evd ? draft.evf : "",
             }
           : null,
-        pi: isEv ? "" : draft.pi.trim(),
+        pi: isEv ? "" : U(draft.pi),
         ini: draft.ini,
         fim: draft.fim,
         paineis: [...draft.sel],
         fif: !!draft.fif,
         nf: draft.nf || 2,
-        ag: (draft.ag || "").trim(),
-        oc: (draft.oc || "").trim(),
-        tp: (draft.tp || "").trim(),
-        fm: (draft.fm || "").trim(),
+        ag: U(draft.ag),
+        oc: U(draft.oc),
+        tp: U(draft.tp),
+        fm: U(draft.fm),
         vok: draft.vok || "",
         nfat: draft.fatv === "nao",
       },
@@ -1178,6 +1211,15 @@ document.addEventListener("click", async (ev) => {
   render();
 });
 document.addEventListener("input", (ev) => {
+  if (ev.target.id === "fpq") {
+    fpQ = ev.target.value;
+    const l = $("fpl");
+    if (l) l.innerHTML = fpList();
+    const n = +((l && l.querySelector("#fpn")) || {}).textContent || 0,
+      c = $("fpc");
+    if (c) c.textContent = n + (n === 1 ? " ponto" : " pontos");
+    return;
+  }
   if (ev.target.id === "cq") {
     cq = ev.target.value;
     const l = $("cl");
