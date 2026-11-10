@@ -870,6 +870,8 @@ document.addEventListener("click", async (ev) => {
       el.textContent = "Não foi possível copiar";
     }
     return;
+  } else if (a === "cknovo") {
+    ckTroca(v);
   } else if (a === "ckopen") {
     ckA.add(v);
     ckOpen(v);

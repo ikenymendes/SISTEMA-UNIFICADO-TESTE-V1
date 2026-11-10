@@ -38,17 +38,23 @@ const ckPronto = (v) =>
   !!(v.paineis && v.paineis.length) && v.paineis.every((i) => ckSt(v, i) === "validada");
 const ckLista = () => S.vts.filter((v) => !v.chk && ckPronto(v));
 function ckPayload(x) {
+  const tr = ck.troca && ck.id === x.id ? ck.troca : null;
   return {
-    id: x.id,
+    id: tr ? x.id + "#troca" + tr.n : x.id,
+    campanha: tr && tr.nome ? tr.nome : "",
     cliente: x.cliente,
     pi: x.pi || "",
     oc: x.oc || "",
     ag: x.ag || "",
-    ini: x.ini || "",
+    ini: (tr && tr.ini) || x.ini || "",
     fim: x.fim || "",
     tp: x.tp || "",
     fm: x.fm || "",
-    obs: x.tipo === "evento" && x.ev && x.ev.nome ? "Evento: " + x.ev.nome : "",
+    obs: tr
+      ? "Novo checking por troca de vídeo" + (tr.ini ? " — novo vídeo em veiculação a partir de " + fmt(tr.ini) : "") + "."
+      : x.tipo === "evento" && x.ev && x.ev.nome
+        ? "Evento: " + x.ev.nome
+        : "",
     paineis: (x.paineis || []).flatMap((i) => {
       const p = PMf(i);
       if (!p) return [];
@@ -76,9 +82,10 @@ function ckDrop() {
   const h = $("ckhost");
   if (h) h.innerHTML = "";
 }
-function ckOpen(id) {
+function ckOpen(id, troca) {
   const x = S.vts.find((q) => q.id === id);
   if (!x) return;
+  if (troca === undefined && ck.troca && ck.id === id && ck.show) troca = null;
   if (
     ck.id &&
     ck.id !== id &&
@@ -87,6 +94,7 @@ function ckOpen(id) {
   )
     return;
   if (ck.id && ck.id !== id) ckDrop();
+  ck.troca = troca || null;
   ck.id = id;
   ck.show = true;
   ck.exp = false;
@@ -104,7 +112,7 @@ function ckOpen(id) {
       f.dataset.ready = "1";
       f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
     };
-    f.src = "gerador-checking.html?v=20261109q";
+    f.src = "gerador-checking.html?v=20261110a";
     h.appendChild(f);
   } else f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
   render();
@@ -125,7 +133,15 @@ addEventListener("message", (ev) => {
   if (d.completo && ck.id && !ck.auto) {
     const x = S.vts.find((q) => q.id === ck.id);
     ck.auto = true;
-    if (x && !x.chk) {
+    /* troca de vídeo: só registra no histórico; não mexe no checking original nem no faturamento */
+    if (x && ck.troca) {
+      x.rck = x.rck || [];
+      if (!x.rck.some((r) => r.n === ck.troca.n)) {
+        x.rck.push({ n: ck.troca.n, d: dia(), ini: ck.troca.ini || "", nome: ck.troca.nome || "" });
+        save();
+        if (view === "k" || view === "c") render();
+      }
+    } else if (x && !x.chk) {
       x.chk = true;
       x.chkd = dia();
       x.chka = 1;
@@ -149,7 +165,7 @@ function ckview() {
       ckDrop();
       return ckview();
     }
-    return `<div class="card"><div class="row"><div><b>Checking — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
+    return `<div class="card"><div class="row"><div><b>${ck.troca ? "Novo checking (troca de vídeo)" : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
   }
   const L = ckLista(),
     W = S.vts.filter(
@@ -180,4 +196,37 @@ function ckview() {
         })
         .join("");
   return h;
+}
+
+/* ===== Novo checking por troca de vídeo (mesmos dados do VT; não altera checking original nem faturamento) ===== */
+function ckTroca(id) {
+  const x = S.vts.find((q) => q.id === id);
+  if (!x) return;
+  const old = document.getElementById("cktr");
+  if (old) old.remove();
+  const hoje = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+  let ini = hoje;
+  if (x.ini && ini < x.ini) ini = x.ini;
+  if (x.fim && ini > x.fim) ini = x.fim;
+  const n = ((x.rck || []).reduce((m, r) => Math.max(m, r.n || 0), 0) || 0) + 1;
+  const el = document.createElement("div");
+  el.id = "cktr";
+  el.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,18,60,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #ff0066">
+    <div style="font-size:18px;font-weight:700;color:#000066;margin-bottom:4px">🎬 Novo checking — troca de vídeo</div>
+    <div class="mu" style="margin-bottom:12px">${e(x.cliente)}${x.pi ? " · PI " + e(x.pi) : ""} · usa os mesmos dados e endereços. O checking original e o faturamento continuam como estão.</div>
+    <div class="mu">Nome do novo vídeo / peça (aparece como “Campanha”)</div>
+    <input id="cktrn" placeholder="Ex.: Black Friday — VT 2" style="width:100%;box-sizing:border-box;margin-bottom:10px">
+    <div class="mu">Novo vídeo em veiculação a partir de</div>
+    <input id="cktri" type="date" value="${ini}" ${x.ini ? `min="${x.ini}"` : ""} ${x.fim ? `max="${x.fim}"` : ""} style="width:100%;box-sizing:border-box">
+    <div class="row" style="margin-top:14px"><button class="pri" id="cktrok" style="flex:1">Abrir checking</button><button id="cktrx" style="flex:0 0 auto">Cancelar</button></div></div>`;
+  document.body.appendChild(el);
+  el.querySelector("#cktrx").onclick = () => el.remove();
+  el.onclick = (ev) => { if (ev.target === el) el.remove(); };
+  el.querySelector("#cktrok").onclick = () => {
+    const nome = el.querySelector("#cktrn").value.trim(), di = el.querySelector("#cktri").value;
+    el.remove();
+    ckOpen(id, { n, ini: di, nome });
+  };
+  setTimeout(() => { const i = el.querySelector("#cktrn"); if (i) i.focus(); }, 50);
 }

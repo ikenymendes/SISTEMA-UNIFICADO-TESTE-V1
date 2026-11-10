@@ -770,7 +770,7 @@ $("#bNovo").onclick=async()=>{if(!await ask4("Começar um novo checking? Os dado
 function receberVT(pl){
  const c=S.cli;
  if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:Object.assign({},EMP_PADRAO),opt:S.opt});S.vtId=pl.id}
- Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
+ Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,campanha:pl.campanha||S.cli.campanha||"",tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
  const antigos=S.paineis,novos=pl.paineis.map(p=>{const loc=locDe(p),ex=antigos.find(a=>a.loc===loc&&(a.tela||"")===(p.tela||""));if(ex){ex.st=p.st;if(p.tp)ex.tipo=normTipo(p.tp);if(p.fm)ex.fmt=p.fm;if(p.pl)ex.pl=p.pl;return ex}return{id:uid(),tipo:normTipo(p.tp)||S.cli.tipoPad,fmt:p.fm||S.cli.fmtPad,loc,tela:p.tela||"",pl:p.pl||"",st:p.st,fotos:[]}});
  S.paineis=novos;
  S.cli.praca=[...new Set(pl.paineis.map(p=>cidade(p.end)).filter(Boolean))].map(s=>s.toUpperCase()).join(" / ");
