@@ -535,7 +535,7 @@ function buildSlides(D0,A,mode){ migKit(D0);
   var RX=8.2, RW=SW-RX-0.6;
   S.text(RX,0.95,RW,0.3,'SOBRE A MEGA MÍDIA OOH',{size:9.5,f:'B',color:C.PINK,spc:200}); S.rect(RX+0.02,1.32,0.9,0.06,{fill:C.PINK});
   S.text(RX,1.6,RW,2.3,K.sobre||'',{size:14,f:'L',color:C.WHITE,ls:1.15});
-  [['Mídia OOH','Diversas opções de mídias'],['Comunicação visual','Equipe profissional capacitada'],['Projetos especiais','Qualquer projeto em Minas Gerais']].forEach(function(t,i){ var y=4.1+i*0.62; S.oval(RX+0.02,y+0.1,0.13,0.13,{fill:C.PINK}); S.text(RX+0.32,y,RW-0.3,0.28,t[0],{size:12,f:'M',color:C.WHITE}); S.text(RX+0.32,y+0.27,RW-0.3,0.26,t[1],{size:9.5,f:'L',color:'CCCCE0'}); });
+  [['Mídia OOH','Diversas opções de mídias'],['Comunicação visual','Equipe profissional capacitada'],['Veículo exclusivo','Circuito de LED do Mercado Central e do Parque Guanabara']].forEach(function(t,i){ var y=4.1+i*0.62; S.oval(RX+0.02,y+0.1,0.13,0.13,{fill:C.PINK}); S.text(RX+0.32,y,RW-0.3,0.28,t[0],{size:12,f:'M',color:C.WHITE}); S.text(RX+0.32,y+0.27,RW-0.3,0.26,t[1],{size:9.5,f:'L',color:'CCCCE0'}); });
   S.text(RX,6.85,RW,0.3,K.selo||'',{size:10,f:'M',color:'CCCCE0'});
   push(S);
 
@@ -546,7 +546,7 @@ function buildSlides(D0,A,mode){ migKit(D0);
   logoAt(S,A.logoW,0.7,6.3,0.62);
   S.text(6.3,0.62,5,0.3,'SOBRE A MEGA',{size:10,f:'B',color:C.PINK,spc:220}); S.text(6.3,0.92,6.4,0.7,'Quem somos',{size:28,f:'M',color:C.NAVY});
   S.text(6.3,1.85,6.4,2.4,D.kit.sobre,{size:14,f:'L',color:C.INK,ls:1.3});
-  [['Mídia OOH','Diversas opções de mídias'],['Comunicação visual','Equipe profissional capacitada'],['Projetos especiais','Qualquer projeto em Minas Gerais']].forEach(function(t,i){ var x=6.3+i*2.18;
+  [['Mídia OOH','Diversas opções de mídias'],['Comunicação visual','Equipe profissional capacitada'],['Veículo exclusivo','Circuito de LED do Mercado Central e do Parque Guanabara']].forEach(function(t,i){ var x=6.3+i*2.18;
     card(S,x,4.45,2.04,1.75,0.14); S.text(x+0.15,4.58,1,0.45,'0'+(i+1),{size:20,f:'M',color:C.PINK}); S.text(x+0.15,5.02,1.8,0.4,t[0],{size:11.5,f:'M',color:C.NAVY}); S.text(x+0.15,5.5,1.8,0.6,t[1],{size:9.5,f:'L',color:C.MID,ls:1.0}); });
   pill(S,6.3,6.5,4.2,0.4,'Atendimento exclusivo e personalizado',{fill:C.PINK_S,color:C.PINK_D,size:9.5}); push(S);
 

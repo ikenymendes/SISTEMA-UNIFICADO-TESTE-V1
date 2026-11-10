@@ -93,7 +93,7 @@ var DEF=function(){ return {
   investTitulo:'Plataforma de mídia OOH',pagamento:'Forma de pagamento: em __ parcelas, com vencimento a partir de __/__/____.',validade:'Proposta válida por 07 (sete) dias. Valores sujeitos à disponibilidade dos pontos.',
   cliente:'',resp:{nome:'Keny Mendes',cargo:'Coordenador Operacional',email:'operacional@megamidiaooh.com.br',tel1:'(31) 98407-4135',tel2:'(31) 3267-5087',site:'www.megamidiaooh.com.br'},fotoCapa:'capa.jpg',fotoContra:null},
  specChips:{led:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']],banca:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500 · 800','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']]},
- pontos:[], libMap:{}, lib:Object.assign({},DEFLIB), sepFotos:{}, mapStyle:'esri_street', 
+ pontos:[], libMap:{}, lib:Object.assign({},DEFLIB), sepFotos:{}, mapStyle:'mega', 
  mercado:{circuito:'Circuito de 8 telas de LED',nTelas:8,lat:-19.9231747,lng:-43.943164,fotos:['mercado.jpg'],
   texto:'Maior mercado da América Latina e um dos principais pontos turísticos e gastronômicos de BH, recebendo visitantes do mundo todo.',
   tiles:[['400+','lojas'],['2.600','empregos diretos'],['15 mi','pessoas por ano'],['40 mil','pessoas/dia (meio de semana)'],['63 mil','veículos por mês'],['420','vagas rotativas']],
@@ -135,8 +135,10 @@ var tileCache={}, mapCache={}, mapFail=0;
 function tileLoad(u,nocount){ if(!tileCache[u]) tileCache[u]=new Promise(function(res){ var i=new Image(); i.crossOrigin='anonymous'; i.onload=function(){res(i)}; i.onerror=function(){ if(!nocount) mapFail++; res(null); }; i.src=u; }); return tileCache[u]; }
 function osmUrl(z,x,y){ var n=1<<z; x=((x%n)+n)%n; return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png'; }
 function tileAny(st,z,x,y){ if(ONLINE) return Promise.resolve(null); var alt=mapSt(st)==='osm'?tileUrl('esri_street',z,x,y):osmUrl(z,x,y); return tileLoad(tileUrl(st,z,x,y),true).then(function(im){ return im||tileLoad(alt,false); }); }
-function mapSt(st){ return ({esri_street:1,esri_gray:1,osm:1})[st]?st:'esri_street'; }
-function tileUrl(st,z,x,y){ st=mapSt(st); var n=1<<z; x=((x%n)+n)%n; if(st==='osm') return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png'; var svc=st==='esri_gray'?'Canvas/World_Light_Gray_Base':'World_Street_Map'; return 'https://server.arcgisonline.com/ArcGIS/rest/services/'+svc+'/MapServer/tile/'+z+'/'+y+'/'+x; }
+function mapSt(st){ return ({mega:1,esri_street:1,esri_gray:1,osm:1})[st]?st:'mega'; }
+function esriUrl(svc,z,x,y){ var n=1<<z; x=((x%n)+n)%n; return 'https://server.arcgisonline.com/ArcGIS/rest/services/'+svc+'/MapServer/tile/'+z+'/'+y+'/'+x; }
+function refUrl(z,x,y){ return esriUrl('Canvas/World_Light_Gray_Reference',z,x,y); }
+function tileUrl(st,z,x,y){ st=mapSt(st); if(st==='osm') return 'https://tile.openstreetmap.org/'+z+'/'+(((x%(1<<z))+(1<<z))%(1<<z))+'/'+y+'.png'; var svc=(st==='esri_gray'||st==='mega')?'Canvas/World_Light_Gray_Base':'World_Street_Map'; return esriUrl(svc,z,x,y); }
 function mapAttr(st){ st=mapSt(st); return st==='osm'?'© OpenStreetMap':'Tiles © Esri'; }
 function worldXY(lat,lng,z){ var s=256*Math.pow(2,z), sn=Math.sin(lat*Math.PI/180); return {x:(lng+180)/360*s,y:(0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*s}; }
 function pinDraw(c,x,y,s){ var g=c.createRadialGradient(x,y,0,x,y,s*2.4); g.addColorStop(0,'rgba(255,0,102,.28)'); g.addColorStop(1,'rgba(255,0,102,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,s*2.4,0,7); c.fill();
@@ -159,8 +161,12 @@ async function renderMap(pts,W,H,zoom,big){
   for(var ty=Math.floor(y0/256);ty<=Math.floor((y0+H/F)/256);ty++) for(var tx=Math.floor(x0/256);tx<=Math.floor((x0+W/F)/256);tx++) (function(tx,ty){ jobs.push(tileAny(st,z,tx,ty).then(function(im){ if(im) c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); })); })(tx,ty);
   await Promise.all(jobs);
   if(mapFail>before){ c.strokeStyle='#fff'; c.lineWidth=H*0.012; for(var i=0;i<6;i++){ c.beginPath(); c.moveTo(0,H*(i/5)); c.lineTo(W,H*((i*37%5)/5+0.1)); c.stroke(); } }
-  /* realce: cores vivas e contraste para as ruas se destacarem */
-  if(!mapFail||mapFail<=before){ try{ c.filter='saturate(1.25) contrast(1.12)'; c.drawImage(cv,0,0); c.filter='none'; }catch(e){} }
+  if(mapSt(st)==='mega'){
+    /* fundo branco Mega: leve tom azul-claro, rótulos de ruas por cima e mais contraste para ficarem legíveis */
+    try{ c.save(); c.globalAlpha=0.05; c.fillStyle='#000066'; c.fillRect(0,0,W,H); c.restore(); }catch(e){}
+    var jobsR=[]; for(var rty=Math.floor(y0/256);rty<=Math.floor((y0+H/F)/256);rty++) for(var rtx=Math.floor(x0/256);rtx<=Math.floor((x0+W/F)/256);rtx++) (function(tx,ty){ jobsR.push(tileLoad(refUrl(z,tx,ty),true).then(function(im){ if(im){ try{ c.filter='contrast(1.35)'; }catch(e){} c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); try{ c.filter='none'; }catch(e){} } })); })(rtx,rty);
+    await Promise.all(jobsR);
+  } else if(!mapFail||mapFail<=before){ try{ c.filter='saturate(1.25) contrast(1.12)'; c.drawImage(cv,0,0); c.filter='none'; }catch(e){} }
   var s=Math.round(Math.min(W,H)*(pts.length>1?0.02:0.034));
   pts.forEach(function(p){ var w=worldXY(p.lat,p.lng,z); var px=(w.x-x0)*F, py=(w.y-y0)*F+(pts.length>1?0:Math.round(H*.05)); if(pts.length>1){ c.fillStyle='#fff'; c.beginPath(); c.arc(px,py,s*0.9,0,7); c.fill(); c.fillStyle='#ff0066'; c.beginPath(); c.arc(px,py,s*0.62,0,7); c.fill(); } else pinDraw(c,px,py,s); });
   if(!ONLINE){ c.font='400 '+Math.round(H*.016)+'px Poppins,Segoe UI,sans-serif'; c.textAlign='right'; var at=mapAttr(st), aw=c.measureText(at).width+16; c.fillStyle='rgba(255,255,255,.85)'; c.fillRect(W-aw-8,H-H*.045-6,aw,H*.045); c.fillStyle='#4a4a6a'; c.fillText(at,W-16,H-H*.045+H*.016*0.8-6); }
