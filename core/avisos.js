@@ -41,8 +41,19 @@ var AVISOS = (function () {
   /* ------------------------------------------------------------------
      RECEBER (todos os perfis)
      ------------------------------------------------------------------ */
-  var visto = 0, busy = false, pilha = null, euId = '';
+  var visto = 0, busy = false, pilha = null, euId = '', vistos = null;
   function chave() { return 'avisos_visto_' + euId; }
+  /* ids já mostrados: o banco guarda a hora em microssegundos e o navegador em milissegundos,
+     então só a hora não basta para saber o que já apareceu (era isso que repetia o aviso) */
+  function carregaVistos() {
+    try { vistos = JSON.parse(localStorage.getItem('avisos_ids_' + euId) || '[]'); } catch (e) { vistos = []; }
+    if (!Array.isArray(vistos)) vistos = [];
+  }
+  function guardaVisto(id) {
+    if (vistos.indexOf(id) < 0) vistos.push(id);
+    if (vistos.length > 200) vistos = vistos.slice(-200);
+    try { localStorage.setItem('avisos_ids_' + euId, JSON.stringify(vistos)); } catch (e) {}
+  }
   function pra(a, eu) { return a.destino === 'todos' || a.destino === eu.papel || (a.destino === 'usuario' && a.destino_id === eu.id); }
 
   function podeNotificar() { return 'Notification' in window && Notification.permission === 'granted'; }
@@ -81,7 +92,8 @@ var AVISOS = (function () {
     if (busy || typeof MEGA === 'undefined') return;
     var cli = MEGA.client, eu = MEGA.perfil && MEGA.perfil();
     if (!cli || !eu || !eu.id || !eu.ativo) return;
-    if (euId !== eu.id) { euId = eu.id; visto = 0; }
+    if (euId !== eu.id) { euId = eu.id; visto = 0; vistos = null; }
+    if (!vistos) carregaVistos();
     if (!visto) {
       try { visto = +localStorage.getItem(chave()) || 0; } catch (e) {}
       if (!visto) visto = Date.now() - 12 * 36e5; /* primeira vez: só as últimas 12 horas */
@@ -90,8 +102,13 @@ var AVISOS = (function () {
     try {
       var r = await cli.from('avisos').select('*').gt('criado_em', new Date(visto).toISOString()).order('criado_em', { ascending: true }).limit(20);
       if (r.error) throw r.error;
+      var antes = visto;
       (r.data || []).forEach(function (a) {
-        visto = Math.max(visto, new Date(a.criado_em).getTime());
+        var t = new Date(a.criado_em).getTime();
+        visto = Math.max(visto, t);
+        if (vistos.indexOf(a.id) >= 0) return; /* já apareceu */
+        if (t <= antes) { guardaVisto(a.id); return; } /* mesmo milissegundo do último visto: já tinha aparecido */
+        guardaVisto(a.id);
         if (!pra(a, eu)) return;
         if (a.criado_por === eu.id && a.destino !== 'usuario') return; /* não avisa quem enviou (só no teste "para mim") */
         cartao(a);
