@@ -21,6 +21,11 @@ function fpMark(txt, q) {
   if (i < 0) return e(t);
   return e(t.slice(0, i)) + "<mark>" + e(t.slice(i, i + q.length)) + "</mark>" + e(t.slice(i + q.length));
 }
+/* dias desde o início da campanha (0 = começou hoje) */
+const fpDiasNoAr = (v) =>
+  v.ini ? Math.round((new Date(dia() + "T12:00:00") - new Date(v.ini + "T12:00:00")) / 864e5) : 0;
+const FP_ATRASO = 3; /* alerta: 3 dias no ar sem foto feita ou sem verificar */
+const fpAtrasado = (c) => c.st !== "validada" && fpDiasNoAr(c.v) >= FP_ATRASO;
 const FP_ST = { pendente: "p", refazer: "p", feita: "f", validada: "v" },
   FP_TXT = { pendente: "Pendente", refazer: "Refazer", feita: "A validar", validada: "Validada" };
 /* pontos com clientes no ar hoje */
@@ -39,8 +44,11 @@ function fpPontos() {
     g.k = np ? "p" : nf ? "f" : "v";
     g.n = np || nf;
     g.fim = g.cli.map((c) => c.v.fim || "9999").sort()[0];
+    g.atr = g.cli.filter(fpAtrasado).length;
+    /* prioridade = campanha que começou primeiro (a mais antiga sem foto vem antes) */
+    g.ini = g.cli.filter((c) => c.st !== "validada").map((c) => c.v.ini || "9999").sort()[0] || "9999";
     const o = { p: 0, f: 1, v: 2 };
-    g.cli.sort((a, b) => o[FP_ST[a.st]] - o[FP_ST[b.st]] || (a.v.fim || "9").localeCompare(b.v.fim || "9"));
+    g.cli.sort((a, b) => o[FP_ST[a.st]] - o[FP_ST[b.st]] || (a.v.ini || "9").localeCompare(b.v.ini || "9"));
     return g;
   });
 }
@@ -75,33 +83,43 @@ function fpCard(g, q) {
     .map((c) => {
       const v = c.v,
         k = FP_ST[c.st],
-        sub = [(v.ev && v.ev.nome) || "", v.fim ? "até " + fmt(v.fim).slice(0, 5) : ""].filter(Boolean).join(" · "),
+        sub = [(v.ev && v.ev.nome) || "", v.ini ? "início " + fmt(v.ini).slice(0, 5) : "", v.fim ? "até " + fmt(v.fim).slice(0, 5) : ""].filter(Boolean).join(" · "),
         d = v.fim ? Math.round((new Date(v.fim + "T12:00:00") - new Date(hj + "T12:00:00")) / 864e5) : 99,
+        dn = fpDiasNoAr(v),
+        atr = fpAtrasado(c)
+          ? `<span class="fp-atr">⚠ ${dn} dias no ar ${c.st === "feita" ? "sem verificar" : "sem foto"}</span>`
+          : "",
         urg = k === "p" && d <= 3 ? ` <span class="fp-urg">⏱ ${d <= 0 ? "sai do ar hoje" : "faltam " + d + (d === 1 ? " dia" : " dias")}</span>` : "";
-      return `<div class="fp-cli"><span><b>${fpMark(v.cliente, q)}</b><small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && c.by ? ` · foto feita por ${e(c.by)}` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
+      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && c.by ? ` · foto feita por ${e(c.by)}` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
     })
     .join("");
-  return `<div class="fp-pt ${g.k}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span><h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
+  return `<div class="fp-pt ${g.k}${g.atr ? " atrasado" : ""}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span>${g.atr ? `<div class="fp-alerta">⚠ ${g.atr} ${g.atr === 1 ? "foto atrasada" : "fotos atrasadas"}</div>` : ""}<h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
 }
 function fpList() {
   const q = fpN(fpQ.trim()),
     all = fpPontos().filter((g) => fpBusca(g, q)),
     c = { p: 0, f: 0, v: 0 };
   all.forEach((g) => c[g.k]++);
+  c.a = all.filter((g) => g.atr).length;
   const vis = all
-    .filter((g) => fpF === "t" || g.k === fpF || g.p.id === fpFixo)
-    .sort((a, b) => ({ p: 0, f: 1, v: 2 })[a.k] - ({ p: 0, f: 1, v: 2 })[b.k] || b.n - a.n || a.fim.localeCompare(b.fim));
+    .filter((g) => fpF === "t" || (fpF === "a" ? g.atr : g.k === fpF) || g.p.id === fpFixo)
+    .sort(
+      (a, b) =>
+        ({ p: 0, f: 1, v: 2 })[a.k] - ({ p: 0, f: 1, v: 2 })[b.k] || a.ini.localeCompare(b.ini) || b.n - a.n || a.fim.localeCompare(b.fim),
+    );
   const ch = (k, rot, dot) =>
-    `<button class="${fpF === k ? "on" : ""}" data-a="fpf" data-v="${k}">${dot ? `<span class="dot ${k}"></span>` : ""}${rot}<i>${k === "t" ? all.length : c[k]}</i></button>`;
+    `<button class="${fpF === k ? "on" : ""}${k === "a" ? " atr" : ""}" data-a="fpf" data-v="${k}">${dot ? `<span class="dot ${k}"></span>` : ""}${rot}<i>${k === "t" ? all.length : c[k]}</i></button>`;
   const vazio = !all.length
     ? q
       ? "Nenhum ponto com clientes no ar encontrado para essa busca."
       : "Nenhum cliente no ar hoje."
     : fpF === "p"
       ? "Nenhum ponto precisando de foto. Tudo em dia! 🎉"
-      : "Nenhum ponto nesta situação.";
+      : fpF === "a"
+        ? "Nenhuma foto atrasada. 👏"
+        : "Nenhum ponto nesta situação.";
   return (
-    `<div class="fp-fil">${ch("p", "Precisa de foto")}${ch("f", "A validar", 1)}${ch("v", "Em dia", 1)}${ch("t", "Todos")}</div>` +
+    `<div class="fp-fil">${c.a ? ch("a", "⚠ Atrasadas") : ""}${ch("p", "Precisa de foto")}${ch("f", "A validar", 1)}${ch("v", "Em dia", 1)}${ch("t", "Todos")}</div>` +
     (vis.length ? `<div class="fp-grade">${vis.map((g) => fpCard(g, q)).join("")}</div>` : `<div class="fp-vazio">${vazio}</div>`) +
     `<span id="fpn" hidden>${all.length}</span>`
   );
@@ -110,11 +128,12 @@ function fotosPonto() {
   const all = fpPontos(),
     c = { p: 0, f: 0, v: 0 };
   all.forEach((g) => c[g.k]++);
+  const na = all.reduce((s, g) => s + g.atr, 0);
   const n = fpList();
   const tot = (n.match(/<span id="fpn" hidden>(\d+)<\/span>/) || [])[1] || 0;
   return `<div class="fpw"><div class="fp-blob a"></div><div class="fp-blob b"></div><div class="fp-in">
 <div class="fp-cab"><div><small>Fluxo do VT</small><h1>📸 Fotos <i>por ponto</i></h1></div>
-<div class="fp-kp"><div class="p"><b>${c.p}</b><span>precisam de foto</span></div><div class="f"><b>${c.f}</b><span>a validar</span></div><div class="v"><b>${c.v}</b><span>em dia</span></div></div></div>
+<div class="fp-kp">${na ? `<div class="a" data-a="fpf" data-v="a"><b>${na}</b><span>⚠ fotos atrasadas</span></div>` : ""}<div class="p"><b>${c.p}</b><span>precisam de foto</span></div><div class="f"><b>${c.f}</b><span>a validar</span></div><div class="v"><b>${c.v}</b><span>em dia</span></div></div></div>
 <label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fpq" type="search" autocomplete="off" placeholder="Buscar endereço, ponto, região ou cliente…" value="${e(fpQ)}"><em id="fpc">${tot} ${tot == 1 ? "ponto" : "pontos"}</em></label>
 <div id="fpl">${n}</div></div></div>`;
 }

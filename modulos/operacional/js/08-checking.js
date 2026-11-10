@@ -36,6 +36,8 @@ const ckAbtn = (v) =>
 const ckSt = (v, i) => (S.fotos[v.id + "__" + i] || {}).status || "pendente";
 const ckPronto = (v) =>
   !!(v.paineis && v.paineis.length) && v.paineis.every((i) => ckSt(v, i) === "validada");
+/* alerta: campanha no ar há 3 dias ou mais e o checking ainda não foi feito */
+const ckAtr = (v) => !v.chk && !!v.ini && fpDiasNoAr(v) >= 3;
 const ckLista = () => S.vts.filter((v) => !v.chk && ckPronto(v));
 function ckPayload(x) {
   const tr = ck.troca && ck.id === x.id ? ck.troca : null;
@@ -167,7 +169,7 @@ function ckview() {
     }
     return `<div class="card"><div class="row"><div><b>${ck.troca ? "Novo checking (troca de vídeo)" : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
   }
-  const L = ckLista(),
+  const L = ckLista().sort((a, b) => (a.ini || "9").localeCompare(b.ini || "9")),
     W = S.vts.filter(
       (v) =>
         (!v.chk && !ckPronto(v) && (v.paineis || []).length && !isConc(v)) ||
@@ -182,17 +184,20 @@ function ckview() {
   h +=
     L.map(
       (v) =>
-        `<div class="card"><div class="row"><div><b>${e(v.cliente)}</b> ${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""} <span class="mu">${e(fmt(v.ini) || "")} → ${e(fmt(v.fim) || "")} · ${(v.paineis || []).length} painéis · todos validados</span></div>${ckAbtn(v)}<button class="sm pri" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`,
+        `<div class="card${ckAtr(v) ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> ${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""} <span class="mu">${e(fmt(v.ini) || "")} → ${e(fmt(v.fim) || "")} · ${(v.paineis || []).length} painéis · todos validados</span>${ckAtr(v) ? `<div class="ck-alerta">⚠ Checking atrasado · campanha no ar há ${fpDiasNoAr(v)} dias</div>` : ""}</div>${ckAbtn(v)}<button class="sm pri" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`,
     ).join("") ||
     '<div class="card mu">Nenhum VT pronto ainda. Quando todas as fotos de um VT forem validadas na Gestão, ele aparece aqui automaticamente.</div>';
-  const pend = W.filter((v) => (v.paineis || []).some((i) => ckSt(v, i) === "validada"));
+  const pend = W.filter((v) => (v.paineis || []).some((i) => ckSt(v, i) === "validada")).sort((a, b) =>
+    (a.ini || "9").localeCompare(b.ini || "9"),
+  );
   if (pend.length)
     h +=
       `<h2>Em andamento (aguardando validação)</h2>` +
       pend
         .map((v) => {
           const n = v.paineis.filter((i) => ckSt(v, i) === "validada").length;
-          return `<div class="card"><div class="row"><div><b>${e(v.cliente)}</b> <span class="mu">${n}/${v.paineis.length} fotos validadas</span></div>${ckAbtn(v)}<button class="sm" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking mesmo assim</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`;
+          const at = ckAtr(v);
+          return `<div class="card${at ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> <span class="mu">${n}/${v.paineis.length} fotos validadas</span>${at ? `<div class="ck-alerta">⚠ Campanha no ar há ${fpDiasNoAr(v)} dias e ${v.paineis.length - n} foto(s) ainda não feitas ou verificadas</div>` : ""}</div>${ckAbtn(v)}<button class="sm" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking mesmo assim</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`;
         })
         .join("");
   return h;
