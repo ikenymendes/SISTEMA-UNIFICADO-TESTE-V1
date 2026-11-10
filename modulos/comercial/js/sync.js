@@ -18,7 +18,7 @@ function dataBR(iso){ var d=new Date(iso); return d.toLocaleDateString('pt-BR')+
 function erroMsg(e){ return (e&&(e.message||e.error_description||e.code))||String(e); }
 
 /* ---- aplicar dados vindos do banco ---- */
-function applyCfg(data){ CFGSRV=JSON.parse(JSON.stringify(data)); CFG_KEYS.forEach(function(k){ if(data[k]!==undefined) D[k]=mergeDef(DEF0[k],data[k]); }); D.kit.cliente=L.cliente||''; if(!ME.admin&&!ME.gerente){ if(L.precos) D.precos=L.precos; if(L.comissao!=null) D.comissao=L.comissao; if(L.bv!=null) D.bv=L.bv; if(L.modoGeral) D.modoGeral=L.modoGeral; } }
+function applyCfg(data){ CFGSRV=JSON.parse(JSON.stringify(data)); CFG_KEYS.forEach(function(k){ if(data[k]!==undefined) D[k]=mergeDef(DEF0[k],data[k]); }); D.kit.cliente=L.cliente||''; if(!ME.admin&&!ME.gerente){ if(L.precos) D.precos=L.precos; if(L.comissao!=null) D.comissao=L.comissao; if(L.bv!=null) D.bv=L.bv; if(L.modoGeral) D.modoGeral=L.modoGeral; } D.baseSP=!!L.baseSP; }
 function applyPontos(rows){ lastPt={}; D.pontos=rows.map(function(r){ var p=Object.assign({},r); p.sel=!!L.sel[p.id]; lastPt[p.id]=ptJson(p); return p; }).sort(function(a,b){ return (a.ord==null?1e9:a.ord)-(b.ord==null?1e9:b.ord); }); ordenaPts(D); sincCircuitos(D); }
 
 async function carregarDados(){
@@ -63,7 +63,7 @@ async function syncOut(){
   }catch(e){ console.error(e); setSaved('erro ao salvar',true); toast('Não foi possível salvar: '+erroMsg(e),true); }
   finally{ syncing=false; if(syncAgain){ syncAgain=false; syncOut(); } }
 }
-function persistLocal(){ L.sel={}; D.pontos.forEach(function(p){ if(p.sel) L.sel[p.id]=1; }); L.cliente=D.kit.cliente||''; if(!ME.admin&&!ME.gerente){ L.precos=D.precos; L.comissao=D.comissao; L.bv=D.bv; L.modoGeral=D.modoGeral; } lsPut(); }
+function persistLocal(){ L.sel={}; D.pontos.forEach(function(p){ if(p.sel) L.sel[p.id]=1; }); L.cliente=D.kit.cliente||''; L.baseSP=!!D.baseSP; if(!ME.admin&&!ME.gerente){ L.precos=D.precos; L.comissao=D.comissao; L.bv=D.bv; L.modoGeral=D.modoGeral; } lsPut(); }
 function dirty(){ persistLocal(); if(ME.admin&&READY){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOut,1200); } else if(ME.gerente&&READY&&(curTab==='precos'||curTab==='precosp')){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOutGer,1200); } }
 /* Gerente comercial: na aba Preços base edita e salva os preços base; nas demais abas age como comercial (ajustes só na própria proposta). */
 function baseEditavel(){ return ME.admin||(ME.gerente&&(curTab==='precos'||curTab==='precosp')); }
@@ -72,7 +72,7 @@ async function syncOutGer(){
   if(!ME.gerente||!READY) return; if(syncing){ syncAgain=true; return; } syncing=true; setSaved('salvando…');
   try{
     var mud=[]; D.pontos.forEach(function(p){ var js=ptJson(p); if(lastPt[p.id]!==js) mud.push([p,js]); });
-    if(mud.length){ ignorarRt=Date.now()+3000; await Store.gravarValoresPontos(mud.map(function(x){ var o={id:x[0].id}; if(x[0].liq!==undefined) o.liq=x[0].liq; if(x[0].prod!==undefined) o.prod=x[0].prod; return o; })); mud.forEach(function(x){ lastPt[x[0].id]=x[1]; }); }
+    if(mud.length){ ignorarRt=Date.now()+3000; await Store.gravarValoresPontos(mud.map(function(x){ var o={id:x[0].id}; if(x[0].liq!==undefined) o.liq=x[0].liq; if(x[0].prod!==undefined) o.prod=x[0].prod; if(x[0].liqsp!==undefined) o.liqsp=x[0].liqsp; if(x[0].prodsp!==undefined) o.prodsp=x[0].prodsp; return o; })); mud.forEach(function(x){ lastPt[x[0].id]=x[1]; }); }
     var c=stable(cfgSnapshot()); if(c!==lastCfg){ await Store.gravarPrecosBase({precos:D.precos,comissao:D.comissao,bv:D.bv,modoGeral:D.modoGeral}); lastCfg=c; var cfg=await Store.lerConfig(); if(cfg){ CFGSRV=JSON.parse(JSON.stringify(cfg)); remoteSig=stable(cfg); } }
     setSaved('preços salvos às '+hora());
   }catch(e){ console.error(e); setSaved('erro ao salvar',true); toast('Não foi possível salvar: '+erroMsg(e),true); }

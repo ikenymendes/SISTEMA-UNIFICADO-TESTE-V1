@@ -18,7 +18,7 @@ function showTab(t){
   var v=$('#view'); v.innerHTML='';
   var fn=({dash:viewDashboard,kit:viewKit,pontos:viewPontos,sel:viewSelecao,sug:viewSugestoes,minhas:viewMinhasSugestoes,hist:viewHistorico,usuarios:viewUsuarios,
     fotos:viewFotos,mercado:function(v){viewSchema(v,'mercado',MERC)},guanabara:function(v){viewSchema(v,'guanabara',GUAN)},brasilia:function(v){viewSchema(v,'brasilia',BRAS)},
-    precos:viewPrecos,precosp:viewPrecosSP,gerar:viewGerar,kitp:function(v){viewFluxo(v,'kitp')},prop:function(v){viewFluxo(v,'prop')}})[t];
+    precos:function(v){viewPrecosBase(v,false)},precosp:function(v){viewPrecosBase(v,true)},gerar:viewGerar,kitp:function(v){viewFluxo(v,'kitp')},prop:function(v){viewFluxo(v,'prop')}})[t];
   if(!fn) return; try{ fn(v); }catch(e){ console.error(e); v.appendChild(h('p',{class:'status err',text:'Erro ao abrir a aba: '+erroMsg(e)})); } window.scrollTo(0,0);
 }
 

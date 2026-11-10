@@ -231,7 +231,7 @@ function pointCard(p,ix){
 /* ---------- preços ---------- */
 function viewPrecos(v,embed){ migPrecos(D); var EDITA=baseEditavel(), soEnd=function(r){ return ehEstatico(r)&&!embed&&EDITA; };
   if(!document.getElementById('ptab-fit')){ var stl=document.createElement('style'); stl.id='ptab-fit'; stl.textContent='.ptab{width:100%;table-layout:fixed;border-collapse:collapse}.ptab th,.ptab td{padding:6px 4px;font-size:12.5px;vertical-align:middle;overflow-wrap:anywhere}.ptab input,.ptab select{width:100%!important;min-width:0!important;box-sizing:border-box;padding:6px 7px;font-size:12.5px}.ptab th:nth-child(1){width:23%}.ptab th:nth-child(2){width:6%}.ptab th:nth-child(3){width:9%}.ptab th:nth-child(4){width:9%}.ptab th:nth-child(5){width:8%}.ptab th:nth-child(6){width:14%}.ptab th:nth-child(7){width:8%}.ptab th:nth-child(8){width:14%}.ptab th:nth-child(9),.ptab th:nth-child(10){width:4%}'+'.ptab thead th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;text-align:left;font-weight:600;opacity:.7;padding-bottom:8px;overflow-wrap:normal;word-break:normal}.ptab tbody tr.gh td{padding:10px 6px}.ptab tr.endl td{border-top:1px solid rgba(0,0,102,.07)}.ptab tr.endl.sub td{background:rgba(0,0,102,.02)}.ptab .calc{text-align:left}.ptab td:nth-child(n+6){text-align:right}.ptab td input{text-align:right}.ptab td:first-child input{text-align:left}.tw{overflow-x:auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 16px;align-items:end;margin-bottom:14px}.grid select,.grid input{width:100%;box-sizing:border-box}'; document.head.appendChild(stl); }
-  if(!embed){ var h2=h('h2',{text:'Tabela de preços e investimento '}); var vb=h('small',{text:'· versão 20261110a'}); vb.style.cssText='font-size:11px;font-weight:500;opacity:.55;'; h2.appendChild(vb); v.appendChild(h2); }
+  if(!embed){ var h2=h('h2',{text:'Tabela de preços e investimento '}); var vb=h('small',{text:'· versão 20261110b'}); vb.style.cssText='font-size:11px;font-weight:500;opacity:.55;'; h2.appendChild(vb); v.appendChild(h2); }
   v.appendChild(h('p',{class:'hint dica-longa',text:'Preencha o valor de tabela UNITÁRIO (por painel, tela ou banca) e o desconto: o valor negociado começa igual ao de tabela e o desconto o reduz; se você escolher mais de um ponto do formato (ou digitar a quantidade em Pontos), o valor é somado (unitário × quantidade). Circuitos (Mercado Central e Parque Guanabara) têm um preço só para o circuito. O valor negociado e a página de Investimento Total são calculados sozinhos. Estáticos (empenas, frontlight, mega painéis, outdoor, bancas estáticas, Metrô-DF) têm o preço de cada endereço logo abaixo da linha; outdoor é por bi-semana e os demais formatos são mensais. O valor é bruto ou líquido para todas as linhas (campo acima). Pontos vêm da contagem dos pontos cadastrados (Mercado Central e Parque Guanabara usam o número de telas). Inserções: é sempre o MÍNIMO por tela/dia (ex.: Mercado Central 220 × 8 telas; Parque Guanabara 250 × 10 telas) e o total é calculado (telas × mínimo).'}));
   var top=h('div',{class:'grid'}), ms=h('select',{},[['bruto','Bruto'],['liquido','Líquido (desconta comissão da agência e BV)']].map(function(o){ var op=h('option',{value:o[0],text:o[1]}); if(D.modoGeral===o[0]) op.selected=true; return op; })); ms.addEventListener('change',function(){ D.modoGeral=ms.value; dirty(); recalc(); });
   var PERFIS=[['direto','Cliente direto (sem comissão)',0,0],['agencia','Agência (25%)',25,0],['planejador','Agência + planejador (25% + 25%)',25,25],['outro','Personalizado',null,null]]; function perfilAtual(){ var c=num(D.comissao), b=num(D.bv), f=PERFIS.filter(function(x){ return x[2]!==null&&x[2]===c&&x[3]===b; })[0]; return f?f[0]:'outro'; } var ps=h('select',{},PERFIS.map(function(o){ return h('option',{value:o[0],text:o[1]}); })); function syncPerfil(){ ps.value=perfilAtual(); } syncPerfil(); var icom=inp(D,'comissao',{num:true,onchange:function(){ syncPerfil(); recalc(); }}), ibv=inp(D,'bv',{num:true,onchange:function(){ syncPerfil(); recalc(); }}); ps.addEventListener('change',function(){ var f=PERFIS.filter(function(x){ return x[0]===ps.value; })[0]; if(f&&f[2]!==null){ D.comissao=f[2]; D.bv=f[3]; icom.value=f[2]; ibv.value=f[3]; dirty(); recalc(); } }); top.appendChild(field('Valor padrão do kit',ms)); top.appendChild(field('Perfil do cliente',ps,'Agência: comissão de 25%. Planejador: 25% de comissão + 25% de BV, um sobre o outro. Direto: sem desconto.')); top.appendChild(field('Comissão da agência (%)',icom)); top.appendChild(field('BV à parte (%)',ibv)); if(ME.admin) top.appendChild(field('Alertar desconto acima de (%)',inp(D,'descAlerta',{num:true}))); v.appendChild(top);
@@ -249,16 +249,16 @@ function rowsEst(r,i){
     if(ME.admin){ hd.appendChild(h('td',{},[h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})])); hd.appendChild(h('td',{},[h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})])); } else { hd.appendChild(h('td')); hd.appendChild(h('td')); }
     var out=[hd];
     if(!lista.length){ var er=h('tr',{class:'endl'+(vz?' vazio':'')}), ec=h('td',{colspan:'10'}); ec.appendChild(h('span',{class:'hint',text:ME.admin||baseEditavel()?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); er.appendChild(ec); out.push(er); }
-    if(r.auto==='revista'&&lista.length){ var SL=selEstaticos(D,r.auto), n=SL.length, ref=SL.concat(lista), pl=null, pp=null; ref.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; });
+    if(r.auto==='revista'&&lista.length){ var SL=selEstaticos(D,r.auto), n=SL.length, ref=SL.concat(lista), pl=null, pp=null; ref.forEach(function(p){ if(!pl&&pLiq(p)>0) pl=p; if(!pp&&pProd(p)>0) pp=p; });
       var ps={id:'*'}, nm='Bancas estáticas · valor UNITÁRIO por banca (todas iguais) × '+n+(n===1?' ponto':' pontos');
-      out.push(linhaEst(r,ps,nm,'t','d',function(){ return pl?vlr(pl.liq)/fatorLiq(D):(ref[0]?vlr(ref[0].preco):0); },String(n),porBi?'Bi-semana':'Mensal',false,function(){ return n||0; }));
-      out.push(linhaProd(r,ps,'↳ Produção (unitária)',function(){ return pp?vlr(pp.prod):0; },String(n),function(){ return n||0; }));
+      out.push(linhaEst(r,ps,nm,'t','d',function(){ return pl?pLiq(pl)/fatorLiq(D):(ref[0]?vlr(ref[0].preco):0); },String(n),porBi?'Bi-semana':'Mensal',false,function(){ return n||0; }));
+      out.push(linhaProd(r,ps,'↳ Produção (unitária)',function(){ return pp?pProd(pp):0; },String(n),function(){ return n||0; }));
       return out; }
     lista.forEach(function(p){
       var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
-      out.push(linhaEst(r,p,nome,'t','d',function(){ var l=vlr(p.liq); return l>0?l/fatorLiq(D):vlr(p.preco); },'1',porBi?'Bi-semana':'Mensal',false));
+      out.push(linhaEst(r,p,nome,'t','d',function(){ var l=pLiq(p); return l>0?l/fatorLiq(D):vlr(p.preco); },'1',porBi?'Bi-semana':'Mensal',false));
     });
-    if(lista.length) out.push(linhaProd(r,{id:'#prod'},'↳ Produção (valor único) — digite o líquido',function(){ var t=0; selEstaticos(D,r.auto).forEach(function(p){ t+=vlr(p.prod); }); return t; },'',null));
+    if(lista.length) out.push(linhaProd(r,{id:'#prod'},'↳ Produção (valor único) — digite o líquido',function(){ var t=0; selEstaticos(D,r.auto).forEach(function(p){ t+=pProd(p); }); return t; },'',null));
     return out; }
   function linhaProd(r,p,rot,base,qtd,mult){ mult=mult||function(){return 1;};
     var tr=h('tr',{class:'endl sub'}), c0=h('td'), sp=h('span',{text:rot}); sp.style.cssText='padding-left:18px;opacity:.85;'; c0.appendChild(sp); tr.appendChild(c0);
@@ -301,49 +301,75 @@ function rowsEst(r,i){
 function filtroDonoSel(onchg){ var s=h('select',{},[h('option',{value:'',text:'Todas as propriedades'})].concat(DONOS.map(function(d){ var o=h('option',{value:d[0],text:d[1]}); if(filtroDono===d[0]) o.selected=true; return o; }))); s.addEventListener('change',function(){ filtroDono=s.value; onchg(); }); return s; }
 function donoField(p,onchg){ var s=h('select',{},DONOS.map(function(d){ var o=h('option',{value:d[0],text:d[1]}); if(donoDe(p)===d[0]) o.selected=true; return o; })); s.addEventListener('change',function(){ p.dono=s.value; if(onchg) onchg(); dirty(); }); return field('Propriedade do ponto',s,'MEGA, MEGA/R2 (sócio), Terceiros ou Padrão.'); }
 
-/* ---------- preço por endereço (empenas, outdoors e demais estáticos): cada endereço aparece abaixo da sua linha ---------- */
-function enderecosGrupo(k,periodo,nomeLinha){
-  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês', temProd=ESTATICOS.indexOf(k)>=0, edita=baseEditavel();
+/* ---------- preço por ponto (Preços base e Preços base SP): mesma tela, valores diferentes ---------- */
+function ptsFmt(k){ return k==='led_mega'?ptsOf(D,'led_mega').concat(ptsOf(D,'led_r2')):k==='banca_mega'?ptsOf(D,'banca_mega').concat(ptsOf(D,'banca_r2')):ptsOf(D,k); }
+function enderecosGrupo(k,periodo,nomeLinha,sp){
+  var porBi=/bi/i.test(String(periodo||''))||k==='outdoor', per=porBi?'bi-semana':'mês', temProd=ESTATICOS.indexOf(k)>=0, edita=baseEditavel(), fL=sp?'liqsp':'liq', fP=sp?'prodsp':'prod';
   var g=h('div',{class:'endgrp'}); g.style.cssText='width:100%;max-width:900px;box-sizing:border-box;margin:12px 0;padding:14px 16px;background:#fff;border:1px solid rgba(0,0,102,.12);border-radius:12px;overflow-x:auto;';
-  var lista=edita?ptsOf(D,k):selEstaticos(D,k);
+  var lista=edita?ptsFmt(k):selEstaticos(D,k);
   var t=h('h4',{text:(nomeLinha||'')+(edita?'':' · '+lista.length+' escolhido'+(lista.length===1?'':'s'))}); t.style.cssText='margin:0 0 10px;'; g.appendChild(t);
   if(!lista.length){ g.appendChild(h('p',{class:'hint',text:edita?'Nenhum ponto cadastrado neste formato.':'Nenhum endereço escolhido neste formato.'})); return g; }
-  if(k==='revista'&&edita){ var ap=h('div'); ap.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px;padding:10px;background:rgba(0,0,102,.05);border-radius:8px;'; var ai=h('input',{type:'text',placeholder:'Mínimo líquido (R$)'}), ap2=h('input',{type:'text',placeholder:'Produção líquida (R$)'}), ab=h('button',{class:'mini',text:'Aplicar a todas as bancas'}); ai.style.width=ap2.style.width='170px'; ab.addEventListener('click',function(){ var a=num(ai.value), b=num(ap2.value); ptsOf(D,k).forEach(function(p){ if(a>0) p.liq=a; if(b>0) p.prod=b; }); dirty(); showTab(curTab); }); ap.appendChild(h('span',{text:'Bancas estáticas têm o mesmo valor: '})); ap.appendChild(ai); ap.appendChild(ap2); ap.appendChild(ab); g.appendChild(ap); }
+  var srvDe=function(p,c){ try{ var o=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; return o[c]; }catch(e){ return undefined; } };
+  /* aviso de que um valor pré-definido está sendo alterado + comparação SP x padrão */
+  var avisos=function(box,campo,rot,ant,agora,padrao){ var m=[]; var a=vlr(ant), n=vlr(agora);
+    if(a>0&&Math.abs(a-n)>0.004) m.push('⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(a)+', agora '+(n>0?brl(n):'vazio')+'). As propostas novas passam a usar o novo valor.');
+    if(sp&&n>0&&padrao>0&&n<=padrao) m.push('⚠ O valor SP deve ser maior que o da base padrão ('+brl(padrao)+').');
+    box.hidden=!m.length; box.textContent=m.join(' '); };
+  var mkAviso=function(){ var a=h('div',{class:'prewarn',hidden:'hidden'}); return a; };
+  if(k==='revista'&&edita){
+    /* Bancas estáticas: um valor único por banca, aplicado a todas */
+    var unit=function(c){ var r=null; lista.forEach(function(p){ if(r===null&&vlr(p[c])>0) r=vlr(p[c]); }); return r; };
+    var difere=function(c){ var u=unit(c)||0; return lista.some(function(p){ return Math.abs(vlr(p[c])-u)>0.004; }); };
+    var box=h('div'); box.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start;';
+    [[fL,'Mínimo líquido / '+per+' (por banca)',fL==='liqsp'?'liq':null],[fP,'Produção líquida (por banca)',fP==='prodsp'?'prod':null]].forEach(function(x){
+      var c=x[0], bc=x[2], w=h('div'), lb=h('div',{text:x[1]}); lb.style.cssText='font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.65;font-weight:600;margin-bottom:5px;';
+      var i=h('input',{type:'text'}); i.inputMode='decimal'; i.placeholder='R$ 0,00'; i.style.cssText='width:100%;box-sizing:border-box;text-align:right;'; var u=unit(c); i.value=u?String(u).replace('.',','):'';
+      var av=mkAviso(), ant=null; lista.forEach(function(p){ if(ant===null&&vlr(srvDe(p,c))>0) ant=srvDe(p,c); });
+      var pad=bc?(unit(bc)||0):0;
+      if(bc&&pad>0){ var rf=h('small',{text:'Base padrão: '+brl(pad)}); rf.style.cssText='display:block;margin-top:4px;opacity:.7;'; w.appendChild(lb); w.appendChild(i); w.appendChild(rf); } else { w.appendChild(lb); w.appendChild(i); }
+      w.appendChild(av);
+      if(difere(c)){ var dn=h('small',{text:'Hoje as bancas têm valores diferentes; ao digitar, todas passam a ter este valor.'}); dn.style.cssText='display:block;margin-top:4px;color:#b45309;'; w.appendChild(dn); }
+      i.addEventListener('input',function(){ var a=num(i.value); lista.forEach(function(p){ p[c]=a>0?a:null; }); dirty(); avisos(av,c,x[1],ant,a,pad); if(window.__recalcPrecos) window.__recalcPrecos(); });
+      box.appendChild(w); });
+    g.appendChild(box);
+    var nm=lista.map(function(p){ return (p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''); }).join('  ·  ');
+    var nt=h('p',{class:'hint',text:'Vale para as '+lista.length+' bancas cadastradas: '+nm}); nt.style.cssText='margin:12px 0 0;font-size:12px;'; g.appendChild(nt);
+    return g;
+  }
   var tb=h('table'); tb.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed;min-width:560px;';
-  var cg=h('colgroup'); [temProd?'52%':'72%','24%',temProd?'24%':'4%'].forEach(function(w){ var c=h('col'); c.style.width=w; cg.appendChild(c); }); if(!temProd) cg.removeChild(cg.lastChild); cg.firstChild.style.width=temProd?'52%':'70%'; if(!temProd) cg.lastChild.style.width='30%'; tb.appendChild(cg);
+  var cg=h('colgroup'); (temProd?['52%','24%','24%']:['70%','30%']).forEach(function(w){ var c=h('col'); c.style.width=w; cg.appendChild(c); }); tb.appendChild(cg);
   var cab=h('tr'); ['Endereço','Mínimo líquido / '+per].concat(temProd?['Produção líquida']:[]).forEach(function(x,i){ var th=h('th',{text:x}); th.style.cssText='font-size:11px;text-transform:uppercase;letter-spacing:.04em;opacity:.65;font-weight:600;padding:0 8px 8px;text-align:'+(i?'right':'left')+';'; cab.appendChild(th); }); tb.appendChild(h('thead',{},[cab]));
   var body=h('tbody'); tb.appendChild(body);
   var td=function(x,right){ var c=h('td'); c.style.cssText='padding:8px;vertical-align:top;border-top:1px solid rgba(0,0,102,.08);'+(right?'text-align:right;':''); if(x) c.appendChild(x); return c; };
   lista.forEach(function(p){
     var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''), tr=h('tr',{class:'endrow'+(edita&&p.sel?' on':'')});
-    var c0=td(null); c0.appendChild(h('span',{class:'t',text:nome})); tr.appendChild(c0);
+    var c0=td(null); c0.appendChild(h('span',{class:'t',text:nome})); if(donoDe(p)!=='padrao') c0.appendChild(h('small',{class:'mu',text:'  · '+donoNome(donoDe(p))})); tr.appendChild(c0);
     if(edita){
-      var srv={}; try{ srv=(typeof lastPt!=='undefined'&&lastPt[p.id])?JSON.parse(lastPt[p.id]):{}; }catch(e){}
-      var aviso=h('div',{class:'prewarn',hidden:'hidden'});
-      var chk=function(campo,rot,ant){ return function(){ var antes=vlr(ant), agora=vlr(p[campo]); if(antes>0&&Math.abs(antes-agora)>0.004){ aviso.hidden=false; aviso.textContent='⚠ Você está alterando um valor pré-definido ('+rot+': era '+brl(antes)+', agora '+(agora>0?brl(agora):'vazio')+'). As propostas novas passam a usar o novo valor.'; } else { aviso.hidden=true; aviso.textContent=''; } if(window.__recalcPrecos) window.__recalcPrecos(); }; };
-      var fl=function(campo,rot,ant){ var i=inp(p,campo,{num:true,onchange:chk(campo,rot,ant)}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; i.style.cssText='width:100%;box-sizing:border-box;text-align:right;'; return i; };
-      tr.appendChild(td(fl('liq','Mínimo líquido',srv.liq))); if(temProd) tr.appendChild(td(fl('prod','Produção líquida',srv.prod)));
-      if(p.preco&&!(vlr(p.liq)>0)) c0.appendChild(h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'}));
-      if(temProd&&vlr(p.liq)>0&&!(vlr(p.prod)>0)) c0.appendChild(h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'}));
+      var aviso=mkAviso();
+      var fl=function(campo,rot,baseCampo){ var w=h('div'), ant=srvDe(p,campo); var i=inp(p,campo,{num:true,onchange:function(){ avisos(aviso,campo,rot,ant,p[campo],baseCampo?vlr(p[baseCampo]):0); if(window.__recalcPrecos) window.__recalcPrecos(); }}); i.placeholder='R$ 0,00'; i.inputMode='decimal'; i.style.cssText='width:100%;box-sizing:border-box;text-align:right;'; w.appendChild(i); if(baseCampo&&vlr(p[baseCampo])>0){ var rf=h('small',{text:'Base padrão: '+brl(vlr(p[baseCampo]))}); rf.style.cssText='display:block;margin-top:3px;opacity:.7;'; w.appendChild(rf); } return w; };
+      tr.appendChild(td(fl(fL,'Mínimo líquido',sp?'liq':null))); if(temProd) tr.appendChild(td(fl(fP,'Produção líquida',sp?'prod':null)));
+      if(!sp&&p.preco&&!(vlr(p.liq)>0)) c0.appendChild(h('small',{class:'legado',text:'Tabela bruta antiga: '+brl(vlr(p.preco))+' (vale até definir o líquido)'}));
+      if(!sp&&temProd&&vlr(p[fL])>0&&!(vlr(p[fP])>0)) c0.appendChild(h('small',{class:'legado',text:'⚠ Falta a produção líquida deste endereço.'}));
       c0.appendChild(aviso);
     } else {
-      tr.appendChild(td(h('b',{class:(p.liq||p.preco)?'':'sem',text:vlr(p.liq)>0?brl(vlr(p.liq)):(p.preco?brl(vlr(p.preco)):'sem preço')}),true));
-      if(temProd) tr.appendChild(td(h('b',{class:vlr(p.prod)>0?'':'sem',text:vlr(p.prod)>0?brl(vlr(p.prod)):'sem produção'}),true));
+      tr.appendChild(td(h('b',{class:(pLiq(p)||p.preco)?'':'sem',text:pLiq(p)>0?brl(pLiq(p)):(p.preco?brl(vlr(p.preco)):'sem preço')}),true));
+      if(temProd) tr.appendChild(td(h('b',{class:pProd(p)>0?'':'sem',text:pProd(p)>0?brl(pProd(p)):'sem produção'}),true));
     }
     body.appendChild(tr);
   });
   g.appendChild(tb); return g;
 }
 
-/* ---------- Preços base SP: valor mínimo líquido de CADA ponto (LED, bancas e estáticos) ---------- */
-function viewPrecosSP(v){
-  v.appendChild(h('h2',{text:'Preços base SP · valor mínimo por ponto'}));
-  v.appendChild(h('p',{class:'hint',text:'Cada ponto tem o seu valor mínimo líquido (mensal; outdoor por bi-semana). Na proposta, o sistema soma o mínimo dos pontos escolhidos e avisa quando o valor negociado ficar abaixo. Estáticos também têm a produção líquida. As alterações são salvas sozinhas.'}));
+/* ---------- Preços base / Preços base SP: valor mínimo líquido de CADA ponto (mesma tela; SP tem valores maiores) ---------- */
+function viewPrecosBase(v,sp){
+  v.appendChild(h('h2',{text:sp?'Preços base SP · valor mínimo por ponto':'Preços base · valor mínimo por ponto'}));
+  v.appendChild(h('p',{class:'hint',text:(sp?'Base SP: mesma lista da base padrão, com valores sempre maiores. Ponto sem valor SP usa o valor da base padrão. ':'Base padrão. ')+'Cada ponto tem o seu mínimo líquido (mensal; outdoor por bi-semana). Estáticos também têm a produção líquida; bancas estáticas têm um valor único para todas. Na proposta o sistema soma os mínimos dos pontos escolhidos e avisa quando o negociado ficar abaixo. As alterações são salvas sozinhas.'}));
   var f=h('input',{type:'search',placeholder:'Filtrar por endereço ou bairro…'}); v.appendChild(field('Buscar ponto',f));
   var wrap=h('div'); v.appendChild(wrap);
-  GRUPOS.forEach(function(g){ if(!ptsOf(D,g.k).length) return; var el=enderecosGrupo(g.k,g.k==='outdoor'?'Bi-semana':'Mensal',g.nome); wrap.appendChild(el); });
+  fmtOpcoes().forEach(function(g){ if(!ptsFmt(g.k).length) return; wrap.appendChild(enderecosGrupo(g.k,g.k==='outdoor'?'Bi-semana':'Mensal',g.nome,sp)); });
   if(!wrap.children.length) wrap.appendChild(h('p',{class:'hint',text:'Nenhum ponto cadastrado.'}));
   f.addEventListener('input',function(){ var q=f.value.trim().toLowerCase(); wrap.querySelectorAll('.endrow').forEach(function(r){ var t=(r.querySelector('.t')||r).textContent.toLowerCase(); r.style.display=(!q||t.indexOf(q)>=0)?'':'none'; }); });
+  if(ME.admin&&!sp){ var dt=h('details',{class:'pt'}); dt.appendChild(h('summary',{text:'Tabela de preços da proposta (avançado, só admin)'})); var bx=h('div'), built=false; dt.appendChild(bx); dt.addEventListener('toggle',function(){ if(dt.open&&!built){ built=true; viewPrecos(bx,false); } }); v.appendChild(dt); }
 }
 
 /* ---------- gerar ---------- */
@@ -393,6 +419,7 @@ function viewFluxo(v,tipo){
     panel.appendChild(avp);
     panel.appendChild(h('h3',{text:'Valores da proposta'}));
     panel.appendChild(h('p',{class:'hint',text:'Aparecem só os formatos dos pontos que você escolheu. Preencha o valor de tabela e o desconto; o total é calculado sozinho.'}));
+    var bs=h('select',{},[['','Base padrão'],['sp','Base SP (valores maiores)']].map(function(o){ return h('option',{value:o[0],text:o[1]}); })); bs.value=D.baseSP?'sp':''; bs.addEventListener('change',function(){ D.baseSP=bs.value==='sp'; try{ persistLocal(); }catch(e){} showTab(tipo); }); panel.appendChild(field('Base de preços',bs,'Escolha SP para usar os valores mínimos da base SP nesta proposta.'));
     viewPrecos(panel,true); setTimeout(function(){ if(window.__onPreco) window.__onPreco(); },0);
   } else {
     var comp=!prop&&window.__completo, n=nSel(), tot=0;

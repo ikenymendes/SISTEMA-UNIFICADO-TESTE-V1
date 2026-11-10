@@ -35,10 +35,13 @@ function selEstaticos(D,k){ return ptsOf(D,k).filter(function(p){ return p.sel; 
    "inflado" pela comissão/BV, para que no modo Líquido o valor final volte a ser exatamente o pré-definido.
    Pontos sem p.liq continuam usando p.preco (tabela bruta antiga). */
 function fatorLiq(D){ var f=(1-num(D.comissao)/100)*(1-num(D.bv)/100); return f>0.01?f:1; }
-function totProdEst(D,k,todos){ return (todos?ptsOf(D,k):selEstaticos(D,k)).reduce(function(a,p){ return a+vlr(p.prod); },0); }
+/* Base de preços: padrão (p.liq / p.prod) ou SP (p.liqsp / p.prodsp, valores maiores; sem valor SP usa o padrão) */
+function pLiq(p){ var s=typeof D!=='undefined'&&D&&D.baseSP&&vlr(p.liqsp)>0; return vlr(s?p.liqsp:p.liq); }
+function pProd(p){ var s=typeof D!=='undefined'&&D&&D.baseSP&&vlr(p.prodsp)>0; return vlr(s?p.prodsp:p.prod); }
+function totProdEst(D,k,todos){ return (todos?ptsOf(D,k):selEstaticos(D,k)).reduce(function(a,p){ return a+pProd(p); },0); }
 function precoEstatico(D,r){
   var f=fatorLiq(D), tab=0, min=0;
-  selEstaticos(D,r.auto).forEach(function(p){ var l=vlr(p.liq), pr=r.incProd?vlr(p.prod):0;
+  selEstaticos(D,r.auto).forEach(function(p){ var l=pLiq(p), pr=r.incProd?pProd(p):0;
     tab+=(l>0?l/f:vlr(p.preco))+pr/f; min+=(l>0?l:0)+pr; });
   return {tab:Math.round(tab*100)/100,min:Math.round(min*100)/100};
 }
@@ -55,11 +58,11 @@ function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!
 function fatorPerfilProd(D,q){ return q==='liq'?1:q==='ag'?0.75:q==='pl'?0.5625:fatorLiq(D); }
 function prodDe(D,e,base){ base=(e&&num(e.pl)>0)?num(e.pl):vlr(base); if(!(base>0)) return 0; var fm=D.modoGeral==='liquido'?fatorLiq(D):1; return base/fatorPerfilProd(D,(e||{}).pq)/(fm>0?fm:1); }
 function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
-  if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&vlr(p.liq)>0) pl=p; if(!pp&&vlr(p.prod)>0) pp=p; mM+=vlr(p.liq); mP+=vlr(p.prod); });
-    var tu=num(e.t)>0?num(e.t):(pl?vlr(pl.liq)/f:vlr(L[0].preco)), tpu=prodDe(D,e,pp?pp.prod:0), dm=num(e.d), dp=0;
+  if(r.auto==='revista'){ var L=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), n=L.length; if(!n) return []; var e=end['*']||{}, pl=null, pp=null, mM=0, mP=0; L.forEach(function(p){ if(!pl&&pLiq(p)>0) pl=p; if(!pp&&pProd(p)>0) pp=p; mM+=pLiq(p); mP+=pProd(p); });
+    var tu=num(e.t)>0?num(e.t):(pl?pLiq(pl)/f:vlr(L[0].preco)), tpu=prodDe(D,e,pp?pProd(pp):0), dm=num(e.d), dp=0;
     return [{p:{id:'*',endereco:'Bancas estáticas · '+n+(n===1?' ponto':' pontos')},n:n,tu:tu,tpu:tpu,tm:tu*n,dm:dm,nm:tu*n*(1-dm/100),tp:tpu*n,dp:dp,np:tpu*n*(1-dp/100),minM:mM,minP:mP}]; }
   var SL=todos?ptsOf(D,r.auto):selEstaticos(D,r.auto), sumP=0;
-  var out=SL.map(function(p){ var e=end[p.id]||{}, l=vlr(p.liq), pr=vlr(p.prod); sumP+=pr;
+  var out=SL.map(function(p){ var e=end[p.id]||{}, l=pLiq(p), pr=pProd(p); sumP+=pr;
     var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d);
     return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:0,dp:0,np:0,minM:l,minP:pr}; });
   /* Produção: UM valor único por formato (líquido + perfil), em vez de um por endereço. */
@@ -75,7 +78,7 @@ function calcPreco(D,r){
   else { tabU=num(r.tabela); var circ=!!r.auto&&r.auto.split(',').every(function(k){ return k==='mercado'||k==='guanabara'; }), qtd=circ?1:((r.pontos!==''&&r.pontos!=null)?num(r.pontos):(r.auto?qtdPreco(D,r.auto):1)); tab=tabU*(qtd>0?qtd:0); }
   var desc=est?(tab>0?(1-eN/tab)*100:0):num(r.desc), neg=est?eN:tab*(1-desc/100), modo=D.modoGeral, fin=modo==='liquido'?neg*(1-num(D.comissao)/100)*(1-num(D.bv)/100):neg;
   var ip=num(r.insPor), ins=ip?ip*pontos:0;
-  if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+vlr(p.liq); },0); },0); }
+  if(!est&&r.auto){ minLiq=r.auto.split(',').reduce(function(a,k){ return a+selEstaticos(D,k).reduce(function(b,p){ return b+pLiq(p); },0); },0); }
   var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
   return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,linhas:LE,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
