@@ -93,7 +93,7 @@ var DEF=function(){ return {
   investTitulo:'Plataforma de mídia OOH',pagamento:'Forma de pagamento: em __ parcelas, com vencimento a partir de __/__/____.',validade:'Proposta válida por 07 (sete) dias. Valores sujeitos à disponibilidade dos pontos.',
   cliente:'',resp:{nome:'Keny Mendes',cargo:'Coordenador Operacional',email:'operacional@megamidiaooh.com.br',tel1:'(31) 98407-4135',tel2:'(31) 3267-5087',site:'www.megamidiaooh.com.br'},fotoCapa:'capa.jpg',fotoContra:null},
  specChips:{led:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']],banca:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500 · 800','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']]},
- pontos:[], libMap:{}, lib:Object.assign({},DEFLIB), sepFotos:{}, mapStyle:'mega', 
+ pontos:[], libMap:{}, lib:Object.assign({},DEFLIB), sepFotos:{}, mapStyle:'neon', 
  mercado:{circuito:'Circuito de 8 telas de LED',nTelas:8,lat:-19.9231747,lng:-43.943164,fotos:['mercado.jpg'],
   texto:'Maior mercado da América Latina e um dos principais pontos turísticos e gastronômicos de BH, recebendo visitantes do mundo todo.',
   tiles:[['400+','lojas'],['2.600','empregos diretos'],['15 mi','pessoas por ano'],['40 mil','pessoas/dia (meio de semana)'],['63 mil','veículos por mês'],['420','vagas rotativas']],
@@ -135,10 +135,10 @@ var tileCache={}, mapCache={}, mapFail=0;
 function tileLoad(u,nocount){ if(!tileCache[u]) tileCache[u]=new Promise(function(res){ var i=new Image(); i.crossOrigin='anonymous'; i.onload=function(){res(i)}; i.onerror=function(){ if(!nocount) mapFail++; res(null); }; i.src=u; }); return tileCache[u]; }
 function osmUrl(z,x,y){ var n=1<<z; x=((x%n)+n)%n; return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png'; }
 function tileAny(st,z,x,y){ if(ONLINE) return Promise.resolve(null); var alt=mapSt(st)==='osm'?tileUrl('esri_street',z,x,y):osmUrl(z,x,y); return tileLoad(tileUrl(st,z,x,y),true).then(function(im){ return im||tileLoad(alt,false); }); }
-function mapSt(st){ return ({mega:1,esri_street:1,esri_gray:1,osm:1})[st]?st:'mega'; }
+function mapSt(st){ return ({neon:1,mega:1,esri_street:1,esri_gray:1,osm:1})[st]?st:'neon'; }
 function esriUrl(svc,z,x,y){ var n=1<<z; x=((x%n)+n)%n; return 'https://server.arcgisonline.com/ArcGIS/rest/services/'+svc+'/MapServer/tile/'+z+'/'+y+'/'+x; }
-function refUrl(z,x,y){ return esriUrl('Canvas/World_Light_Gray_Reference',z,x,y); }
-function tileUrl(st,z,x,y){ st=mapSt(st); if(st==='osm') return 'https://tile.openstreetmap.org/'+z+'/'+(((x%(1<<z))+(1<<z))%(1<<z))+'/'+y+'.png'; var svc=(st==='esri_gray'||st==='mega')?'Canvas/World_Light_Gray_Base':'World_Street_Map'; return esriUrl(svc,z,x,y); }
+function refUrl(z,x,y,st){ return esriUrl(mapSt(st)==='neon'?'Canvas/World_Dark_Gray_Reference':'Canvas/World_Light_Gray_Reference',z,x,y); }
+function tileUrl(st,z,x,y){ st=mapSt(st); if(st==='osm') return 'https://tile.openstreetmap.org/'+z+'/'+(((x%(1<<z))+(1<<z))%(1<<z))+'/'+y+'.png'; var svc=st==='neon'?'Canvas/World_Dark_Gray_Base':(st==='esri_gray'||st==='mega')?'Canvas/World_Light_Gray_Base':'World_Street_Map'; return esriUrl(svc,z,x,y); }
 function mapAttr(st){ st=mapSt(st); return st==='osm'?'© OpenStreetMap':'Tiles © Esri'; }
 function worldXY(lat,lng,z){ var s=256*Math.pow(2,z), sn=Math.sin(lat*Math.PI/180); return {x:(lng+180)/360*s,y:(0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*s}; }
 function pinDraw(c,x,y,s){ var g=c.createRadialGradient(x,y,0,x,y,s*2.4); g.addColorStop(0,'rgba(255,0,102,.28)'); g.addColorStop(1,'rgba(255,0,102,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,s*2.4,0,7); c.fill();
@@ -146,6 +146,27 @@ function pinDraw(c,x,y,s){ var g=c.createRadialGradient(x,y,0,x,y,s*2.4); g.addC
   c.fillStyle='#fff'; c.beginPath(); c.arc(x,y-s*1.5,s*.42,0,7); c.fill(); c.fillStyle='#000066'; c.beginPath(); c.arc(x,y-s*1.5,s*.2,0,7); c.fill(); }
 /* aproxima o mapa: um nível acima do zoom cadastrado (máx. 19) */
 function zoomMapa(z){ return Math.min(19,+z||16); }
+/* Estilo "Mega noturno": recolore o mapa escuro em azul-marinho, ruas em azul e avenidas em rosa com brilho */
+function neonize(c,W,H){
+  var im=c.getImageData(0,0,W,H), d=im.data, n=W*H, hist=new Uint32Array(256), L=new Uint8Array(n), i, j, k;
+  for(i=0,j=0;i<n;i++,j+=4){ var l=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8; L[i]=l; hist[l]++; }
+  var bg=0, mx=0; for(k=0;k<256;k++) if(hist[k]>mx){ mx=hist[k]; bg=k; }
+  var acc=0, hi=255, lim=n*0.997; for(k=0;k<256;k++){ acc+=hist[k]; if(acc>=lim){ hi=k; break; } }
+  if(hi<=bg+8) hi=bg+40;
+  var NV=[9,8,52], BL=[50,62,210], PK=[255,24,124];
+  var gl=document.createElement('canvas'); gl.width=W; gl.height=H; var g=gl.getContext('2d'), gi=g.createImageData(W,H), gd=gi.data;
+  for(i=0,j=0;i<n;i++,j+=4){ var t=(L[i]-bg)/(hi-bg); if(t<0) t=0; if(t>1) t=1; var r,gg,b,u;
+    if(t<0.14){ u=t/0.14; r=NV[0]+u*8; gg=NV[1]+u*10; b=NV[2]+u*30; }
+    else if(t<0.55){ u=(t-0.14)/0.41; r=NV[0]+(BL[0]-NV[0])*u; gg=NV[1]+(BL[1]-NV[1])*u; b=NV[2]+(BL[2]-NV[2])*u; }
+    else { u=(t-0.55)/0.45; r=BL[0]+(PK[0]-BL[0])*u; gg=BL[1]+(PK[1]-BL[1])*u; b=BL[2]+(PK[2]-BL[2])*u; gd[j]=PK[0]; gd[j+1]=PK[1]; gd[j+2]=PK[2]; gd[j+3]=Math.round(255*u); }
+    d[j]=r; d[j+1]=gg; d[j+2]=b; d[j+3]=255; }
+  c.putImageData(im,0,0); g.putImageData(gi,0,0);
+  try{ var bl=Math.max(2,Math.round(Math.min(W,H)*0.008)); c.save(); c.globalCompositeOperation='lighter';
+    c.filter='blur('+bl+'px)'; c.globalAlpha=0.85; c.drawImage(gl,0,0);
+    c.filter='blur('+(bl*3)+'px)'; c.globalAlpha=0.5; c.drawImage(gl,0,0); c.restore(); c.filter='none';
+    var vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75); vg.addColorStop(0,'rgba(5,4,30,0)'); vg.addColorStop(1,'rgba(5,4,30,.55)'); c.fillStyle=vg; c.fillRect(0,0,W,H);
+  }catch(e){}
+}
 async function renderMap(pts,W,H,zoom,big){
   var key=[pts.map(function(p){return p.lat+','+p.lng}).join(';'),W,H,zoom,big,D.mapStyle].join('|'); if(mapCache[key]) return mapCache[key];
   var st=D.mapStyle, z=zoom||16, cx, cy;
@@ -154,22 +175,26 @@ async function renderMap(pts,W,H,zoom,big){
     for(z=17;z>8;z--){ var a=worldXY(Math.max.apply(null,la),Math.min.apply(null,ln),z), b=worldXY(Math.min.apply(null,la),Math.max.apply(null,ln),z); if((b.x-a.x)<W*0.8&&(b.y-a.y)<H*0.78) break; }
     var o=worldXY(cla,cln,z); cx=o.x; cy=o.y;
   } else { var o2=worldXY(pts[0].lat,pts[0].lng,z); cx=o2.x; cy=o2.y; }
-  var cv=document.createElement('canvas'); cv.width=W; cv.height=H; var c=cv.getContext('2d'); c.fillStyle='#eef0f7'; c.fillRect(0,0,W,H);
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H; var c=cv.getContext('2d'); c.fillStyle=mapSt(D.mapStyle)==='neon'?'#0b0a3a':'#eef0f7'; c.fillRect(0,0,W,H);
   var F=pts.length>1?1:1.7; /* mapa de 1 ponto: amplia, assim ruas e nomes ficam maiores e legíveis */
   var x0=cx-W/(2*F), y0=cy-H/(2*F), jobs=[]; var before=mapFail;
   if(ONLINE){ var gg=c.createLinearGradient(0,0,0,H); gg.addColorStop(0,'#f3f5fb'); gg.addColorStop(1,'#e6e9f4'); c.fillStyle=gg; c.fillRect(0,0,W,H); c.strokeStyle='rgba(0,0,102,.07)'; c.lineWidth=Math.max(1,H*.003); var st2=Math.round(H/9); for(var gx=0;gx<W;gx+=st2){ c.beginPath(); c.moveTo(gx,0); c.lineTo(gx,H); c.stroke(); } for(var gy=0;gy<H;gy+=st2){ c.beginPath(); c.moveTo(0,gy); c.lineTo(W,gy); c.stroke(); } if(pts.length===1){ c.strokeStyle='rgba(255,0,102,.22)'; c.lineWidth=Math.max(2,H*.004); [.12,.2,.29].forEach(function(r){ c.beginPath(); c.arc(W/2,H/2+Math.round(H*.05),H*r,0,7); c.stroke(); }); } }
   for(var ty=Math.floor(y0/256);ty<=Math.floor((y0+H/F)/256);ty++) for(var tx=Math.floor(x0/256);tx<=Math.floor((x0+W/F)/256);tx++) (function(tx,ty){ jobs.push(tileAny(st,z,tx,ty).then(function(im){ if(im) c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); })); })(tx,ty);
   await Promise.all(jobs);
   if(mapFail>before){ c.strokeStyle='#fff'; c.lineWidth=H*0.012; for(var i=0;i<6;i++){ c.beginPath(); c.moveTo(0,H*(i/5)); c.lineTo(W,H*((i*37%5)/5+0.1)); c.stroke(); } }
-  if(mapSt(st)==='mega'){
+  if(mapSt(st)==='neon'){
+    if(!(mapFail>before)) neonize(c,W,H);
+    var jobsN=[]; for(var nty=Math.floor(y0/256);nty<=Math.floor((y0+H/F)/256);nty++) for(var ntx=Math.floor(x0/256);ntx<=Math.floor((x0+W/F)/256);ntx++) (function(tx,ty){ jobsN.push(tileLoad(refUrl(z,tx,ty,'neon'),true).then(function(im){ if(im){ try{ c.filter='brightness(1.25)'; }catch(e){} c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); try{ c.filter='none'; }catch(e){} } })); })(ntx,nty);
+    await Promise.all(jobsN);
+  } else if(mapSt(st)==='mega'){
     /* fundo branco Mega: leve tom azul-claro, rótulos de ruas por cima e mais contraste para ficarem legíveis */
     try{ c.save(); c.globalAlpha=0.05; c.fillStyle='#000066'; c.fillRect(0,0,W,H); c.restore(); }catch(e){}
-    var jobsR=[]; for(var rty=Math.floor(y0/256);rty<=Math.floor((y0+H/F)/256);rty++) for(var rtx=Math.floor(x0/256);rtx<=Math.floor((x0+W/F)/256);rtx++) (function(tx,ty){ jobsR.push(tileLoad(refUrl(z,tx,ty),true).then(function(im){ if(im){ try{ c.filter='contrast(1.35)'; }catch(e){} c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); try{ c.filter='none'; }catch(e){} } })); })(rtx,rty);
+    var jobsR=[]; for(var rty=Math.floor(y0/256);rty<=Math.floor((y0+H/F)/256);rty++) for(var rtx=Math.floor(x0/256);rtx<=Math.floor((x0+W/F)/256);rtx++) (function(tx,ty){ jobsR.push(tileLoad(refUrl(z,tx,ty,'mega'),true).then(function(im){ if(im){ try{ c.filter='contrast(1.35)'; }catch(e){} c.drawImage(im,(tx*256-x0)*F,(ty*256-y0)*F,256*F+1,256*F+1); try{ c.filter='none'; }catch(e){} } })); })(rtx,rty);
     await Promise.all(jobsR);
   } else if(!mapFail||mapFail<=before){ try{ c.filter='saturate(1.25) contrast(1.12)'; c.drawImage(cv,0,0); c.filter='none'; }catch(e){} }
   var s=Math.round(Math.min(W,H)*(pts.length>1?0.02:0.034));
   pts.forEach(function(p){ var w=worldXY(p.lat,p.lng,z); var px=(w.x-x0)*F, py=(w.y-y0)*F+(pts.length>1?0:Math.round(H*.05)); if(pts.length>1){ c.fillStyle='#fff'; c.beginPath(); c.arc(px,py,s*0.9,0,7); c.fill(); c.fillStyle='#ff0066'; c.beginPath(); c.arc(px,py,s*0.62,0,7); c.fill(); } else pinDraw(c,px,py,s); });
-  if(!ONLINE){ c.font='400 '+Math.round(H*.016)+'px Poppins,Segoe UI,sans-serif'; c.textAlign='right'; var at=mapAttr(st), aw=c.measureText(at).width+16; c.fillStyle='rgba(255,255,255,.85)'; c.fillRect(W-aw-8,H-H*.045-6,aw,H*.045); c.fillStyle='#4a4a6a'; c.fillText(at,W-16,H-H*.045+H*.016*0.8-6); }
+  if(!ONLINE){ c.font='400 '+Math.round(H*.016)+'px Poppins,Segoe UI,sans-serif'; c.textAlign='right'; var at=mapAttr(st), aw=c.measureText(at).width+16; var nn=mapSt(st)==='neon'; c.fillStyle=nn?'rgba(10,9,50,.75)':'rgba(255,255,255,.85)'; c.fillRect(W-aw-8,H-H*.045-6,aw,H*.045); c.fillStyle=nn?'#b9bde8':'#4a4a6a'; c.fillText(at,W-16,H-H*.045+H*.016*0.8-6); }
   var src=cv.toDataURL('image/jpeg',0.9); var a={src:src,w:W,h:H,el:cv,falhou:mapFail>before}; if(!a.falhou) mapCache[key]=a; return a;
 }
 function parseMapsText(text){

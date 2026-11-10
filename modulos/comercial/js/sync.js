@@ -23,7 +23,7 @@ function dataBR(iso){ var d=new Date(iso); return d.toLocaleDateString('pt-BR')+
 function erroMsg(e){ return (e&&(e.message||e.error_description||e.code))||String(e); }
 
 /* ---- aplicar dados vindos do banco ---- */
-function applyCfg(data){ CFGSRV=JSON.parse(JSON.stringify(data)); CFG_KEYS.forEach(function(k){ if(data[k]!==undefined) D[k]=mergeDef(DEF0[k],data[k]); }); D.kit.cliente=L.cliente||''; if(!ME.admin&&!ME.gerente){ if(L.precos) D.precos=L.precos; if(L.comissao!=null) D.comissao=L.comissao; if(L.bv!=null) D.bv=L.bv; if(L.modoGeral) D.modoGeral=L.modoGeral; } D.baseSP=!!L.baseSP; D.perfilEsc=!!L.perfilEsc; if(D.mercado) D.mercado.nTelas=TELAS_CIRC.mercado; if(D.guanabara) D.guanabara.nTelas=TELAS_CIRC.guanabara; }
+function applyCfg(data){ CFGSRV=JSON.parse(JSON.stringify(data)); CFG_KEYS.forEach(function(k){ if(data[k]!==undefined) D[k]=mergeDef(DEF0[k],data[k]); }); D.kit.cliente=L.cliente||''; if(!ME.admin&&!ME.gerente){ if(L.precos) D.precos=L.precos; if(L.comissao!=null) D.comissao=L.comissao; if(L.bv!=null) D.bv=L.bv; if(L.modoGeral) D.modoGeral=L.modoGeral; } D.baseSP=!!L.baseSP; D.perfilEsc=!!L.perfilEsc; if(!(D.kit&&D.kit.mapV>=2)){ if(!D.mapStyle||D.mapStyle==='esri_street'||D.mapStyle==='mega') D.mapStyle='neon'; if(D.kit) D.kit.mapV=2; } if(D.mercado) D.mercado.nTelas=TELAS_CIRC.mercado; if(D.guanabara) D.guanabara.nTelas=TELAS_CIRC.guanabara; }
 function applyPontos(rows){ lastPt={}; D.pontos=rows.map(function(r){ var p=Object.assign({},r); p.sel=!!L.sel[p.id]; lastPt[p.id]=ptJson(p); return p; }).sort(function(a,b){ return (a.ord==null?1e9:a.ord)-(b.ord==null?1e9:b.ord); }); ordenaPts(D); sincCircuitos(D); }
 
 async function carregarDados(){
