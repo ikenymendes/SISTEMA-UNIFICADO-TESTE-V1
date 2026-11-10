@@ -122,9 +122,19 @@ var ADMIN = (function () {
     var cSug = h('section', { class: 'adm-card lista anim' });
     cSug.innerHTML = '<header><div><h2>Sugestões aguardando você</h2><p>Pedidos do time comercial</p></div></header><ul class="lst"><li class="vazio">carregando…</li></ul>';
 
+    /* LEDs por propriedade: Mercado Central e Parque Guanabara são circuitos = 1 LED cada */
+    function telaBox(cls, rot) {
+      var b = h('div', { class: 'tl-box ' + cls });
+      b.innerHTML = '<span class="tl-ico">' + icone('tv') + '</span><span class="tl-txt"><span class="tl-rot">' + rot + '</span><span class="tl-val">—</span><span class="tl-sub">carregando…</span></span>';
+      return b;
+    }
+    var tMega = telaBox('t1', 'LED MEGA'), tR2 = telaBox('t2', 'LED MEGA/R2');
+    var telas = h('div', { class: 'adm-telas', title: 'Mercado Central e Parque Guanabara contam como 1 LED cada (são circuitos)' }, [tMega, tR2]);
+
     var raiz = h('div', { class: 'adm-pg' }, [
       h('div', { class: 'adm-cab anim' }, [
         h('div', { class: 'adm-tit' }, [sau, h('h1', { text: 'Visão geral' }), data, ctx.climaEl ? ctx.climaEl('adm-local') : null]),
+        telas,
         h('div', { class: 'adm-dir' }, [hora, h('div', { class: 'adm-btns' }, [botao('Comercial', 'comercial', 'vidro', 'comercial'), botao('Operacional', 'operacional', 'rosa', 'operacional')])])
       ]),
       h('div', { class: 'adm-atalhos anim' }, [
@@ -181,6 +191,36 @@ var ADMIN = (function () {
         falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler'); falhou(kEst, 'não consegui ler');
         cRos.querySelector('.ros-corpo').innerHTML = '<div class="vazio">Não consegui carregar a operação.</div>';
         cMan.querySelector('.lst').innerHTML = '<li class="vazio">Não consegui carregar.</li>';
+      }
+    })();
+
+    (async function contarTelas() {
+      var LED = { led_bh: 'p', led_rm: 'p', df_painel: 'p', banca_led: 'b' }, CIRC = { mercado: 1, guanabara: 1 };
+      function sub(c) {
+        var t = [];
+        if (c.p) t.push(c.p + (c.p === 1 ? ' painel' : ' painéis'));
+        if (c.b) t.push(c.b + (c.b === 1 ? ' banca' : ' bancas'));
+        if (c.c) t.push(c.c + (c.c === 1 ? ' circuito' : ' circuitos'));
+        return t.join(' · ') || 'nenhum LED';
+      }
+      function pinta(box, c) {
+        contar(box.querySelector('.tl-val'), c.p + c.b + c.c);
+        box.querySelector('.tl-sub').textContent = sub(c);
+      }
+      try {
+        var r = await client.from('pontos').select('data');
+        if (r.error) throw r.error;
+        var m = { p: 0, b: 0, c: 0 }, r2 = { p: 0, b: 0, c: 0 }, circ = {};
+        (r.data || []).forEach(function (x) {
+          var p = x.data || {}, sec = p.secao || '', dono = p.dono || 'padrao';
+          if (dono === 'terceiros') return;
+          var alvo = dono === 'mega_r2' ? r2 : m;
+          if (CIRC[sec]) { if (!circ[sec]) { circ[sec] = 1; m.c++; } return; } /* circuito: 1 LED, sempre MEGA */
+          if (LED[sec]) alvo[LED[sec]]++;
+        });
+        pinta(tMega, m); pinta(tR2, r2);
+      } catch (e) {
+        [tMega, tR2].forEach(function (b) { b.querySelector('.tl-val').textContent = '—'; b.querySelector('.tl-sub').textContent = 'não consegui ler'; });
       }
     })();
 
