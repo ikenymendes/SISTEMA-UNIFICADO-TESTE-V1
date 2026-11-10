@@ -8,22 +8,25 @@
    no navegador, o banco recusa o que o perfil não pode.
    ===================================================================== */
 
-/* Módulos (cada um é um sistema completo, carregado só para quem tem acesso) */
+/* Módulos (cada um é um sistema completo, carregado só para quem tem acesso).
+   A página do módulo é sempre buscada nova (?v=hora atual): assim cada atualização publicada aparece
+   sem o navegador usar uma versão antiga guardada. Os scripts de cada módulo continuam com a própria versão. */
+var VMOD = Date.now();
 var MODULOS = {
   comercial: {
     rotulo: 'Comercial',
     descricao: 'Pontos, propostas e mídia kit',
-    url: 'modulos/comercial/index.html?v=20261109n'
+    url: 'modulos/comercial/index.html?v=' + VMOD
   },
   operacional: {
     rotulo: 'Operacional',
     descricao: 'Gestão operacional: VTs, rotas, manutenção, checking',
-    url: 'modulos/operacional/index.html?v=20261109n'
+    url: 'modulos/operacional/index.html?v=' + VMOD
   },
   financeiro: {
     rotulo: 'Financeiro',
     descricao: 'Faturamento: nota fiscal dos checkings concluídos',
-    url: 'modulos/financeiro/index.html?v=20261109n'
+    url: 'modulos/financeiro/index.html?v=' + VMOD
   }
 };
 
