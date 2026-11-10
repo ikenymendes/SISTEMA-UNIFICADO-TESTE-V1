@@ -10,7 +10,12 @@ function emailKey(e){ return String(e||'').trim().toLowerCase(); }
 function stable(o){ return JSON.stringify(o,function(k,v){ if(v&&typeof v==='object'&&!Array.isArray(v)){ var r={}; Object.keys(v).sort().forEach(function(x){ r[x]=v[x]; }); return r; } return v; }); }
 function stripPt(p){ var o=JSON.parse(JSON.stringify(p)); delete o.sel; return o; }
 function ptJson(p){ return stable(stripPt(p)); }
-function cfgSnapshot(){ var o={}; CFG_KEYS.forEach(function(k){ o[k]=D[k]; }); o.kit=Object.assign({},D.kit); delete o.kit.cliente; return JSON.parse(JSON.stringify(o)); }
+/* A base guarda só a ESTRUTURA das linhas de preço. Os valores digitados/praticados numa proposta
+   (tabela, desconto, negociado por endereço) NUNCA entram na base — quem define a base é só o admin,
+   pelos valores mínimos de cada ponto. */
+function cfgSnapshot(){ var o={}; CFG_KEYS.forEach(function(k){ o[k]=D[k]; }); o.kit=Object.assign({},D.kit); delete o.kit.cliente;
+  o.precos=(D.precos||[]).map(function(r){ var c=Object.assign({},r); delete c.end; delete c.desc; delete c.tabela; return c; });
+  return JSON.parse(JSON.stringify(o)); }
 function toast(msg,err){ var t=$('#toast'); if(!t) return; t.textContent=msg; t.className='toast show'+(err?' err':''); clearTimeout(toast.t); toast.t=setTimeout(function(){ t.className='toast'; },6000); }
 function setSaved(t,err){ var s=$('#saved'); if(s){ s.textContent=t; s.style.color=err?'#ffb3c9':''; } }
 function hora(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
