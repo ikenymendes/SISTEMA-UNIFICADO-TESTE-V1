@@ -46,9 +46,11 @@ function precoEstatico(D,r){
   return {tab:Math.round(tab*100)/100,min:Math.round(min*100)/100};
 }
 /* Quantidade padrão: pontos escolhidos na proposta (se houver); senão, todos os cadastrados. Circuitos usam o nº de telas. */
+/* Circuitos são sempre fixos: Mercado Central = 8 telas, Parque Guanabara = 10 telas (em qualquer área do sistema) */
+var TELAS_CIRC={mercado:8,guanabara:10};
 function qtdPontos(D,auto){ var tot=0,sel=0,alg=false;
   auto.split(',').forEach(function(k){ var a=ptsOf(D,k), s=a.filter(function(p){return p.sel;}).length; if(s) alg=true;
-    if(k==='mercado'||k==='guanabara'){ var n=(D[k]&&D[k].nTelas)||0; tot+=n; if(s) sel+=n; } else { tot+=a.length; sel+=s; } });
+    if(k==='mercado'||k==='guanabara'){ var n=TELAS_CIRC[k]; tot+=n; if(s) sel+=n; } else { tot+=a.length; sel+=s; } });
   return alg?sel:tot; }
 /* Quantidade para o PREÇO: pontos escolhidos na proposta; sem escolha (ou circuito) vale 1, então o negociado fica igual ao valor de tabela. */
 function qtdPreco(D,auto){ var sel=0; auto.split(',').forEach(function(k){ if(k!=='mercado'&&k!=='guanabara') sel+=selEstaticos(D,k).length; }); return sel>0?sel:1; }
