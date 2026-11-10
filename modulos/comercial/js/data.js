@@ -92,6 +92,7 @@ var DEF=function(){ return {
   sobre:'A MEGA é uma empresa especializada em mídia OOH, comunicação visual e projetos especiais. Temos diversas opções de mídias e equipe profissional extremamente capacitada. Executamos qualquer projeto dentro do estado de Minas Gerais, sempre com atendimento exclusivo e personalizado.',
   investTitulo:'Plataforma de mídia OOH',pagamento:'Forma de pagamento: em __ parcelas, com vencimento a partir de __/__/____.',validade:'Proposta válida por 07 (sete) dias. Valores sujeitos à disponibilidade dos pontos.',
   cliente:'',resp:{nome:'Keny Mendes',cargo:'Coordenador Operacional',email:'operacional@megamidiaooh.com.br',tel1:'(31) 98407-4135',tel2:'(31) 3267-5087',site:'www.megamidiaooh.com.br'},fotoCapa:'capa.jpg',fotoContra:null},
+ specPad:{led:{peso:'25 MB',arquivo:'MP4',dur:'10"',conteudo:'Vídeo'},banca:{peso:'25 MB',arquivo:'MP4',dur:'10"',conteudo:'Vídeo'},df:{peso:'25 MB',arquivo:'MP4',dur:'10"',conteudo:'Somente vídeo estático'}},
  specChips:{led:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']],banca:[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['500 · 800','Mínimo de veiculações por dia'],['20 MB','Tamanho máximo']]},
  pontos:[], libMap:{}, lib:Object.assign({},DEFLIB), sepFotos:{}, mapStyle:'claro', 
  mercado:{circuito:'Circuito de 8 telas de LED',nTelas:8,lat:-19.9231747,lng:-43.943164,fotos:['mercado.jpg'],

@@ -1,5 +1,5 @@
 /* Estado do usuário e sincronização dos pontos/configuração com o Supabase. */
-var CFG_KEYS=['kit','mercado','guanabara','brasilia','precos','specChips','sepInfo','sepFotos','comissao','descAlerta','bv','modoGeral','mapStyle','libMap'];
+var CFG_KEYS=['kit','mercado','guanabara','brasilia','precos','specChips','specPad','sepInfo','sepFotos','comissao','descAlerta','bv','modoGeral','mapStyle','libMap'];
 var ME={email:'',uid:null,papel:null,admin:false,gerente:false,nome:''};
 var DEF0=null, CFGSRV=null;
 var READY=false, lastPt={}, lastCfg='', remoteSig='', latestRemote={cfg:null,pts:null}, syncing=false, syncAgain=false, saveT=null, entered=false, synced=false;
