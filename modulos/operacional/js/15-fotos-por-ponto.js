@@ -4,7 +4,9 @@
    precisa de foto. Busca por endereço, nome do ponto, região ou cliente.
    ===================================================================== */
 let fpQ = "",
-  fpF = "p";
+  fpF = "p",
+  fpOpen = null, /* cliente (chave vt__ponto) com o menu de foto aberto */
+  fpFixo = null; /* ponto que continua visível enquanto você mexe nele */
 const fpN = (s) =>
   String(s || "")
     .normalize("NFD")
@@ -29,7 +31,7 @@ function fpPontos() {
     if (!vig(v) || (v.man && v.conc)) return;
     let g = m.get(t.p.id);
     if (!g) m.set(t.p.id, (g = { p: t.p, cli: [] }));
-    g.cli.push({ v, st: t.status, nota: t.nota, by: t.by });
+    g.cli.push({ v, key: t.key, st: t.status, nota: t.nota, by: t.by });
   });
   return [...m.values()].map((g) => {
     const np = g.cli.filter((c) => FP_ST[c.st] === "p").length,
@@ -50,6 +52,22 @@ function fpBusca(g, q) {
 }
 const FP_OK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+const fpStTxt = (c) =>
+  c.st === "feita" ? "Feita" + (c.by ? " · " + e(c.by) : "") : c.st === "validada" ? "Validada" : FP_TXT[c.st] || "Pendente";
+const fpQuem = () => [...new Set(MOTOS.concat(typeof ELD === "string" && ELD ? [ELD] : []))];
+/* menu rápido: Pendente -> quem fez a foto -> Validar (concluído) */
+function fpMenu(c) {
+  const k = c.key;
+  if (refazerOpen === k)
+    return `<div class="fp-menu"><span>Motivo para refazer</span><div class="fp-rf"><input id="rfn" placeholder="Ex.: VT errado na tela, foto escura…"><button type="button" class="fp-b pri" data-a="rfok" data-v="${k}">Enviar</button></div></div>`;
+  if (c.st === "pendente" || c.st === "refazer")
+    return `<div class="fp-menu"><span>📷 Quem fez a foto?</span><div class="fp-bs">${fpQuem()
+      .map((m) => `<button type="button" class="fp-b" data-a="qf" data-v="${k}|${e(m)}">${e(m)}</button>`)
+      .join("")}</div></div>`;
+  if (c.st === "feita")
+    return `<div class="fp-menu"><span>Foto feita${c.by ? " por <b>" + e(c.by) + "</b>" : ""}. Está certa?</span><div class="fp-bs"><button type="button" class="fp-b ok" data-a="ok" data-v="${k}">✔ Validar</button><button type="button" class="fp-b" data-a="rf" data-v="${k}">↺ Refazer</button><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
+  return `<div class="fp-menu"><span>✔ Validada${c.by ? " · foto de <b>" + e(c.by) + "</b>" : ""}</span><div class="fp-bs"><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
+}
 function fpCard(g, q) {
   const p = g.p,
     hj = dia();
@@ -60,10 +78,10 @@ function fpCard(g, q) {
         sub = [(v.ev && v.ev.nome) || "", v.fim ? "até " + fmt(v.fim).slice(0, 5) : ""].filter(Boolean).join(" · "),
         d = v.fim ? Math.round((new Date(v.fim + "T12:00:00") - new Date(hj + "T12:00:00")) / 864e5) : 99,
         urg = k === "p" && d <= 3 ? ` <span class="fp-urg">⏱ ${d <= 0 ? "sai do ar hoje" : "faltam " + d + (d === 1 ? " dia" : " dias")}</span>` : "";
-      return `<div class="fp-cli"><span><b>${fpMark(v.cliente, q)}</b><small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && c.by ? ` · foto feita por ${e(c.by)}` : ""}</small></span><span class="fp-st ${k}">${FP_TXT[c.st] || "Pendente"}</span></div>`;
+      return `<div class="fp-cli"><span><b>${fpMark(v.cliente, q)}</b><small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && c.by ? ` · foto feita por ${e(c.by)}` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
     })
     .join("");
-  return `<div class="fp-pt ${g.k}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span><h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
+  return `<div class="fp-pt ${g.k}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span><h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
 }
 function fpList() {
   const q = fpN(fpQ.trim()),
@@ -71,7 +89,7 @@ function fpList() {
     c = { p: 0, f: 0, v: 0 };
   all.forEach((g) => c[g.k]++);
   const vis = all
-    .filter((g) => fpF === "t" || g.k === fpF)
+    .filter((g) => fpF === "t" || g.k === fpF || g.p.id === fpFixo)
     .sort((a, b) => ({ p: 0, f: 1, v: 2 })[a.k] - ({ p: 0, f: 1, v: 2 })[b.k] || b.n - a.n || a.fim.localeCompare(b.fim));
   const ch = (k, rot, dot) =>
     `<button class="${fpF === k ? "on" : ""}" data-a="fpf" data-v="${k}">${dot ? `<span class="dot ${k}"></span>` : ""}${rot}<i>${k === "t" ? all.length : c[k]}</i></button>`;

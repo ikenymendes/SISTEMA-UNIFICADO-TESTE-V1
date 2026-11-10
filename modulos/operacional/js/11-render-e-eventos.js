@@ -315,7 +315,21 @@ document.addEventListener("click", async (ev) => {
       '<div class="warn">Só o administrador pode alterar ou apagar pontos e configurações.</div>';
     return;
   }
+  if (a === "fpst") {
+    fpOpen = fpOpen === v ? null : v;
+    fpFixo = fpOpen ? v.split("__")[1] : null;
+    refazerOpen = null;
+    const l = $("fpl");
+    if (l) l.innerHTML = fpList();
+    return;
+  }
+  if (view === "fp" && /^(ok|qundo|rfok)$/.test(a)) {
+    fpOpen = null;
+    fpFixo = null;
+  }
   if (a === "fpf") {
+    fpOpen = null;
+    fpFixo = null;
     fpF = v;
     const l = $("fpl");
     if (l) l.innerHTML = fpList();
