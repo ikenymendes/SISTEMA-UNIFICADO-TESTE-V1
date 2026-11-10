@@ -136,7 +136,7 @@ function mRow(m, ctx) {
       acts.push(`<button class="sm" data-a="mtoeld" data-v="${m.id}">Passar p/ ${ELD}</button>`);
     acts.push(
       m.status === "resolvida"
-        ? `<button class="sm" data-a="mreop" data-v="${m.id}">Reabrir</button>`
+        ? `<button class="sm" data-a="mreop" data-v="${m.id}">Reabrir</button><button class="sm" data-a="mrby" data-v="${m.id}">Quem resolveu</button>`
         : `<button class="sm pri" data-a="mdone" data-v="${m.id}">Manutenção feita</button>`,
     );
     acts.push(
@@ -148,7 +148,7 @@ function mRow(m, ctx) {
       ? `<div class="row" style="margin-top:6px"><input id="mvn" placeholder="O que viu no local?"><button class="sm pri" data-a="mvneed" data-v="${m.id}" style="flex:0 0 auto">Precisa de manutenção</button><button class="sm" data-a="mvok" data-v="${m.id}" style="flex:0 0 auto">Sem defeito</button></div>`
       : "";
   const pz = pzTxt(m);
-  return `<div class="task"><div><b>${p ? e(p.nome) : "(painel removido)"}</b>${p ? `<div class="mu">${e(p.end)} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>` : ""}<div>🔧 ${e(m.def)}</div>${pi >= 0 || pz ? `<div>${pi >= 0 ? `<span class="b ${prC(pi)}">${e(prN(m.prio))}</span> ` : ""}${pz}</div>` : ""}<div class="mu"><span class="b s-${m.status}">${MS()[m.status]}</span> ${m.resp === "moto" ? "verifica: " + e(m.moto) : "direto " + ELD} · aberto ${dt(m.ts)}${m.vnota ? ` · <span class="s-feita">Motoboy: ${e(m.vnota)}</span>` : ""}${m.rts ? " · resolvida " + dt(m.rts) + (m.rby ? " por " + e(m.rby) : "") : ""}${m.at && m.status !== "resolvida" ? ' · <span class="s-pendente">🔧 em atendimento' + (m.atby ? " (" + e(m.atby) + ")" : "") + "</span>" : ""}${m.snota ? ' · <span class="s-feita">Solução: ' + e(m.snota) + "</span>" : ""}${m.pnota ? ' · <span class="s-refazer">⚠ Pendência: ' + e(m.pnota) + "</span>" : ""}</div>${f}${editM === m.id && ctx !== "m" ? mEdit(m) : ""}</div><div class="acts">${acts.join("")}</div></div>`;
+  return `<div class="task"><div><b>${p ? e(p.nome) : "(painel removido)"}</b>${p ? `<div class="mu">${e(p.end)} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>` : ""}<div>🔧 ${e(m.def)}</div>${pi >= 0 || pz ? `<div>${pi >= 0 ? `<span class="b ${prC(pi)}">${e(prN(m.prio))}</span> ` : ""}${pz}</div>` : ""}<div class="mu"><span class="b s-${m.status}">${MS()[m.status]}</span> ${m.resp === "moto" ? "verifica: " + e(m.moto) : "direto " + ELD} · aberto ${dt(m.ts)}${m.vnota ? ` · <span class="s-feita">Motoboy: ${e(m.vnota)}</span>` : ""}${m.rts ? " · resolvida " + dt(m.rts) + (m.rby ? " por <b>" + e(m.rby) + "</b>" : "") + (m.fby && m.fby !== m.rby ? " <span class=\"mu\">(fechado por " + e(m.fby) + ")</span>" : "") : ""}${m.at && m.status !== "resolvida" ? ' · <span class="s-pendente">🔧 em atendimento' + (m.atby ? " (" + e(m.atby) + ")" : "") + "</span>" : ""}${m.snota ? ' · <span class="s-feita">Solução: ' + e(m.snota) + "</span>" : ""}${m.pnota ? ' · <span class="s-refazer">⚠ Pendência: ' + e(m.pnota) + "</span>" : ""}</div>${f}${editM === m.id && ctx !== "m" ? mEdit(m) : ""}</div><div class="acts">${acts.join("")}</div></div>`;
 }
 /* ===== Mensagem de manutenção para WhatsApp ===== */
 let mwa = "all";
@@ -311,4 +311,58 @@ function motoboy() {
       h += `<h2 data-a="col" data-v="${e(ck)}" style="cursor:pointer">${S.col[ck] ? "▸" : "▾"} ${e(c.n)} (${g.length})</h2>${S.col[ck] ? "" : `<div class="card">${g.map((t) => taskRow(t, false, true)).join("")}</div>`}`;
     });
   return h;
+}
+
+/* ===== Concluir manutenção informando QUEM RESOLVEU (pode ser diferente de quem fecha o chamado) ===== */
+function mEquipe() {
+  const L = [ELD].concat(MOTOS || []);
+  return L.filter((x, i) => x && L.indexOf(x) === i);
+}
+function mResolvidoAbrir(id, fechar) {
+  const m = S.manut.find((q) => q.id === id);
+  if (!m) return;
+  const p = PMf(m.pid), old = document.getElementById("mrbx");
+  if (old) old.remove();
+  const ja = String(m.rby || "").split(/\s*(?:,| e )\s*/).filter(Boolean);
+  const eq = mEquipe(), sel = fechar ? [ELD] : ja.filter((n) => eq.includes(n)), outros = fechar ? "" : ja.filter((n) => !eq.includes(n)).join(", ");
+  const el = document.createElement("div");
+  el.id = "mrbx";
+  el.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,18,60,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:460px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #16a34a">
+    <div style="font-size:18px;font-weight:700;color:#000066;margin-bottom:2px">✅ ${fechar ? "Concluir manutenção" : "Quem resolveu"}</div>
+    <div class="mu" style="margin-bottom:12px">${p ? e(p.nome) : ""} · ${e(m.def || "")}</div>
+    <div style="font-weight:600;margin-bottom:6px">Quem resolveu? <span class="mu" style="font-weight:400">(pode marcar mais de um)</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">${eq.map((n) => `<label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid #d9dcef;border-radius:999px;cursor:pointer"><input type="checkbox" value="${e(n)}" ${sel.includes(n) ? "checked" : ""}> ${e(n)}</label>`).join("")}</div>
+    <input id="mrbo" placeholder="Outra pessoa (opcional)" value="${e(outros)}" style="width:100%;box-sizing:border-box;margin-bottom:10px">
+    <div class="mu">O que foi feito (opcional)</div>
+    <textarea id="mrbs" rows="2" style="width:100%;box-sizing:border-box" placeholder="Ex.: troca da fonte do módulo 3">${e(m.snota || "")}</textarea>
+    <div id="mrbw" class="mu" style="color:#c01858;margin-top:6px"></div>
+    <div class="row" style="margin-top:12px"><button class="pri" id="mrbok" style="flex:1">${fechar ? "Concluir" : "Salvar"}</button><button id="mrbx2" style="flex:0 0 auto">Cancelar</button></div></div>`;
+  document.body.appendChild(el);
+  el.querySelector("#mrbx2").onclick = () => el.remove();
+  el.onclick = (ev) => { if (ev.target === el) el.remove(); };
+  el.querySelector("#mrbok").onclick = () => {
+    const nomes = Array.from(el.querySelectorAll("input[type=checkbox]:checked")).map((c) => c.value)
+      .concat(el.querySelector("#mrbo").value.split(",").map((x) => x.trim()).filter(Boolean));
+    if (!nomes.length) { el.querySelector("#mrbw").textContent = "Marque quem resolveu."; return; }
+    const rby = nomes.length > 1 ? nomes.slice(0, -1).join(", ") + " e " + nomes[nomes.length - 1] : nomes[0];
+    const snota = el.querySelector("#mrbs").value.trim();
+    const quem = typeof mtUser === "function" ? mtUser() : "";
+    if (fechar) mset(id, { status: "resolvida", rts: Date.now(), rby, fby: quem, snota, pnota: "", pts: 0 });
+    else mset(id, { rby, snota, fby: m.fby || quem });
+    el.remove();
+    render();
+  };
+}
+/* texto de manutenção CONCLUÍDA para o WhatsApp */
+function mConclTxt(m) {
+  const p = PMf(m.pid), L = ["✅ *MANUTENÇÃO CONCLUÍDA – MEGA MÍDIA OOH*", ""];
+  L.push("*" + (p ? p.nome : "(ponto removido)") + "*");
+  if (p) L.push("📍 " + (p.end || "") + (rg(p) && !(p.end || "").toLowerCase().includes(rg(p).toLowerCase()) ? " – " + rg(p) : ""));
+  L.push("⚠️ *Defeito:* " + (m.def || ""));
+  if (m.snota) L.push("🛠 *O que foi feito:* " + m.snota);
+  L.push("👷 *Resolvido por:* " + (m.rby || ELD));
+  if (m.rts) L.push("🕒 *Concluído em:* " + dh(m.rts));
+  if (m.pz && m.rts) L.push(m.rts <= m.pz ? "⏱ Dentro do prazo" : "⏱ Fora do prazo (prazo " + dh(m.pz) + ")");
+  return L.join("\n");
 }

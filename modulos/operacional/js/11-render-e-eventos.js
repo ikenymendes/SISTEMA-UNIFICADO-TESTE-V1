@@ -1045,14 +1045,13 @@ document.addEventListener("click", async (ev) => {
     mtM = "";
     $("warn").innerHTML = "";
   } else if (a === "mtoeld") mset(v, { status: "eld" });
-  else if (a === "mdone")
-    mset(v, {
-      status: "resolvida",
-      rts: Date.now(),
-      rby: typeof mtUser === "function" ? mtUser() : "",
-      pnota: "",
-      pts: 0,
-    });
+  else if (a === "mdone") {
+    mResolvidoAbrir(v, true);
+    return;
+  } else if (a === "mrby") {
+    mResolvidoAbrir(v, false);
+    return;
+  }
   else if (a === "mreop") mset(v, { status: "eld", rts: 0 });
   else if (a === "mdel") {
     if (!(await ask4("Excluir este chamado de manutenção?"))) return;
@@ -1062,7 +1061,7 @@ document.addEventListener("click", async (ev) => {
   } else if (a === "mcp") {
     const m = S.manut.find((q) => q.id === v);
     if (!m) return;
-    const tx =
+    const tx = m.status === "resolvida" ? mConclTxt(m) :
       "🔧 *MANUTENÇÃO – MEGA MÍDIA OOH*\n" +
       pEmo(m.prio) +
       " *" +
