@@ -36,7 +36,7 @@ function fpPontos() {
     if (!vig(v) || (v.man && v.conc)) return;
     let g = m.get(t.p.id);
     if (!g) m.set(t.p.id, (g = { p: t.p, cli: [] }));
-    g.cli.push({ v, key: t.key, st: t.status, nota: t.nota, by: t.by });
+    g.cli.push({ v, key: t.key, st: t.status, nota: t.nota, by: t.by, fts: (S.fotos[t.key] || {}).fts || 0 });
   });
   return [...m.values()].map((g) => {
     const np = g.cli.filter((c) => FP_ST[c.st] === "p").length,
@@ -60,6 +60,16 @@ function fpBusca(g, q) {
 }
 const FP_OK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+/* "hoje 14:32", "ontem 09:10" ou "08/11 16:05" */
+function fpQuando(ts) {
+  if (!ts) return "";
+  const d = new Date(ts),
+    h = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    dd = d.toISOString ? new Date(ts - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10) : "",
+    hj = dia(),
+    on = new Date(new Date(hj + "T12:00:00") - 864e5).toISOString().slice(0, 10);
+  return (dd === hj ? "hoje" : dd === on ? "ontem" : fmt(dd).slice(0, 5)) + " às " + h;
+}
 const fpStTxt = (c) =>
   c.st === "feita" ? "Feita" + (c.by ? " · " + e(c.by) : "") : c.st === "validada" ? "Validada" : FP_TXT[c.st] || "Pendente";
 const fpQuem = () => [...new Set(MOTOS.concat(typeof ELD === "string" && ELD ? [ELD] : []))];
@@ -73,7 +83,7 @@ function fpMenu(c) {
       .map((m) => `<button type="button" class="fp-b" data-a="qf" data-v="${k}|${e(m)}">${e(m)}</button>`)
       .join("")}</div></div>`;
   if (c.st === "feita")
-    return `<div class="fp-menu"><span>Foto feita${c.by ? " por <b>" + e(c.by) + "</b>" : ""}. Está certa?</span><div class="fp-bs"><button type="button" class="fp-b ok" data-a="ok" data-v="${k}">✔ Validar</button><button type="button" class="fp-b" data-a="rf" data-v="${k}">↺ Refazer</button><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
+    return `<div class="fp-menu"><span>Foto feita${c.by ? " por <b>" + e(c.by) + "</b>" : ""}${c.fts ? " " + fpQuando(c.fts) : ""}. Está certa?</span><div class="fp-bs"><button type="button" class="fp-b ok" data-a="ok" data-v="${k}">✔ Validar</button><button type="button" class="fp-b" data-a="rf" data-v="${k}">↺ Refazer</button><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
   return `<div class="fp-menu"><span>✔ Validada${c.by ? " · foto de <b>" + e(c.by) + "</b>" : ""}</span><div class="fp-bs"><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
 }
 function fpCard(g, q) {
@@ -90,7 +100,7 @@ function fpCard(g, q) {
           ? `<span class="fp-atr">⚠ ${dn} dias no ar ${c.st === "feita" ? "sem verificar" : "sem foto"}</span>`
           : "",
         urg = k === "p" && d <= 3 ? ` <span class="fp-urg">⏱ ${d <= 0 ? "sai do ar hoje" : "faltam " + d + (d === 1 ? " dia" : " dias")}</span>` : "";
-      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && c.by ? ` · foto feita por ${e(c.by)}` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
+      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && (c.by || c.fts) ? ` · <span class="fp-fez">📷 ${c.by ? e(c.by) + " " : ""}${fpQuando(c.fts)}</span>` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
     })
     .join("");
   return `<div class="fp-pt ${g.k}${g.atr ? " atrasado" : ""}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span>${g.atr ? `<div class="fp-alerta">⚠ ${g.atr} ${g.atr === 1 ? "foto atrasada" : "fotos atrasadas"}</div>` : ""}<h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
@@ -124,6 +134,63 @@ function fpList() {
     `<span id="fpn" hidden>${all.length}</span>`
   );
 }
+/* fotos marcadas como feitas (pelo motoboy ou por alguém) esperando validação */
+function fpParaValidar() {
+  const m = new Map();
+  tasks(true).forEach((t) => {
+    if (t.status !== "feita") return;
+    const f = S.fotos[t.key] || {};
+    let g = m.get(t.p.id);
+    if (!g) m.set(t.p.id, (g = { p: t.p, L: [], ts: 0, by: new Set() }));
+    g.L.push(t);
+    g.ts = Math.max(g.ts, f.fts || f.ts || 0);
+    if (t.by) g.by.add(t.by);
+  });
+  return [...m.values()].sort((a, b) => b.ts - a.ts);
+}
+function fpAvisos() {
+  const L = fpParaValidar();
+  if (!L.length) return "";
+  return `<div class="fp-av"><div class="fp-av-cab">🔔 <b>Para validar</b> <span>${L.reduce((s, g) => s + g.L.length, 0)} foto(s) feitas esperando você</span></div>${L.slice(0, 8)
+    .map(
+      (g) =>
+        `<div class="fp-av-it"><div><b>${e([...g.by].join(" e ") || "Alguém")}</b> fez as fotos de <b>${e(g.p.nome)}</b><small>${g.L.map((t) => e(t.vt.cliente)).join(" · ")}${g.ts ? " · " + fpQuando(g.ts) : ""}</small></div><button type="button" class="fp-b ok" data-a="fpvall" data-v="${g.p.id}">✔ Validar ${g.L.length > 1 ? "todas" : ""}</button></div>`,
+    )
+    .join("")}${L.length > 8 ? `<div class="fp-av-mais">e mais ${L.length - 8} ponto(s) no filtro "A validar"</div>` : ""}</div>`;
+}
+/* aviso para admin/operacional quando chega foto nova feita (ex.: motoboy na rua) */
+let fpVisto = 0;
+try {
+  fpVisto = +localStorage.getItem("fp_visto") || 0;
+} catch (_) {}
+function fpNotifica() {
+  if (typeof eMoto === "function" && eMoto()) return;
+  if (typeof eMan === "function" && eMan()) return;
+  const L = fpParaValidar(),
+    novo = L.filter((g) => g.ts > fpVisto);
+  if (view === "fp") {
+    const mx = Math.max(fpVisto, ...L.map((g) => g.ts));
+    if (mx > fpVisto) {
+      fpVisto = mx;
+      try {
+        localStorage.setItem("fp_visto", String(mx));
+      } catch (_) {}
+    }
+    const t0 = $("fptoast");
+    if (t0) t0.remove();
+    return;
+  }
+  if (!novo.length) return;
+  let t = $("fptoast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "fptoast";
+    document.body.appendChild(t);
+  }
+  const g = novo[0],
+    n = novo.reduce((s, x) => s + x.L.length, 0);
+  t.innerHTML = `<span class="fp-t-ico">📷</span><div><b>${e([...g.by].join(" e ") || "Alguém")} fez as fotos de ${e(g.p.nome)}</b><small>${n} foto(s) para validar · ${fpQuando(g.ts)}</small></div><button type="button" data-a="tab" data-v="fp">Validar</button><button type="button" class="x" data-a="fptx" aria-label="Fechar">×</button>`;
+}
 function fotosPonto() {
   const all = fpPontos(),
     c = { p: 0, f: 0, v: 0 };
@@ -135,6 +202,6 @@ function fotosPonto() {
 <div class="fp-cab"><div><small>Fluxo do VT</small><h1>📸 Fotos <i>por ponto</i></h1></div>
 <div class="fp-kp">${na ? `<div class="a" data-a="fpf" data-v="a"><b>${na}</b><span>⚠ fotos atrasadas</span></div>` : ""}<div class="p"><b>${c.p}</b><span>precisam de foto</span></div><div class="f"><b>${c.f}</b><span>a validar</span></div><div class="v"><b>${c.v}</b><span>em dia</span></div></div></div>
 <label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fpq" type="search" autocomplete="off" placeholder="Buscar endereço, ponto, região ou cliente…" value="${e(fpQ)}"><em id="fpc">${tot} ${tot == 1 ? "ponto" : "pontos"}</em></label>
-<div id="fpl">${n}</div></div></div>`;
+${fpAvisos()}<div id="fpl">${n}</div></div></div>`;
 }
 const fpPend = () => fpPontos().filter((g) => g.k === "p").length;

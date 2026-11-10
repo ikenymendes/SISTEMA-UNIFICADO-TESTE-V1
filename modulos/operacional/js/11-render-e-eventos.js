@@ -40,6 +40,12 @@ function mobNav() {
       } else document.body.classList.remove("mm");
     });
   }
+  if (eMoto()) {
+    bar.innerHTML = `<img src="${LOGO_W}" alt="Mega OOH"><b>Fotos perto de você</b><span>👤 ${e(mtUser())}</span>${HOST ? "" : `<a href="#" data-a="sair">Sair</a>`}`;
+    nav.innerHTML = "";
+    sh.innerHTML = "";
+    return;
+  }
   if (eMan()) {
     bar.innerHTML = `<img src="${LOGO_W}" alt="Mega OOH"><b>Manutenção</b><span>👤 ${e(mtUser())}</span>${HOST ? "" : `<a href="#" data-a="sair">Sair</a>`}`;
     nav.innerHTML = "";
@@ -88,6 +94,10 @@ function render() {
   S.col = S.col || {};
   if (eMan()) {
     view = "mt";
+    document.body.classList.add("rm");
+  } else if (eMoto()) {
+    view = "pm";
+    moto = motoLogado();
     document.body.classList.add("rm");
   } else document.body.classList.remove("rm");
   const nfx = fxStat(dia().slice(0, 7));
@@ -149,6 +159,9 @@ function render() {
     (eMan() ? mtWelcome() : "");
   ckShow();
   if (view === "pl" && !PL.d && !PL.busy && !PL.err) plLoad();
+  try {
+    fpNotifica();
+  } catch (_) {}
 }
 function keep() {
   const c = $("dc");
@@ -312,17 +325,34 @@ document.addEventListener("click", async (ev) => {
   if (eMan() && !MAN_OK.has(a)) {
     return;
   }
+  if (eMoto() && !MOTO_OK.has(a)) return;
   if (CLD && !eAdm() && ADMIN_ONLY.has(a)) {
     $("warn").innerHTML =
       '<div class="warn">Só o administrador pode alterar ou apagar pontos e configurações.</div>';
     return;
   }
-  if (a === "pmmodo" || a === "pmraio") {
-    if (a === "pmmodo") PM.modo = v;
-    else PM.raio = +v;
+  if (a === "pmmodo") {
+    PM.modo = v;
     try {
-      localStorage.setItem("pm_" + (a === "pmmodo" ? "modo" : "raio"), String(a === "pmmodo" ? PM.modo : PM.raio));
+      localStorage.setItem("pm_modo", PM.modo);
     } catch (_) {}
+    render();
+    return;
+  }
+  if (a === "fptx") {
+    const t = $("fptoast");
+    if (t) t.remove();
+    fpVisto = Math.max(fpVisto, ...fpParaValidar().map((g) => g.ts));
+    try {
+      localStorage.setItem("fp_visto", String(fpVisto));
+    } catch (_) {}
+    return;
+  }
+  if (a === "fpvall") {
+    /* valida de uma vez todas as fotos "feitas" daquele ponto */
+    tasks(true)
+      .filter((t) => t.p.id === v && t.status === "feita")
+      .forEach((t) => setF(t.key, { status: "validada" }));
     render();
     return;
   }
@@ -332,7 +362,7 @@ document.addEventListener("click", async (ev) => {
     L.forEach((t) => {
       const fi = fotoInfo(t);
       if (fi && !fi.ok) falta.push(t.vt.cliente);
-      else setF(t.key, { status: "feita", nota: "", by: moto });
+      else setF(t.key, { status: "feita", nota: "", by: moto, fts: Date.now() });
     });
     $("warn").innerHTML = falta.length
       ? '<div class="warn">' + e(falta.join(", ")) + ": este cliente exige fotos de início e fim. Marque Início/Fim na Gestão.</div>"
@@ -824,7 +854,7 @@ document.addEventListener("click", async (ev) => {
       return;
     }
     $("warn").innerHTML = "";
-    setF(v, a === "feita" ? { status: "feita", nota: "", by: moto } : { status: "validada" });
+    setF(v, a === "feita" ? { status: "feita", nota: "", by: moto, fts: Date.now() } : { status: "validada" });
   } else if (a === "rf") refazerOpen = v;
   else if (a === "rfok") {
     const n = $("rfn").value;
@@ -850,7 +880,7 @@ document.addEventListener("click", async (ev) => {
       return;
     }
     $("warn").innerHTML = "";
-    setF(k, { status: "feita", nota: "", by: m });
+    setF(k, { status: "feita", nota: "", by: m, fts: Date.now() });
   } else if (a === "qwho") {
     const [k, m] = v.split("|");
     setF(k, { by: m });

@@ -106,6 +106,8 @@ var ADMIN = (function () {
     var kProp = kpi('arquivo', 'Propostas no mês', 'k3', 'comercial');
     var kSug = kpi('chat', 'Sugestões pendentes', 'k4', 'comercial');
     var kEst = kpi('arquivo', 'Estáticos com aviso', 'k5', 'operacional');
+    var kFot = kpi('tv', 'Fotos para validar', 'k6', 'operacional');
+    kFot.onclick = function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='fp';fpF='f';render()"); } catch (e) {} }); };
     kEst.onclick = function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='i';render()"); } catch (e) {} }); };
     function kSet(card, valor, sub, tom) {
       var v = card.querySelector('.kpi-val'), s = card.querySelector('.kpi-sub');
@@ -175,7 +177,7 @@ var ADMIN = (function () {
         atalho('Financeiro', 'financeiro', function () { abrir('financeiro'); }),
         atalho('Players', 'tv', function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='pl';render()"); } catch (e) {} }); })
       ]),
-      h('div', { class: 'adm-kpis' }, [kCamp, kMan, kEst, kProp, kSug]),
+      h('div', { class: 'adm-kpis' }, [kCamp, kMan, kFot, kEst, kProp, kSug]),
       h('div', { class: 'adm-linha' }, [cGraf, cRos]),
       h('div', { class: 'adm-linha dois' }, [cMan, cSug])
     ]);
@@ -186,7 +188,7 @@ var ADMIN = (function () {
 
     (async function operacional() {
       try {
-        var r = await client.from('registros').select('tipo,dados').in('tipo', ['vt', 'mn', 'es']).eq('excluido', false);
+        var r = await client.from('registros').select('tipo,dados').in('tipo', ['vt', 'mn', 'es', 'ft']).eq('excluido', false);
         if (r.error) throw r.error;
         var hoje = hojeISO(), agora = Date.now(), noAr = 0, aIniciar = 0, fim = 0, abertas = [];
         (r.data || []).forEach(function (x) {
@@ -203,6 +205,13 @@ var ADMIN = (function () {
           if (!e.inst ? (df < 0 || di <= 2) : df <= 2) avE++;
         });
         kSet(kEst, avE, avE ? 'instalar ou retirar lona' : 'tudo em dia', avE ? 'alerta' : 'bom');
+        /* fotos marcadas como feitas (ex.: motoboy na rua) esperando validação */
+        var feitas = (r.data || []).filter(function (x) { return x.tipo === 'ft' && x.dados && x.dados.status === 'feita'; })
+          .map(function (x) { return x.dados; }).sort(function (a, b) { return (b.fts || b.ts || 0) - (a.fts || a.ts || 0); });
+        var ult = feitas[0], quando = ult ? new Date(ult.fts || ult.ts || 0) : null;
+        kSet(kFot, feitas.length, feitas.length
+          ? 'última: ' + esc(ult.by || 'alguém') + (quando && quando.getTime() ? ' · ' + quando.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + quando.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '')
+          : 'nada esperando', feitas.length ? 'alerta' : 'bom');
         var atrasadas = abertas.filter(function (m) { return m.pz && m.pz < agora; });
         kSet(kCamp, noAr, aIniciar + ' a iniciar · ' + fim + ' encerradas');
         kSet(kMan, abertas.length, atrasadas.length ? '<b>' + atrasadas.length + ' atrasada(s)</b>' : 'nenhuma atrasada', atrasadas.length ? 'alerta' : 'bom');
@@ -220,7 +229,7 @@ var ADMIN = (function () {
           return '<li><span class="pto ' + (atr ? 'ruim' : '') + '"></span><div><b>' + esc(m.def || 'Chamado de manutenção') + '</b><small>' + (m.status === 'eld' ? 'em atendimento' : 'pendente') + (m.moto ? ' · ' + esc(m.moto) : '') + '</small></div>' + chip + '</li>';
         }).join('') : '<li class="vazio">Nenhuma manutenção aberta. Tudo em dia.</li>';
       } catch (e) {
-        falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler'); falhou(kEst, 'não consegui ler');
+        falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler'); falhou(kEst, 'não consegui ler'); falhou(kFot, 'não consegui ler');
         cRos.querySelector('.ros-corpo').innerHTML = '<div class="vazio">Não consegui carregar a operação.</div>';
         cMan.querySelector('.lst').innerHTML = '<li class="vazio">Não consegui carregar.</li>';
       }

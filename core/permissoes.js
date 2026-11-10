@@ -75,6 +75,12 @@ var PERMISSOES = {
     areas: ['inicio'],
     inicial: 'inicio'
   },
+  motoboy: {
+    rotulo: 'Motoboy',
+    modulos: ['operacional'],
+    areas: ['inicio'],
+    inicial: 'operacional'   /* abre direto na tela "Fotos perto de você" */
+  },
   financeiro: {
     rotulo: 'Financeiro',
     modulos: ['financeiro'],

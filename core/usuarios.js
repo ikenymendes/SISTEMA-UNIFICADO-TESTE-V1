@@ -5,8 +5,8 @@
    (As assinaturas da contracapa continuam na aba "Assinaturas" do Comercial.)
    ===================================================================== */
 var USUARIOS = (function () {
-  var PAPEIS = [['admin', 'Administrador'], ['comercial', 'Comercial'], ['gerente_comercial', 'Gerente comercial'], ['operacional', 'Operacional'], ['manutencao', 'Manutenção'], ['financeiro', 'Financeiro']];
-  var ROTULO = { admin: 'Administrador', comercial: 'Comercial', gerente_comercial: 'Gerente comercial', operacional: 'Operacional', manutencao: 'Manutenção', financeiro: 'Financeiro', pendente: 'Pendente', bloqueado: 'Bloqueado' };
+  var PAPEIS = [['admin', 'Administrador'], ['comercial', 'Comercial'], ['gerente_comercial', 'Gerente comercial'], ['operacional', 'Operacional'], ['manutencao', 'Manutenção'], ['motoboy', 'Motoboy'], ['financeiro', 'Financeiro']];
+  var ROTULO = { admin: 'Administrador', comercial: 'Comercial', gerente_comercial: 'Gerente comercial', operacional: 'Operacional', manutencao: 'Manutenção', motoboy: 'Motoboy', financeiro: 'Financeiro', pendente: 'Pendente', bloqueado: 'Bloqueado' };
   var cli = null, euId = null, raiz = null, listaEl = null, pendEl = null, lista = [];
 
   function h(tag, attrs, filhos) {

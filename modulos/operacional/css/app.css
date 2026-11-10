@@ -2005,3 +2005,17 @@ body{font-size:14px;line-height:1.55}
 .pm-teste{margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--tx2);padding:10px 12px;border-radius:16px;background:#00003d55;border:1px solid var(--borda)}
 .pm-teste .pm-sel{flex:1;min-width:0}
 @media (max-width:700px){.fpw .pm-modo button{font-size:12.5px;padding:8px 4px}.pm-top h1{font-size:22px}.pm-quem{width:100%;flex-direction:row;align-items:center;justify-content:space-between}}
+/* Para validar (fotos feitas esperando o escritório) */
+.fp-av{margin:0 0 16px;border-radius:22px;padding:12px 14px;background:linear-gradient(135deg,#ffb54726,#ffffff12);border:1px solid #ffb54777;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.fp-av-cab{font-size:14px;margin-bottom:6px}.fp-av-cab b{color:#fff}.fp-av-cab span{color:var(--tx2);font-size:12.5px;margin-left:6px}
+.fp-av-it{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--borda);font-size:13px;color:var(--tx2)}
+.fp-av-it>div{flex:1;min-width:0}.fp-av-it b{color:#fff}.fp-av-it small{display:block;font-size:11.5px}
+.fp-av-mais{font-size:12px;color:var(--tx2);padding-top:6px}
+.fp-fez{color:#ffd28a;font-weight:600}
+#fptoast{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;align-items:center;gap:12px;max-width:420px;padding:12px 14px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#10107aee,#3a2a9aee);border:1px solid #ffffff40;box-shadow:0 20px 44px -12px #00003dcc;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);animation:fpAbre .25s ease;font-family:Poppins,sans-serif}
+#fptoast .fp-t-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#ff0066,#ff5a8c);font-size:18px;flex:none}
+#fptoast b{font-size:13px;display:block}#fptoast small{font-size:11.5px;color:#ffffffb8}
+#fptoast button{border:0;border-radius:11px;padding:8px 12px;font:700 12.5px Poppins,sans-serif;background:#ff0066;color:#fff;cursor:pointer;flex:none}
+#fptoast button.x{background:transparent;padding:4px 6px;font-size:18px;color:#ffffffa0}
+@media (max-width:700px){#fptoast{left:10px;right:10px;bottom:84px;max-width:none}}
+body.rm #fptoast{display:none}

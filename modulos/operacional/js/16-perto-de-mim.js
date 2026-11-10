@@ -4,10 +4,17 @@
    raio escolhido. "Fiz as fotos" marca a foto como feita, com o nome de
    quem fez; a validação continua no escritório (Fotos por ponto/Gestão).
    ===================================================================== */
-let PM = { pos: null, err: "", watch: null, raio: 1000, modo: "lista", sim: "" };
+let PM = { pos: null, err: "", watch: null, modo: "lista", sim: "" };
+/* usuário com perfil Motoboy: só enxerga esta tela */
+const eMoto = () => typeof CLD !== "undefined" && CLD && ROLE === "motoboy";
+const MOTO_OK = new Set(["pmmodo", "pmfez", "sair"]);
+/* nome do motoboy logado, igual ao da lista de motoboys (Thiago, Alan...) */
+function motoLogado() {
+  const n = String((PERFIL && (PERFIL.nome || PERFIL.email)) || "").trim(),
+    p = n.split(/[ @.]/)[0].toLowerCase();
+  return MOTOS.find((m) => m.toLowerCase() === n.toLowerCase() || m.toLowerCase().split(" ")[0] === p) || n.split(" ")[0] || n;
+}
 try {
-  const r = +localStorage.getItem("pm_raio");
-  if ([500, 1000, 3000, 5000].includes(r)) PM.raio = r;
   const m = localStorage.getItem("pm_modo");
   if (m === "lista" || m === "prox") PM.modo = m;
 } catch (_) {}
@@ -77,15 +84,14 @@ function pmCorpo() {
   const total = com.length + sem.length;
   let gps;
   if (sim) gps = `<span class="pm-pu sim"></span><span>Simulando que você está em <b>${e(sim.nome)}</b></span>`;
-  else if (PM.pos) gps = `<span class="pm-pu"></span><span>Localização ativa · <b>${total} ${total === 1 ? "ponto pendente" : "pontos pendentes"}</b> no total</span>`;
+  else if (PM.pos) gps = `<span class="pm-pu"></span><span>Localização ativa · <b>${total} ${total === 1 ? "ponto pendente" : "pontos pendentes"}</b>, do mais perto para o mais longe</span>`;
   else if (PM.err) gps = `<span class="pm-pu off"></span><span>${e(PM.err)}</span>`;
   else gps = `<span class="pm-pu wait"></span><span>Procurando a sua localização…</span>`;
   let h = `<div class="pm-gps">${gps}</div>`;
   if (!onde) return h + `<div class="pm-vazio">Assim que o GPS responder, os pontos perto de você aparecem aqui.</div>`;
-  const perto = com.filter((g) => g.d <= PM.raio),
-    fora = com.filter((g) => g.d > PM.raio);
+  const perto = com; /* raio automático: todos os pendentes, sempre do mais perto para o mais longe */
   if (!perto.length)
-    h += `<div class="pm-vazio">Nenhuma foto pendente até ${pmKm(PM.raio)}.${fora.length ? `<br>O ponto pendente mais perto é <b>${e(fora[0].p.nome)}</b>, a ${pmKm(fora[0].d)}.` : total ? "" : "<br>Tudo em dia! 🎉"}</div>`;
+    h += `<div class="pm-vazio">${total ? "Os pontos pendentes ainda não têm coordenada cadastrada." : "Nenhuma foto pendente agora. Tudo em dia! 🎉"}</div>`;
   else if (PM.modo === "prox") {
     const g = perto[0];
     h += `<div class="pm-big"><small>MAIS PERTO AGORA</small><div class="pm-km">${pmKm(g.d).replace(/ (m|km)$/, "<span> $1</span>")}</div><div class="pm-min">≈ ${pmMin(g.d)} min</div><h3>${e(g.p.nome)}</h3><div class="pm-end">${e(g.p.end || "")}</div><div class="pm-cls">${g.L.map(pmCli).join("")}</div>${pmBtns(g)}</div>`;
@@ -103,8 +109,6 @@ function pmCorpo() {
           `<div class="pm-card"><div class="pm-dist"><b>${pmKm(g.d)}</b><small>≈ ${pmMin(g.d)} min</small></div><h4>${e(g.p.nome)}</h4><div class="pm-end">${e(g.p.end || "")}${g.p.tp ? " · " + e(g.p.tp) : ""}</div>${g.L.map(pmCli).join("")}${pmBtns(g)}</div>`,
       )
       .join("");
-  if (perto.length && fora.length)
-    h += `<div class="pm-fora">Mais ${fora.length} ${fora.length === 1 ? "ponto pendente" : "pontos pendentes"} fora do raio · o mais perto é <b>${e(fora[0].p.nome)}</b>, a ${pmKm(fora[0].d)}</div>`;
   if (sem.length)
     h += `<div class="pm-fora">${sem.length} ${sem.length === 1 ? "ponto pendente não tem" : "pontos pendentes não têm"} coordenada cadastrada e não ${sem.length === 1 ? "aparece" : "aparecem"} aqui: ${sem.map((g) => e(g.p.nome)).join(", ")}.</div>`;
   return h;
@@ -115,16 +119,15 @@ function pmPinta() {
 }
 function pertoDeMim() {
   pmGps();
-  const R = [500, 1000, 3000, 5000];
+  const mot = eMoto();
   const quem = `<select data-a="msel" class="pm-sel">${MOTOS.map((m) => `<option ${m === moto ? "selected" : ""}>${e(m)}</option>`).join("")}</select>`;
   const simSel = `<select data-a="pmsim" class="pm-sel"><option value="">Minha localização real (GPS)</option>${ALL()
     .filter((p) => p.ll)
     .map((p) => `<option value="${p.id}" ${PM.sim === p.id ? "selected" : ""}>Simular: ${e(p.nome)}</option>`)
     .join("")}</select>`;
   return `<div class="fpw pmw"><div class="fp-blob a"></div><div class="fp-blob b"></div><div class="fp-in">
-<div class="pm-top"><div><small>Tela do motoboy</small><h1>📸 Fotos <i>perto de você</i></h1></div><div class="pm-quem"><span>Fotos feitas por</span>${quem}</div></div>
+<div class="pm-top"><div><small>${mot ? "Olá, " + e(moto) : "Tela do motoboy"}</small><h1>📸 Fotos <i>perto de você</i></h1></div>${mot ? "" : `<div class="pm-quem"><span>Fotos feitas por</span>${quem}</div>`}</div>
 <div class="pm-modo"><button class="${PM.modo === "lista" ? "on" : ""}" data-a="pmmodo" data-v="lista">📋 Lista</button><button class="${PM.modo === "prox" ? "on" : ""}" data-a="pmmodo" data-v="prox">🎯 Próximo ponto</button></div>
-<div class="pm-raio">${R.map((r) => `<button class="${PM.raio === r ? "on" : ""}" data-a="pmraio" data-v="${r}">${r < 1000 ? r + " m" : r / 1000 + " km"}</button>`).join("")}</div>
 <div id="pmc">${pmCorpo()}</div>
-<div class="pm-teste"><span>🧪 Teste no escritório</span>${simSel}</div></div></div>`;
+${mot ? "" : `<div class="pm-teste"><span>🧪 Teste no escritório</span>${simSel}</div>`}</div></div>`;
 }
