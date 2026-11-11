@@ -319,28 +319,38 @@ button, input { font: inherit; color: inherit; }
   .lg-bl, .bv-bg::before, .bv-bg::after, .mg-logo, .login .cartao, .bv-mk img, .bv-mk::before, .bv-mk::after, .bv-pl, .bv-sau, .bv-hora, .bv-data, .bv-barra i, .bv-dem .go { animation: none !important; opacity: 1; clip-path: none; }
 }
 
-/* luz rosa que acompanha o mouse */
-.lg-luz { position: absolute; left: 0; top: 0; width: 520px; height: 520px; border-radius: 50%; pointer-events: none; z-index: 0; will-change: transform;
-  background: radial-gradient(circle, #ff2d7ae6 0%, #ff006699 30%, #ff00662e 55%, transparent 70%); filter: blur(24px); opacity: 0; transition: opacity .4s; }
+/* rastro "cometa" que acompanha o mouse (fica atrás do cartão de vidro) */
+.lg-luz { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity .6s; }
 .login.mouse .lg-luz { opacity: 1; }
+.lg-luz canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.login .lg-in { position: relative; z-index: 2; }
 
-/* abertura depois do login: o cartão recolhe, as faixas abrem e o logo cresce (estilo vinheta) */
-.login.saindo .cartao { animation: lgRecolhe .45s cubic-bezier(.6,0,.4,1) forwards; transform-origin: 50% 0; }
-.login.saindo .versao, .login.saindo .teste-box { animation: lgSome .3s forwards; }
-.login.saindo .mg-logo { animation: lgSome .35s .25s forwards; }
-.login.saindo .lg-grade { animation: lgSome .6s forwards; }
-@keyframes lgRecolhe { 60% { opacity: 1; } to { transform: scaleY(0) translateY(-30px); opacity: 0; } }
-@keyframes lgSome { to { opacity: 0; transform: translateY(-10px); } }
-.lg-intro { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; overflow: hidden; pointer-events: none; }
-.li-faixas { position: absolute; inset: 0; display: flex; justify-content: center; align-items: stretch; gap: 0; }
-.li-faixas i { display: block; flex: 0 0 4vw; max-width: 60px; background: linear-gradient(180deg, transparent, var(--c) 30%, var(--c) 70%, transparent); opacity: 0; transform: scaleY(0);
-  animation: liFaixa 1.5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i) * 35ms); filter: blur(1px); box-shadow: 0 0 30px var(--c); }
-@keyframes liFaixa { 0% { opacity: 0; transform: scaleY(0) translateX(0); } 35% { opacity: .9; transform: scaleY(1); } 70% { opacity: .7; transform: scaleY(1.1) translateX(calc((var(--i) - 6.5) * 6vw)); } 100% { opacity: 0; transform: scaleY(1.2) translateX(calc((var(--i) - 6.5) * 14vw)); } }
-.li-marca { position: relative; width: 120px; opacity: 0; transform: scale(.4); filter: drop-shadow(0 0 30px #ff0066) drop-shadow(0 0 70px #ff006699);
-  animation: liMarca 1.85s cubic-bezier(.3,.7,.2,1) .15s forwards; }
-@keyframes liMarca { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.15); } 55% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1.6); } 100% { opacity: 0; transform: scale(14); } }
-.li-flash { position: absolute; inset: 0; background: radial-gradient(circle, #ffffff, #ff3d86 30%, #1d46b8 70%); opacity: 0; animation: liFlash 1.9s forwards; }
-@keyframes liFlash { 0%, 78% { opacity: 0; } 88% { opacity: .55; } 100% { opacity: 0; } }
+/* abertura depois do login */
+.login.saindo .cartao form > * { animation: lgCampo .38s cubic-bezier(.5,0,.3,1) forwards; }
+.login.saindo .cartao form > *:nth-child(2) { animation-delay: .03s; } .login.saindo .cartao form > *:nth-child(3) { animation-delay: .06s; }
+.login.saindo .cartao form > *:nth-child(4) { animation-delay: .09s; } .login.saindo .cartao form > *:nth-child(5) { animation-delay: .12s; }
+.login.saindo .cartao form > *:nth-child(6), .login.saindo .cartao form > *:nth-child(7) { animation-delay: .15s; }
+@keyframes lgCampo { to { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+.login.saindo .cartao { animation: lgCartao .5s .18s cubic-bezier(.5,0,.3,1) forwards; }
+@keyframes lgCartao { to { opacity: 0; transform: scale(.94); filter: blur(8px); } }
+.login.saindo .mg-logo, .login.saindo .versao, .login.saindo .teste-box, .login.saindo .lg-luz { animation: lgSome .4s forwards; }
+@keyframes lgSome { to { opacity: 0; } }
+.lg-intro { position: fixed; inset: 0; z-index: 50; overflow: hidden; pointer-events: none; }
+.li-fundo { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #1a0b5e, #05052e 70%); opacity: 0; animation: liFundo 2.45s ease forwards; }
+@keyframes liFundo { 0% { opacity: 0; } 14% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
+.li-halo { position: absolute; left: 50%; top: 50%; width: 900px; height: 900px; margin: -450px 0 0 -450px; border-radius: 50%;
+  background: radial-gradient(circle, #ff3d8659, #ff3d8614 40%, transparent 65%); opacity: 0; transform: scale(.2); animation: liHalo 2.45s ease-out forwards; }
+@keyframes liHalo { 0% { opacity: 0; transform: scale(.2); } 35% { opacity: 1; transform: scale(1); } 70% { opacity: .8; } 100% { opacity: 0; transform: scale(1.1); } }
+.li-m { position: absolute; left: 50%; top: 50%; width: 130px; transform: translate(-50%, -62%); opacity: 0; animation: liM 2.45s ease-in-out forwards; }
+@keyframes liM {
+  0% { opacity: 0; transform: translate(-50%, -62%) scale(1.25); filter: brightness(3) blur(10px) drop-shadow(0 0 40px #ff3d86); }
+  35% { opacity: 1; transform: translate(-50%, -62%) scale(1); filter: brightness(1.6) blur(0) drop-shadow(0 0 40px #ff3d86); }
+  72% { opacity: 1; transform: translate(-50%, -62%) scale(1); filter: brightness(1) blur(0) drop-shadow(0 0 24px #ff0066aa); }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(1.15); filter: blur(12px) drop-shadow(0 0 24px #ff0066aa); } }
+.li-p { position: absolute; left: 50%; top: calc(50% + 46px); height: 40px; transform: translateX(-50%); clip-path: inset(0 100% 0 0); animation: liP 2.45s ease forwards; }
+@keyframes liP { 0%, 30% { clip-path: inset(0 100% 0 0); opacity: 1; } 56% { clip-path: inset(0 0 0 0); opacity: 1; filter: blur(0); } 76% { clip-path: inset(0 0 0 0); opacity: 1; } 100% { clip-path: inset(0 0 0 0); opacity: 0; filter: blur(10px); } }
+@media (max-width: 600px) { .li-m { width: 104px; } .li-p { height: 32px; top: calc(50% + 36px); } }
+
 @media (max-width: 700px) { input, textarea, select { font-size: 16px !important; } }
 /* telas baixas (iPhone com a barra do Safari, iPhone SE): o cartão de demandas não cobre a hora */
 @media (max-height: 780px) {

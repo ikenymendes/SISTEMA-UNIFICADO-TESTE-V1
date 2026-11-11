@@ -113,35 +113,48 @@ var MEGA = (function () {
     ]);
   }
 
-  /* a luz rosa acompanha o mouse (com um pequeno atraso, suave) */
+  /* rastro "cometa": uma trilha rosa suave segue o mouse por trás do cartão de vidro e vai sumindo */
   function seguirMouse(tela, luz) {
     if (!window.matchMedia || !matchMedia('(any-pointer: fine)').matches) return;
-    var alvo = { x: innerWidth * 0.3, y: innerHeight * 0.3 }, pos = { x: alvo.x, y: alvo.y }, viva = true;
-    tela.addEventListener('pointermove', function (ev) { alvo.x = ev.clientX; alvo.y = ev.clientY; tela.classList.add('mouse'); });
+    var cv = h('canvas', {}); luz.appendChild(cv);
+    var c = cv.getContext('2d'), W = 0, H = 0, pts = [], p = null, alvo = null, parado = 0;
+    function tam() { var d = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; c.setTransform(d, 0, 0, d, 0, 0); }
+    tam(); window.addEventListener('resize', tam);
+    tela.addEventListener('pointermove', function (ev) { alvo = { x: ev.clientX, y: ev.clientY }; if (!p) p = { x: alvo.x, y: alvo.y }; tela.classList.add('mouse'); });
     tela.addEventListener('pointerleave', function () { tela.classList.remove('mouse'); });
     (function passo() {
       if (!document.body.contains(tela)) return;
-      pos.x += (alvo.x - pos.x) * 0.12; pos.y += (alvo.y - pos.y) * 0.12;
-      luz.style.transform = 'translate(' + (pos.x - 260) + 'px,' + (pos.y - 260) + 'px)';
+      if (p && alvo) {
+        p.x += (alvo.x - p.x) * 0.22; p.y += (alvo.y - p.y) * 0.22;
+        var mov = Math.abs(alvo.x - p.x) + Math.abs(alvo.y - p.y) > .5;
+        if (mov || parado++ < 2) pts.push({ x: p.x, y: p.y, v: 1 }); if (mov) parado = 0;
+      }
+      c.clearRect(0, 0, W, H);
+      pts.forEach(function (q) { q.v *= 0.93; });
+      pts = pts.filter(function (q) { return q.v > 0.04; });
+      pts.forEach(function (q) {
+        var r = 18 + 70 * q.v, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
+        g.addColorStop(0, 'rgba(255,61,134,' + (0.10 * q.v) + ')'); g.addColorStop(1, 'rgba(255,61,134,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, r, 0, 6.3); c.fill();
+      });
       requestAnimationFrame(passo);
     })();
   }
 
-  /* abertura depois do login (estilo vinheta): o cartão recolhe, as faixas abrem e o logo Mega cresce */
+  /* abertura depois do login: o cartão se dissolve, o "M" acende com um clarão,
+     "MEGA OOH" se escreve embaixo e tudo se dissolve suavemente */
   function abertura(tela) {
     return new Promise(function (ok) {
       var reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduz || !tela) return ok();
-      var faixas = [];
-      for (var i = 0; i < 14; i++) faixas.push(h('i', { style: '--i:' + i + ';--c:' + ['#ff0066', '#ff3d86', '#c13cff', '#7a2bff', '#4d7cff', '#38bdf8', '#ff5a8c'][i % 7] }));
       var intro = h('div', { class: 'lg-intro', 'aria-hidden': 'true' }, [
-        h('div', { class: 'li-faixas' }, faixas),
-        h('img', { class: 'li-marca', src: 'core/assets/marca.png', alt: '' }),
-        h('div', { class: 'li-flash' })
+        h('div', { class: 'li-fundo' }), h('div', { class: 'li-halo' }),
+        h('img', { class: 'li-m', src: 'core/assets/marca.png', alt: '' }),
+        h('img', { class: 'li-p', src: 'core/assets/palavra.png', alt: '' })
       ]);
       tela.classList.add('saindo');
-      setTimeout(function () { tela.appendChild(intro); }, 420);
-      setTimeout(ok, 2300);
+      setTimeout(function () { tela.appendChild(intro); }, 380);
+      setTimeout(ok, 2850);
     });
   }
 
