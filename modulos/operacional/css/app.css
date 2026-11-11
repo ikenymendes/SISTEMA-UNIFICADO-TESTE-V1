@@ -2198,3 +2198,5 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
   .fp-dica>span:nth-child(2){flex:none}
   .fp-dlk{grid-column:1/-1}
 }
+/* celular: campos com 16px (no iPhone, menos que isso faz a tela dar zoom ao tocar) */
+@media (max-width: 700px) { input, textarea, select { font-size: 16px !important; } }

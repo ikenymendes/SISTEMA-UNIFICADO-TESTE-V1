@@ -320,8 +320,8 @@ button, input { font: inherit; color: inherit; }
 }
 
 /* luz rosa que acompanha o mouse */
-.lg-luz { position: absolute; left: 0; top: 0; width: 520px; height: 520px; border-radius: 50%; pointer-events: none; z-index: 0;
-  background: radial-gradient(circle, #ff0066aa 0%, #ff006655 35%, transparent 68%); filter: blur(30px); opacity: 0; transition: opacity .5s; mix-blend-mode: screen; }
+.lg-luz { position: absolute; left: 0; top: 0; width: 520px; height: 520px; border-radius: 50%; pointer-events: none; z-index: 0; will-change: transform;
+  background: radial-gradient(circle, #ff2d7ae6 0%, #ff006699 30%, #ff00662e 55%, transparent 70%); filter: blur(24px); opacity: 0; transition: opacity .4s; }
 .login.mouse .lg-luz { opacity: 1; }
 
 /* abertura depois do login: o cartão recolhe, as faixas abrem e o logo cresce (estilo vinheta) */
@@ -341,4 +341,15 @@ button, input { font: inherit; color: inherit; }
 @keyframes liMarca { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.15); } 55% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1.6); } 100% { opacity: 0; transform: scale(14); } }
 .li-flash { position: absolute; inset: 0; background: radial-gradient(circle, #ffffff, #ff3d86 30%, #1d46b8 70%); opacity: 0; animation: liFlash 1.9s forwards; }
 @keyframes liFlash { 0%, 78% { opacity: 0; } 88% { opacity: .55; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .lg-luz { display: none; } }
+@media (max-width: 700px) { input, textarea, select { font-size: 16px !important; } }
+/* telas baixas (iPhone com a barra do Safari, iPhone SE): o cartão de demandas não cobre a hora */
+@media (max-height: 780px) {
+  .bv.fase2 .bv-top { transform: translateY(-34vh) scale(.62); }
+  .bv.fase2 .bv-hora, .bv.fase2 .bv-data, .bv.fase2 .bv-local { opacity: 0 !important; transition: opacity .3s; }
+  .bv-dem { padding: 14px 14px 12px; }
+  .bv-dem .k { padding: 10px; } .bv-dem .k b { font-size: 26px; }
+}
+@media (max-height: 600px) { .bv.fase2 .bv-top { transform: translateY(-38vh) scale(.5); } .bv-dem h3 { font-size: 16px; } }
+/* enquanto a abertura/boas-vindas está na tela, o convite "Instale o app" espera */
+body:has(.bv:not(.sai)) .app-convite, body:has(.lg-intro) .app-convite { opacity: 0; pointer-events: none; transform: translateY(20px); }
+.app-convite { transition: opacity .4s, transform .4s; }

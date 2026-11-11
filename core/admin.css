@@ -362,3 +362,8 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 .adm .trilho .marca { width: 40px; margin: 4px 0 16px; filter: drop-shadow(0 0 14px #ff006688); transition: transform .2s; }
 .adm .trilho .marca:hover { transform: scale(1.08); }
 .adm.tema-branco .trilho .marca { content: url('assets/marca.png'); filter: none; }
+@media (max-width: 700px) {
+  .adm-cab.v2 .adm-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .adm-cab.v2 .adm-btn { min-width: 0; padding-left: 8px; padding-right: 8px; justify-content: center; }
+  .adm-cab.v2 .adm-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

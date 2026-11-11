@@ -115,7 +115,7 @@ var MEGA = (function () {
 
   /* a luz rosa acompanha o mouse (com um pequeno atraso, suave) */
   function seguirMouse(tela, luz) {
-    if (!window.matchMedia || !matchMedia('(pointer: fine)').matches) return;
+    if (!window.matchMedia || !matchMedia('(any-pointer: fine)').matches) return;
     var alvo = { x: innerWidth * 0.3, y: innerHeight * 0.3 }, pos = { x: alvo.x, y: alvo.y }, viva = true;
     tela.addEventListener('pointermove', function (ev) { alvo.x = ev.clientX; alvo.y = ev.clientY; tela.classList.add('mouse'); });
     tela.addEventListener('pointerleave', function () { tela.classList.remove('mouse'); });
