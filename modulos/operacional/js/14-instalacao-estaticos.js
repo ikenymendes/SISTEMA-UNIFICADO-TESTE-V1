@@ -9,7 +9,7 @@ const INFV = () => ({ id: "", pt: "", nome: "", end: "", cl: "", pi: "", ini: ""
 const inDias = (d) => Math.round((new Date(d + "T12:00:00") - new Date(dia() + "T12:00:00")) / 864e5);
 const inPlural = (n) => n + (n === 1 ? " dia" : " dias");
 const inLista = () => (S.est || []).filter((x) => x.oc === "cli" && x.ini && x.fim);
-const inNome = (x) => x.nome || x.end || "Ponto";
+const inNome = (x) => estNome(x);
 
 /* avisos de cada campanha de estático (só as que ainda não foram retiradas) */
 function inAviso(x) {
@@ -106,10 +106,17 @@ function instalacao() {
     A = inAvisos(),
     ed = inf.id && S.est.find((q) => q.id === inf.id),
     novo = inf.pt === "__novo",
+    inOcup = (q) => q.oc === "cli" && q.cl && !q.ret && q.fim && q.fim >= dia(),
     opts = (S.est || [])
+      .filter((x) => !x.pai)
       .slice()
       .sort((a, b) => inNome(a).localeCompare(inNome(b), "pt-BR"))
-      .map((x) => `<option value="${x.id}" ${inf.pt === x.id ? "selected" : ""}>${e(inNome(x))}${x.nome && x.end ? " — " + e(x.end) : ""}</option>`)
+      .map((x) => {
+        const G = estGrupo(x.id),
+          n = Math.max(+x.nesp || 1, G.length),
+          oc = G.filter(inOcup).length;
+        return `<option value="${x.id}" ${inf.pt === x.id ? "selected" : ""}>${e(x.nome || x.end || "Ponto")}${x.nome && x.end ? " — " + e(x.end) : ""}${n > 1 ? ` · ${oc}/${n} espaços ocupados` : oc ? " · ocupado" : ""}</option>`;
+      })
       .join(""),
     G = {
       falta: L.filter((x) => !x.ret && !x.inst).sort((a, b) => a.ini.localeCompare(b.ini)),
@@ -179,7 +186,7 @@ document.addEventListener("click", (ev) => {
     save();
     render();
   } else if (a === "in_ed" && x) {
-    inf = { id: x.id, pt: x.id, nome: "", end: "", cl: x.cl || "", pi: x.pi || "", ini: x.ini || "", fim: x.fim || "" };
+    inf = { id: x.id, pt: x.pai || x.id, nome: "", end: "", cl: x.cl || "", pi: x.pi || "", ini: x.ini || "", fim: x.fim || "" };
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
   } else if (a === "in_can") {
@@ -202,10 +209,26 @@ document.addEventListener("click", (ev) => {
       alvo = { id: "e" + Date.now() + S.n++, nome: inf.nome.trim(), end: inf.end.trim(), obs: "", ...campos, inst: "", ret: "" };
       S.est.push(alvo);
     } else {
-      alvo = S.est.find((q) => q.id === inf.pt);
-      if (!alvo) return msg("Ponto não encontrado.");
-      if (alvo.id !== inf.id && alvo.oc === "cli" && alvo.cl && alvo.fim && alvo.fim >= dia() && !alvo.ret &&
-        !confirm("Este ponto já tem a campanha de " + alvo.cl + " (até " + fmt(alvo.fim) + "). Substituir pela nova campanha?")) return;
+      const pai = S.est.find((q) => q.id === inf.pt);
+      if (!pai) return msg("Ponto não encontrado.");
+      /* espaço ocupado = campanha não retirada que cruza o período da nova */
+      const G = estGrupo(pai.id),
+        ocupa = (q) => q.oc === "cli" && q.cl && !q.ret && q.fim && q.fim >= inf.ini && (!q.ini || q.ini <= inf.fim);
+      alvo = inf.id && G.find((q) => q.id === inf.id);
+      if (!alvo) alvo = G.find((q) => !ocupa(q));
+      if (!alvo && G.length < (+pai.nesp || 1)) {
+        const usados = G.map((q) => (q.pai ? +q.esp || 2 : 1));
+        let nx = 2;
+        while (usados.includes(nx)) nx++;
+        alvo = { ...pai, id: "e" + Date.now() + S.n++, pai: pai.id, esp: nx, nesp: undefined, obs: "", oc: "", cl: "", pi: "", ini: "", fim: "", inst: "", ret: "" };
+        delete alvo.nesp;
+        S.est.push(alvo);
+      }
+      if (!alvo) {
+        const q = G.slice().sort((a, b) => (a.fim || "").localeCompare(b.fim || ""))[0];
+        if (!confirm((G.length > 1 ? "Os " + G.length + " espaços deste ponto estão ocupados nesse período." : "Este ponto já tem a campanha de " + q.cl + " (até " + fmt(q.fim) + ").") + "\n\nSubstituir a campanha de " + q.cl + " (até " + fmt(q.fim) + ") pela nova?\n\nDica: se o ponto tem mais placas, aumente “Espaços (placas)” em Estáticos.")) return;
+        alvo = q;
+      }
       const mudou = alvo.id !== inf.id || alvo.ini !== campos.ini || alvo.fim !== campos.fim || alvo.cl !== campos.cl;
       Object.assign(alvo, campos);
       if (!inf.id || mudou && alvo.id !== inf.id) {

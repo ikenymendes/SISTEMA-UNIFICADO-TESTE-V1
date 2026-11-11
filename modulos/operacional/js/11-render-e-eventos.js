@@ -238,6 +238,7 @@ function keep() {
     ef.nome = $("en").value;
     ef.end = ee.value;
     ef.obs = $("eo").value;
+    if ($("eesp")) ef.nesp = Math.max(1, Math.min(20, +$("eesp").value || 1));
     const so = $("eoc");
     if (so) ef.oc = so.value;
     const ec = $("ecl");
@@ -865,6 +866,7 @@ document.addEventListener("click", async (ev) => {
     $("warn").innerHTML = "";
     const d = { nome: ef.nome.trim(), end, obs: ef.obs.trim(), ...estOcD() },
       x = eed && S.est.find((q) => q.id === eed);
+    if (!x || !x.pai) d.nesp = ef.nesp || 1; /* nº de espaços fica no ponto principal */
     if (x) Object.assign(x, d);
     else S.est.push({ id: "e" + Date.now() + S.n++, ...d });
     eed = null;
@@ -899,6 +901,7 @@ document.addEventListener("click", async (ev) => {
         pi: x.pi || "",
         ini: x.ini || "",
         fim: x.fim || "",
+        nesp: x.nesp || 1,
       };
       scrollTo(0, 0);
     }
@@ -980,8 +983,9 @@ document.addEventListener("click", async (ev) => {
     confRem = null;
     save();
   } else if (a === "erem") {
-    if (!(await ask4("Excluir este ponto estático?"))) return;
-    S.est = S.est.filter((q) => q.id !== v);
+    const nf = S.est.filter((q) => q.pai === v).length;
+    if (!(await ask4("Excluir este ponto estático" + (nf ? " e os outros " + nf + " espaços dele" : "") + "?"))) return;
+    S.est = S.est.filter((q) => q.id !== v && q.pai !== v);
     confRem = null;
     save();
   } else if (a === "padd") {

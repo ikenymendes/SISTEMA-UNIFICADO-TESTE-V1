@@ -60,7 +60,7 @@ const finPanel = (v) =>
 let cq = "",
   eed = null,
   efl = "todos",
-  ef = { nome: "", end: "", obs: "", bulk: "", oc: "vazio", cl: "", pi: "", ini: "", fim: "" };
+  ef = { nome: "", end: "", obs: "", bulk: "", oc: "vazio", cl: "", pi: "", ini: "", fim: "", nesp: 1 };
 function conclList() {
   const q = cq.trim().toLowerCase(),
     L = S.vts
@@ -93,7 +93,10 @@ const concl = () => {
     np = c.length - na - ne;
   return `<div class="tabs" style="margin-bottom:8px"><button class="sm ${ctab === "ag" ? "on" : ""}" data-a="ctab" data-v="ag">Aguardando fechamento (${na})</button><button class="sm ${ctab === "pc" ? "on" : ""}" data-a="ctab" data-v="pc">Processos concluídos (${np})</button><button class="sm ${ctab === "ec" ? "on" : ""}" data-a="ctab" data-v="ec">Eventos concluídos (${ne})</button></div><div class="card"><div class="row"><input id="cq" placeholder="Buscar por cliente ou PI…" value="${e(cq)}"><div class="mu" style="flex:0 0 auto">${ctab === "pc" ? np : ctab === "ec" ? ne : na} VT(s)</div></div>${ctab === "ag" ? `<div class="chips" style="margin-top:8px">${cflBar()}</div>` : ""}</div><div id="cl">${conclList()}</div>`;
 };
-const efv = () => ({ nome: "", end: "", obs: "", bulk: "", oc: "vazio", cl: "", pi: "", ini: "", fim: "" });
+const efv = () => ({ nome: "", end: "", obs: "", bulk: "", oc: "vazio", cl: "", pi: "", ini: "", fim: "", nesp: 1 });
+/* espaços (placas) de um ponto estático: o ponto é o espaço 1; os outros ficam ligados a ele (pai) */
+const estNome = (x) => (x.nome || x.end || "Ponto") + (x.pai ? " · espaço " + (x.esp || 2) : +x.nesp > 1 ? " · espaço 1" : "");
+const estGrupo = (pid) => S.est.filter((q) => q.id === pid || q.pai === pid);
 const vokBadge = (v) =>
   v.vok === "sim"
     ? ' <span class="b s-validada">🎬 VT correto</span>'
@@ -149,11 +152,11 @@ function estaticos() {
       ["lona", "Lona mega"],
     ].concat(cnt("nd") ? [["nd", "Sem definição"]] : []);
   return `<div class="card"><h2 style="margin-top:0">${ed ? "Editar estático" : "Adicionar estático"}</h2><div class="row"><input id="en" placeholder="Nome / referência (opcional)" value="${e(ef.nome)}"><input id="ee" placeholder="Endereço, bairro, cidade" value="${e(ef.end)}"></div>
-<div class="row" style="margin-top:8px"><div><div class="mu">Ocupação</div><select id="eoc" data-a="x_eo">${ef.oc === "" ? '<option value="" selected>Não definida</option>' : ""}${EOP.map(([k, n]) => `<option value="${k}" ${ef.oc === k ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
+<div class="row" style="margin-top:8px"><div style="flex:0 0 auto"><div class="mu">Espaços (placas) no ponto</div><input id="eesp" type="number" min="1" max="20" style="width:120px" value="${e(ef.nesp || 1)}"></div><div><div class="mu">Ocupação</div><select id="eoc" data-a="x_eo">${ef.oc === "" ? '<option value="" selected>Não definida</option>' : ""}${EOP.map(([k, n]) => `<option value="${k}" ${ef.oc === k ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
 ${ef.oc === "cli" ? `<div class="row" style="margin-top:8px"><input id="ecl" placeholder="Cliente" value="${e(ef.cl)}"><input id="epi" placeholder="Nº da PI" value="${e(ef.pi)}"><div><div class="mu">Início</div><input id="eini" type="date" value="${e(ef.ini)}"></div><div><div class="mu">Fim</div><input id="efim" type="date" value="${e(ef.fim)}"></div></div>` : ""}
 <input id="eo" style="margin-top:8px" placeholder="Observação (opcional)" value="${e(ef.obs)}"><div class="row" style="margin-top:8px"><button class="pri" data-a="eadd" style="flex:0 0 auto">${ed ? "Salvar" : "Adicionar"}</button>${ed ? '<button data-a="ecan2" style="flex:0 0 auto">Cancelar</button>' : ""}</div></div>
 ${ed ? "" : `<div class="card"><h2 style="margin-top:0">Adicionar vários</h2><div class="mu">Cole um endereço por linha. Todos entram com a ocupação escolhida acima (cliente + PI + período, vazio ou lona mega).</div><textarea id="eb" rows="4" style="margin-top:6px">${e(ef.bulk)}</textarea><button data-a="ebulk" style="margin-top:8px">Adicionar lista</button></div>`}
-<div class="card"><b>${S.est.length}</b> <span class="mu">estáticos cadastrados</span><div class="chips">${FL.map(([k, n]) => `<span class="chip ${efl === k ? "sel" : ""}" data-a="efl" data-v="${k}">${n} (${cnt(k)})</span>`).join("")}</div>${L.map((x) => `<div class="task"><div><b>${e(x.nome || x.end)}</b>${x.nome ? `<div class="mu">${e(x.end)}</div>` : ""}<div>${estOc(x)}</div>${x.obs ? `<div class="mu">${e(x.obs)}</div>` : ""}<div class="mu"><a href="${mapa(x)}" target="_blank" rel="noopener">mapa</a></div></div><div class="acts"><button class="sm" data-a="eed" data-v="${x.id}">Editar</button><button class="sm" data-a="erem" data-v="${x.id}">${confRem === "es|" + x.id ? "Confirmar?" : "Remover"}</button></div></div>`).join("") || '<div class="mu">Nenhum neste filtro.</div>'}</div>`;
+<div class="card"><b>${S.est.length}</b> <span class="mu">estáticos cadastrados</span><div class="chips">${FL.map(([k, n]) => `<span class="chip ${efl === k ? "sel" : ""}" data-a="efl" data-v="${k}">${n} (${cnt(k)})</span>`).join("")}</div>${L.map((x) => `<div class="task"><div><b>${e(estNome(x))}</b>${+x.nesp > 1 ? ` <span class="b">${x.nesp} espaços</span>` : ""}${x.nome ? `<div class="mu">${e(x.end)}</div>` : ""}<div>${estOc(x)}</div>${x.obs ? `<div class="mu">${e(x.obs)}</div>` : ""}<div class="mu"><a href="${mapa(x)}" target="_blank" rel="noopener">mapa</a></div></div><div class="acts"><button class="sm" data-a="eed" data-v="${x.id}">Editar</button><button class="sm" data-a="erem" data-v="${x.id}">${confRem === "es|" + x.id ? "Confirmar?" : "Remover"}</button></div></div>`).join("") || '<div class="mu">Nenhum neste filtro.</div>'}</div>`;
 }
 /* ===== Eventos: VTs do tipo evento, data e pontos que veiculam ===== */
 const evEnd = (v) => (v.ev && (v.ev.dtf || v.ev.dt)) || "";
