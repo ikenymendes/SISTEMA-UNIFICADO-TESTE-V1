@@ -176,7 +176,7 @@ const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>
 const uid=()=>Math.random().toString(36).slice(2,10);
 const TIPOS=["PAINEL DE LED","BANCA DE LED","BANCA ESTÁTICA","FRONTLIGHT","BACKLIGHT","PAINEL MENSAL","EMPENA","RELÓGIO DIGITAL","ABRIGO DE ÔNIBUS","MOBILIÁRIO URBANO"];
 const normTipo=t=>{t=String(t||"").trim().toUpperCase();return t==="LED"?"PAINEL DE LED":t};
-const temNome=t=>/PAINEL|PAINÉIS|BANCA|ABRIGO|EMPENA|RELÓGIO|RELOGIO|MOBILI|TOTEM|TÓTEM/.test(t);
+const temNome=t=>/PAINEL|PAINÉIS|BANCA|ABRIGO|EMPENA|RELÓGIO|RELOGIO|MOBILI|TOTEM|TÓTEM|VIDEO ?WALL|TESTEIRA|VITRINE|ATIVAÇÃO/.test(t);
 function nomeTipo(t,n){t=normTipo(t)||"PAINEL";if(/^(FRONT ?LIGHT|BACKLIGHT)$/.test(t))t="PAINEL "+t.replace(" ","");else if(!temNome(t))t="PAINEL DE "+t;if(n>1)t=t.replace(/\bPAINEL\b/,"PAINÉIS").replace(/\bBANCA\b/,"BANCAS").replace(/\bESTÁTICA\b/,"ESTÁTICAS").replace(/\bMENSAL\b/,"MENSAIS").replace(/\bEMPENA\b/,"EMPENAS").replace(/\bABRIGO\b/,"ABRIGOS").replace(/\bRELÓGIO\b/,"RELÓGIOS");return t}
 const pretty=s=>{s=String(s||"").toLowerCase();s=s.charAt(0).toUpperCase()+s.slice(1);return s.replace(/\bled\b/g,"LED")};
 const titleCase=s=>String(s||"").toLowerCase().replace(/(^|[\s\/-])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g,x=>x.toLowerCase());
@@ -187,16 +187,27 @@ function tipoSel(v,attr){const known=TIPOS.includes(v);let o=TIPOS.map(t=>`<opti
 /* ---------------- estado ---------------- */
 const EMP_PADRAO={nome:"MEGA MÍDIA COMUNICAÇÃO LTDA",cnpj:"30.754.263/0001-57",end:"Rua Igaraçu, 544 – Sala 01 – Novo Eldorado – Contagem/MG – CEP 32341-230",tel:"(31) 3267-5087"};
 /* ---------- capas por formato / grupos (ex.: Mercado Central) ---------- */
-const GR_AUTO=p=>{const t=((p.loc||"")+" "+(p.tela||"")).toLowerCase();if(/estacionamento/.test(t))return"ESTACIONAMENTO 5x2";if(/sa[ií]da|pedestre/.test(t))return"SAÍDA DE PEDESTRES 2x1";if(/mercado central/.test(t))return"LEDS DOS CORREDORES";return""};
+const MC_EST="ESTACIONAMENTO 5x2",MC_SAI="SAÍDA DA AMAZONAS · VIDEOWALL 2x1",MC_COR="LEDS DOS CORREDORES";
+const mcGrupo=t=>{t=t.toLowerCase();return /estacionamento/.test(t)?MC_EST:/sa[ií]da|pedestre|amazonas|video ?wall/.test(t)?MC_SAI:/corredor/.test(t)?MC_COR:(/mercado central/.test(t)?MC_COR:"")};
+const GR_AUTO=p=>{const t=((p.loc||"")+" "+(p.tela||"")).toLowerCase();if(/estacionamento/.test(t))return MC_EST;if(/sa[ií]da|pedestre|amazonas|video ?wall/.test(t))return MC_SAI;if(/mercado central/.test(t))return"LEDS DOS CORREDORES";return""};
 const gjOn=g=>!!(g&&S.gj&&S.gj[g]),gLider=g=>S.paineis.find(x=>x.grupo===g),gQtd=g=>S.paineis.filter(x=>x.grupo===g).length;
 const segue=p=>gjOn(p.grupo)&&gLider(p.grupo)&&gLider(p.grupo).id!==p.id;
 const dropTxt=p=>!p.grupo?"📷 Arraste as fotos aqui ou clique para escolher":gjOn(p.grupo)?`📷 TODAS as fotos de “${p.grupo}” (${gQtd(p.grupo)} telas juntas) — arraste aqui ou clique`:`📷 Fotos de “${p.grupo}” — arraste aqui ou clique`;
 function agruparOrdem(){const seen=[],out=[];S.paineis.forEach(p=>{if(!p.grupo){out.push(p);return}if(seen.includes(p.grupo))return;seen.push(p.grupo);S.paineis.filter(x=>x.grupo===p.grupo).forEach(x=>out.push(x))});S.paineis=out}
 function juntarFotos(g){const l=gLider(g);if(!l)return;S.paineis.forEach(x=>{if(x!==l&&x.grupo===g&&x.fotos.length){l.fotos.push(...x.fotos);x.fotos=[]}})}
-function aplicarMercado(){const esc2=S.paineis.some(p=>/mercado central/i.test((p.loc||"")+" "+(p.tela||"")));let c=0;S.gj=S.gj||{};
- S.paineis.forEach(p=>{if(p.grupo)return;const t=((p.loc||"")+" "+(p.tela||"")).toLowerCase();let g=/estacionamento/.test(t)?"ESTACIONAMENTO 5x2":/sa[ií]da|pedestre/.test(t)?"SAÍDA DE PEDESTRES 2x1":(/mercado central/.test(t)?"LEDS DOS CORREDORES":"");if(g){p.grupo=g;c++}});
- if(S.paineis.some(p=>p.grupo==="LEDS DOS CORREDORES")){S.gj["LEDS DOS CORREDORES"]=true;juntarFotos("LEDS DOS CORREDORES")}
- agruparOrdem();save();renderPaineis();toast(c?c+" painéis agrupados — confira e ajuste o campo “Capa própria” se preciso":"Nenhum painel do Mercado Central encontrado (procuro “Mercado Central”, “estacionamento” e “saída” no endereço/tela)")}
+/* Modelo Mercado Central: o circuito tem 3 capas — estacionamento (LED 5x2m), saída da Av. Amazonas
+   (videowall 2x1m) e LEDs dos corredores (96x64cm). Se o Mercado Central veio como um endereço só,
+   ele é aberto nas 3 partes. */
+function mcExpande(){let n=0;const out=[];S.paineis.forEach(p=>{const t=((p.loc||"")+" "+(p.tela||"")).toLowerCase();
+  if(!p.grupo&&/mercado central/.test(t)&&!mcGrupo(p.tela||"")){
+   out.push({id:uid(),tipo:"PAINEL DE LED",fmt:"5x2m",loc:p.loc,tela:"Entrada do estacionamento",pl:"",st:p.st,grupo:MC_EST,qtd:1,fotos:[]});
+   out.push({id:uid(),tipo:"VIDEOWALL",fmt:"2x1m",loc:p.loc,tela:"Saída da Av. Amazonas",pl:"",st:p.st,grupo:MC_SAI,qtd:1,fotos:[]});
+   p.tipo="PAINEL DE LED";p.fmt="96x64cm";p.tela="Corredores";p.grupo=MC_COR;p.qtd=6;out.push(p);n++}
+  else out.push(p)});S.paineis=out;return n}
+function aplicarMercado(silencioso){let c=mcExpande()*3;S.gj=S.gj||{};
+ S.paineis.forEach(p=>{if(p.grupo)return;const t=((p.loc||"")+" "+(p.tela||""));const g=/mercado central/i.test(t)||/estacionamento|corredor/i.test(p.tela||"")?mcGrupo(t):"";if(g){p.grupo=g;c++}});
+ if(S.paineis.some(p=>p.grupo===MC_COR)){S.gj[MC_COR]=true;juntarFotos(MC_COR)}
+ agruparOrdem();save();if(silencioso)return c;renderPaineis();toast(c?c+" painéis do Mercado Central organizados em 3 capas: estacionamento, saída da Amazonas (videowall) e corredores":"Nenhum painel do Mercado Central encontrado")}
 const blank=()=>({
  cli:{cliente:"",agencia:"",pi:"",oc:"",ini:"",fim:"",praca:"",obs:"",campanha:"",tipoPad:"PAINEL DE LED",fmtPad:""},
  paineis:[],
@@ -234,7 +245,7 @@ const nFotos=()=>S.paineis.reduce((a,p)=>a+p.fotos.length,0);
 function resumo(){tell({fotos:nFotos(),completo:S.paineis.length>0&&S.paineis.every(p=>p.fotos.length>0)});$("#resumo").textContent=`${S.paineis.length} painel(is) · ${nFotos()} foto(s)`;const n=$("#nav .n");if(n)n.textContent=S.paineis.length}
 function fmtData(s){if(!s)return"";const[a,m,d]=s.split("-");return`${d}/${m}/${a}`}
 function periodo(){const{ini,fim}=S.cli;if(!ini&&!fim)return"";if(ini&&fim){const[a1,m1,d1]=ini.split("-"),[a2]=fim.split("-");return a1===a2?`${d1}/${m1} a ${fmtData(fim)}`:`${fmtData(ini)} a ${fmtData(fim)}`}return fmtData(ini||fim)}
-function qtdPecas(){const n=S.paineis.length,c={};S.paineis.forEach(p=>{const t=(p.tipo||"").toUpperCase().trim()||"PAINEL";c[t]=(c[t]||0)+1});const k=Object.keys(c);
+function qtdPecas(){const n=S.paineis.length,c={};S.paineis.forEach(p=>{const t=(p.tipo||"").toUpperCase().trim()||"PAINEL";c[t]=(c[t]||0)+(+p.qtd||1)});const k=Object.keys(c);
  return k.map(t=>`${c[t]} ${nomeTipo(t==="PAINEL"?"":t,c[t])}`).join(" · ")}
 function nomeArquivo(){const c=(S.cli.cliente||"CLIENTE").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"");const pi=S.cli.pi?"_"+S.cli.pi.replace(/[^A-Za-z0-9.\-]+/g,""):"";return`CHECKING_${c}${pi}`}
 
@@ -535,19 +546,19 @@ function buildSlides(){
  const grupos=[];ps.forEach(p=>{const t=normTipo(p.tipo)||"PAINEL",k=p.grupo?"G|"+p.grupo:t+"|";let g=grupos.find(x=>x.k===k);if(!g)grupos.push(g={t,k,gr:p.grupo||"",l:[]});g.l.push(p)});
  const total=ps.length,usados=new Set();
  grupos.forEach((g,gi)=>{
-  if(S.opt.sep){const mem=g.gr?S.paineis.filter(x=>x.grupo===g.gr):g.l,n=mem.length,tit=(g.gr||tituloTipo(g.t,n)).split(" "),l1=tit[0],l2=tit.slice(1).join(" "),praca=titleCase(S.cli.praca),per=periodo(),
+  if(S.opt.sep){const mem=g.gr?S.paineis.filter(x=>x.grupo===g.gr):g.l,n=mem.length,tit0=(g.gr||tituloTipo(g.t,n)),tit=tit0.split(" "),l1=tit0.includes(" · ")?tit0.split(" · ")[0]:tit[0],l2=tit0.includes(" · ")?tit0.split(" · ").slice(1).join(" · "):tit.slice(1).join(" "),tsz=Math.min(34,Math.floor(4.0*72/(Math.max(l1.length,l2.length,1)*0.62))),praca=titleCase(S.cli.praca),per=periodo(),
     dias=(S.cli.ini&&S.cli.fim)?Math.round((new Date(S.cli.fim)-new Date(S.cli.ini))/864e5)+1:0,
-    txt=`Registro fotográfico da veiculação de ${S.cli.cliente||"—"}${praca?" em "+praca:""}${per?", no período de "+per:""}. Cada ponto foi fotografado pela operação Mega.`,
+    txt=`Registro fotográfico da veiculação de ${S.cli.cliente||"—"}${S.cli.evento?" no evento "+S.cli.evento:""}${praca?" em "+praca:""}${per?", no período de "+per:""}. Cada ponto foi fotografado pela operação Mega.`,
     ends=mem.map(p=>(p.loc||"—")+(p.tela?" · "+p.tela:"")),bl=ends.slice(0,3);if(ends.length>3)bl[2]=`${ends[2]}  + ${ends.length-3} ${ends.length-3===1?"endereço":"endereços"}`;
    const tile=(x,v,l,pk)=>[RC(x,4.16,2.15,1.35,pk?PINK:"FFFFFF",{a:pk?1:.10,r:.12}),TX(x+.25,4.3,1.82,.78,[[R(v,v.length<=7?30:v.length<=11?20:v.length<=14?16:v.length<=17?13:v.length<=21?11:9,"FFFFFF",0)]],{valign:"middle"}),TX(x+.25,5.05,1.8,.3,[[R(l,9,pk?"FFFFFF":"C9CCF2",0)]])];
    out.push({bg:bgURL(`kit:${/SHOPPING CIDADE/i.test(g.gr)?"shopping":kindTipo(g.t)}:${/LED/.test(g.t)?1:0}:${gi}:${grupos.length}`),items:[
    logo(LOGO_BRANCA,0.94,0.55,2.0),
    TX(0.71,3.62,4.3,.3,[[R(`${String(gi+1).padStart(2,"0")} · TIPO DE MÍDIA`,8.5,PINK,1,3)]]),
-   TX(0.71,3.98,4.3,1.35,l2?[[R(l1,34,"FFFFFF",0)],[R(l2,34,"FFFFFF",0)]]:[[R(l1,34,"FFFFFF",0)]]),
+   TX(0.71,3.98,4.3,1.35,l2?[[R(l1,tsz,"FFFFFF",0)],[R(l2,tsz,"FFFFFF",0)]]:[[R(l1,tsz,"FFFFFF",0)]]),
    TX(0.71,5.4,4.3,.4,[[R(praca||"",11,"C9CCF2",0)]]),
    TX(5.9,1.05,6.8,.3,[[R("SOBRE A VEICULAÇÃO",8.5,PINK,1,3)]]),RC(5.9,1.46,.62,.05,PINK,{r:.02}),
    TX(5.9,1.75,6.75,2.2,[[R(txt,19,"FFFFFF",0)]]),
-   ...tile(5.9,String(n),n===1?"peça veiculada":"peças veiculadas",false),...tile(8.2,S.cli.pi||"—","nº da PI",true),...tile(10.5,dias?`${dias} dias`:"—","de veiculação",false),
+   ...tile(5.9,String(mem.reduce((a,p)=>a+(+p.qtd||1),0)),mem.reduce((a,p)=>a+(+p.qtd||1),0)===1?"peça veiculada":"peças veiculadas",false),...(S.cli.evento?tile(8.2,S.cli.evento,"evento",true):tile(8.2,S.cli.pi||"—","nº da PI",true)),...tile(10.5,dias?`${dias} dias`:"—","de veiculação",false),
    ...bl.flatMap((b,k)=>[RC(5.95,5.95+k*.36+.09,.11,.11,PINK,{r:.055}),TX(6.2,5.95+k*.36,6.4,.32,[[R(b,11,"FFFFFF",0)]],{valign:"middle"})])]})}
   g.l.forEach(p=>{
    const idx=ps.indexOf(p)+1,per=S.opt.perSlide;
@@ -677,7 +688,7 @@ function render0(){
 }
 function renderPaineis(focus){
  const ps=S.paineis;
- $("#t1").innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">Painéis, endereços e fotos</h2><p class="hint" style="margin:2px 0 0">Para cada painel: tipo, formato, localização e as fotos (arraste ou clique). Cada foto vira um slide.</p></div><span class="sp"></span>${fixosDo(S.cli.cliente).length&&(S.fixFora||[]).length?`<button class="b" id="bFix" title="Traz de volta os ativos fixos do Shopping Cidade que foram removidos">↺ Repor ativos do Shopping Cidade (${S.fixFora.length})</button>`:""}<button class="b" id="bMC" title="Separa Mercado Central em Estacionamento 5x2, Saída de pedestres 2x1 e LEDs dos corredores, cada um com sua capa">Aplicar modelo Mercado Central</button><button class="b pri" id="bAdd">+ Painel</button></div><datalist id="grDl"><option value="ESTACIONAMENTO 5x2"><option value="SAÍDA DE PEDESTRES 2x1"><option value="LEDS DOS CORREDORES"></datalist>
+ $("#t1").innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">Painéis, endereços e fotos</h2><p class="hint" style="margin:2px 0 0">Para cada painel: tipo, formato, localização e as fotos (arraste ou clique). Cada foto vira um slide.</p></div><span class="sp"></span>${fixosDo(S.cli.cliente).length&&(S.fixFora||[]).length?`<button class="b" id="bFix" title="Traz de volta os ativos fixos do Shopping Cidade que foram removidos">↺ Repor ativos do Shopping Cidade (${S.fixFora.length})</button>`:""}<button class="b" id="bMC" title="Separa o Mercado Central em Estacionamento 5x2, Saída da Amazonas (videowall 2x1) e LEDs dos corredores, cada um com sua capa">Aplicar modelo Mercado Central</button><button class="b pri" id="bAdd">+ Painel</button></div><datalist id="grDl"><option value="ESTACIONAMENTO 5x2"><option value="SAÍDA DA AMAZONAS · VIDEOWALL 2x1"><option value="LEDS DOS CORREDORES"></datalist>
   <div class="row" style="margin-top:14px"><textarea id="bulk" rows="2" style="flex:1;margin:0;min-height:48px" placeholder="Colar vários endereços (um por linha) para criar os painéis de uma vez"></textarea><button class="b nv" id="bBulk">Criar painéis</button></div></div>`
   +(ps.length?"":`<div class="card hint">Nenhum painel ainda. Importe um VT da Matriz, cole endereços acima ou clique em “+ Painel”.</div>`)
   +ps.map((p,i)=>`${p.grupo&&(i===0||ps[i-1].grupo!==p.grupo)?`<div class="gbanner"><b>📌 Capa própria: ${esc(p.grupo)}</b><span>${gQtd(p.grupo)} ${gQtd(p.grupo)===1?"tela":"telas"}</span><label class="gj"><input type="checkbox" data-gj="${esc(p.grupo)}" ${gjOn(p.grupo)?"checked":""}> Todas as fotos juntas (um só espaço)</label></div>`:""}<div class="painel" data-pid="${p.id}"><div class="hd"><span class="num">${String(i+1).padStart(2,"0")}</span><span class="tt">${esc((p.loc||"Novo painel")+(p.tela?" · "+p.tela:""))}</span>${p.st?`<span class="pill ${p.st==="validada"?"":"pk"}">foto: ${esc(p.st)}</span>`:""}<span class="pill ${p.fotos.length?"":"pk"}">${p.fotos.length} foto(s)</span>
@@ -686,7 +697,7 @@ function renderPaineis(focus){
    ${segue(p)?`<div class="hint" style="margin:10px 0 0">As fotos deste grupo ficam no primeiro painel do grupo (“${esc(p.grupo)}”).</div>`:`<div class="drop" data-a="drop">${dropTxt(p)}</div>`}
    <div class="fotos">${p.fotos.map((f,k)=>`<div class="foto" data-fid="${f.id}"><img src="${f.src}"><div class="c"><input type="text" data-cap placeholder="Legenda (ex.: Início)" value="${esc(f.cap)}"></div><div class="ac"><button data-a="fl">←</button><button data-a="fr">→</button><button class="x" data-a="fx">✕</button></div></div>`).join("")}</div></div>`).join("");
  if($("#bFix"))$("#bFix").onclick=()=>{const n=aplicarFixos(true);agruparOrdem();save();renderPaineis();toast(n+" ativo(s) do Shopping Cidade de volta")};
- $("#bMC").onclick=aplicarMercado;$("#bAdd").onclick=()=>{S.paineis.push({id:uid(),tipo:S.cli.tipoPad,fmt:S.cli.fmtPad,loc:"",fotos:[]});save();renderPaineis()};
+ $("#bMC").onclick=()=>aplicarMercado();$("#bAdd").onclick=()=>{S.paineis.push({id:uid(),tipo:S.cli.tipoPad,fmt:S.cli.fmtPad,loc:"",fotos:[]});save();renderPaineis()};
  $("#bBulk").onclick=()=>{const l=$("#bulk").value.split("\n").map(s=>s.trim()).filter(Boolean);l.forEach(x=>S.paineis.push({id:uid(),tipo:S.cli.tipoPad,fmt:S.cli.fmtPad,loc:x,fotos:[]}));save();renderPaineis();toast(l.length+" painéis criados")};
  if(focus){const el=document.querySelector(`[data-pid="${focus}"]`);if(el&&tab===1)el.scrollIntoView({block:"nearest"})}
  resumo();
@@ -807,10 +818,14 @@ function aplicarFixos(repor){
 function receberVT(pl){
  const c=S.cli;
  if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:Object.assign({},EMP_PADRAO),opt:S.opt});S.vtId=pl.id}
- Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,campanha:pl.campanha||S.cli.campanha||"",tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
- const antigos=S.paineis,novos=pl.paineis.map(p=>{const loc=locDe(p),ex=antigos.find(a=>a.loc===loc&&(a.tela||"")===(p.tela||""));if(ex){ex.st=p.st;if(p.tp)ex.tipo=normTipo(p.tp);if(p.fm)ex.fmt=p.fm;if(p.pl)ex.pl=p.pl;return ex}return{id:uid(),tipo:normTipo(p.tp)||S.cli.tipoPad,fmt:p.fm||S.cli.fmtPad,loc,tela:p.tela||"",pl:p.pl||"",st:p.st,fotos:[]}});
+ Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,evento:pl.evento||"",oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,campanha:pl.campanha||S.cli.campanha||"",tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
+ const antigos=S.paineis,novos=pl.paineis.flatMap(p=>{const loc=locDe(p);
+  /* Mercado Central já aberto nas 3 capas neste checking: mantém as 3 partes (e as fotos) */
+  if(!p.tela&&/mercado central/i.test(loc)){const mc=antigos.filter(a=>a.loc===loc&&[MC_EST,MC_SAI,MC_COR].includes(a.grupo));if(mc.length){mc.forEach(a=>a.st=p.st);return mc}}
+  const ex=antigos.find(a=>a.loc===loc&&(a.tela||"")===(p.tela||""));if(ex){ex.st=p.st;if(p.tp)ex.tipo=normTipo(p.tp);if(p.fm)ex.fmt=p.fm;if(p.pl)ex.pl=p.pl;return ex}return{id:uid(),tipo:normTipo(p.tp)||S.cli.tipoPad,fmt:p.fm||S.cli.fmtPad,loc,tela:p.tela||"",pl:p.pl||"",st:p.st,fotos:[]}});
  S.paineis=novos.concat(antigos.filter(a=>a.fixo));
  aplicarFixos(false);
+ if(S.paineis.some(p=>!p.grupo&&/mercado central/i.test(p.loc||"")))aplicarMercado(true);
  S.cli.praca=[...new Set(pl.paineis.map(p=>cidade(p.end)).filter(Boolean))].map(s=>s.toUpperCase()).join(" / ");
  save();
 }

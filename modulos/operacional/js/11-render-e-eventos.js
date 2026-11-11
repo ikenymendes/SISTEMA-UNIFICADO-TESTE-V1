@@ -708,7 +708,7 @@ document.addEventListener("click", async (ev) => {
               dtf: draft.evf && draft.evf !== draft.evd ? draft.evf : "",
             }
           : null,
-        pi: isEv ? "" : U(draft.pi),
+        pi: U(draft.pi),
         ini: draft.ini,
         fim: draft.fim,
         paineis: [...draft.sel],

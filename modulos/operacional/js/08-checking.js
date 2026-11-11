@@ -43,7 +43,9 @@ function ckPayload(x) {
   const tr = ck.troca && ck.id === x.id ? ck.troca : null;
   return {
     id: tr ? x.id + "#troca" + tr.n : x.id,
-    campanha: tr && tr.nome ? tr.nome : "",
+    /* evento: o nome do evento é a campanha (PI e datas continuam iguais) */
+    campanha: tr && tr.nome ? tr.nome : x.tipo === "evento" && x.ev && x.ev.nome ? x.ev.nome : "",
+    evento: x.tipo === "evento" && x.ev && x.ev.nome ? x.ev.nome : "",
     cliente: x.cliente,
     pi: x.pi || "",
     oc: x.oc || "",
@@ -54,25 +56,24 @@ function ckPayload(x) {
     fm: x.fm || "",
     obs: tr
       ? "Novo checking por troca de vídeo" + (tr.ini ? " — novo vídeo em veiculação a partir de " + fmt(tr.ini) : "") + "."
-      : x.tipo === "evento" && x.ev && x.ev.nome
-        ? "Evento: " + x.ev.nome
-        : "",
+      : "",
     paineis: (x.paineis || []).flatMap((i) => {
       const p = PMf(i);
       if (!p) return [];
       const st = ckSt(x, i),
-        pl = p.pl || "";
+        pl = p.pl || "",
+        pad = padraoPonto(p) || {}; /* tipo/formato padrão do cadastro quando o endereço não tem */
       return p.telas && p.telas.length
         ? p.telas.map((t) => ({
             nome: p.nome,
             end: p.end,
             tela: t.n,
-            tp: t.tp || p.tp || "",
-            fm: t.fm || p.fm || "",
+            tp: t.tp || p.tp || pad.tp || "",
+            fm: t.fm || p.fm || pad.fm || "",
             pl,
             st,
           }))
-        : [{ nome: p.nome, end: p.end, tp: p.tp || "", fm: p.fm || "", pl, st }];
+        : [{ nome: p.nome, end: p.end, tp: p.tp || pad.tp || "", fm: p.fm || pad.fm || "", pl, st }];
     }),
   };
 }
@@ -114,7 +115,7 @@ function ckOpen(id, troca) {
       f.dataset.ready = "1";
       f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
     };
-    f.src = "gerador-checking.html?v=20261111s";
+    f.src = "gerador-checking.html?v=20261111v";
     h.appendChild(f);
   } else f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
   render();
