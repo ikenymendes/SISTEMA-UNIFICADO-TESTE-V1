@@ -27,7 +27,41 @@ function pmDist(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 const pmKm = (m) => (m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km");
-const pmMin = (m) => Math.max(1, Math.round(m / 1000 / 0.35)); /* moto na cidade ~21 km/h */
+const pmMin = (m) => Math.max(1, Math.round(m / 1000 / 0.35)); /* reserva: moto na cidade ~21 km/h, em linha reta */
+/* distância e tempo PELAS RUAS (OSRM, sem chave): uma consulta para todos os pontos; refaz ao andar 300 m ou a cada 3 min */
+PM.rota = null;
+PM.rotaBusy = false;
+function pmRotas(onde, L) {
+  const ok = PM.rota && pmDist(PM.rota.de, onde) < 300 && Date.now() - PM.rota.ts < 180000 && L.slice(0, 80).every((g) => PM.rota.ids.has(g.p.id));
+  if (ok || PM.rotaBusy || !L.length || (PM.rotaErr && Date.now() - PM.rotaErr < 60000)) return;
+  PM.rotaBusy = true;
+  const alvo = L.slice(0, 80),
+    u =
+      "https://router.project-osrm.org/table/v1/driving/" +
+      [onde, ...alvo.map((g) => g.p.ll)].map((c) => (+c[1]).toFixed(6) + "," + (+c[0]).toFixed(6)).join(";") +
+      "?sources=0&annotations=distance,duration";
+  fetch(u)
+    .then((r) => r.json())
+    .then((j) => {
+      if (!j || j.code !== "Ok") throw 0;
+      const d = {};
+      alvo.forEach((g, i) => {
+        const m = j.distances[0][i + 1],
+          t = j.durations[0][i + 1];
+        if (m != null && t != null) d[g.p.id] = { m, t };
+      });
+      PM.rota = { de: onde, ts: Date.now(), d, ids: new Set(alvo.map((g) => g.p.id)) };
+      PM.rotaErr = 0;
+    })
+    .catch(() => (PM.rotaErr = Date.now()))
+    .finally(() => {
+      PM.rotaBusy = false;
+      if (view === "pm") pmPinta();
+    });
+}
+const pmRua = (g) => (PM.rota && g.dr != null ? true : false);
+const pmDTxt = (g) => pmKm(pmRua(g) ? g.dr : g.d);
+const pmTTxt = (g) => (pmRua(g) ? Math.max(1, Math.round(g.tr / 60)) : pmMin(g.d));
 function pmGps() {
   if (PM.watch != null || !navigator.geolocation) {
     if (!navigator.geolocation) PM.err = "Este aparelho não informa a localização.";
@@ -35,6 +69,7 @@ function pmGps() {
   }
   PM.watch = navigator.geolocation.watchPosition(
     (p) => {
+      PM.acc = p.coords.accuracy || 0;
       const novo = [p.coords.latitude, p.coords.longitude],
         mudou = !PM.pos || pmDist(PM.pos, novo) > 25;
       PM.pos = novo;
@@ -80,6 +115,16 @@ function pmPontos(onde) {
       .filter((g) => g.p.ll)
       .map((g) => ((g.d = onde ? pmDist(onde, g.p.ll) : null), g))
       .sort((a, b) => (a.d || 0) - (b.d || 0));
+  if (onde) {
+    pmRotas(onde, com);
+    const R = PM.rota && pmDist(PM.rota.de, onde) < 300 ? PM.rota.d : null;
+    com.forEach((g) => {
+      const x = R && R[g.p.id];
+      g.dr = x ? x.m : null;
+      g.tr = x ? x.t : null;
+    });
+    if (R) com.sort((a, b) => (a.dr != null ? a.dr : 1e9) - (b.dr != null ? b.dr : 1e9) || a.d - b.d);
+  }
   com.forEach((g) => g.L.sort((a, b) => (a.vt.ini || "9").localeCompare(b.vt.ini || "9")));
   return { com, sem };
 }
@@ -152,7 +197,10 @@ function pmCorpo() {
   const { com, sem } = pmPontos(onde);
   let gps;
   if (sim) gps = `<span class="pm-pu sim"></span><span>Simulando que você está em <b>${e(sim.nome)}</b></span>`;
-  else if (PM.pos) gps = `<span class="pm-pu"></span><span>GPS ativo · do mais perto para o mais longe</span>`;
+  else if (PM.pos && PM.acc > 200)
+    gps = `<span class="pm-pu wait"></span><span><b>Localização aproximada (±${pmKm(PM.acc)})</b> · as distâncias podem estar erradas. Ligue o GPS / “localização precisa” do celular.</span>`;
+  else if (PM.pos)
+    gps = `<span class="pm-pu"></span><span>GPS ativo${PM.acc ? " · precisão ±" + pmKm(PM.acc) : ""} · ${PM.rota && pmDist(PM.rota.de, PM.pos) < 300 ? "distância pelas ruas" : "distância em linha reta"}</span>`;
   else if (PM.err) gps = `<span class="pm-pu off"></span><span>${e(PM.err)}</span>`;
   else gps = `<span class="pm-pu wait"></span><span>Procurando a sua localização…</span>`;
   let h = pmHero() + `<div class="pm-gps">${gps}</div>`;
@@ -161,19 +209,19 @@ function pmCorpo() {
   if (!perto.length) h += `<div class="pm-vazio">${sem.length ? "Os pontos pendentes ainda não têm coordenada cadastrada." : "Nenhuma foto pendente agora. Tudo em dia! 🎉"}</div>`;
   else if (PM.modo === "prox") {
     const g = perto[0];
-    h += `<div class="pm-big"><small>MAIS PERTO AGORA</small><div class="pm-km">${pmKm(g.d).replace(/ (m|km)$/, "<span> $1</span>")}</div><div class="pm-min">≈ ${pmMin(g.d)} min</div><h3>${e(g.p.nome)}</h3><div class="pm-end">${e(g.p.end || "")}</div><div class="pm-cls">${g.L.map(pmCli).join("")}</div>${pmBtns(g)}</div>`;
+    h += `<div class="pm-big"><small>MAIS PERTO AGORA</small><div class="pm-km">${pmDTxt(g).replace(/ (m|km)$/, "<span> $1</span>")}</div><div class="pm-min">≈ ${pmTTxt(g)} min ${pmRua(g) ? "pelas ruas, sem trânsito" : "· em linha reta"}</div><h3>${e(g.p.nome)}</h3><div class="pm-end">${e(g.p.end || "")}</div><div class="pm-cls">${g.L.map(pmCli).join("")}</div>${pmBtns(g)}</div>`;
     if (perto.length > 1)
       h +=
         `<div class="pm-sub">Depois desse</div>` +
         perto
           .slice(1)
-          .map((x) => `<div class="pm-mini"><b>${e(x.p.nome)}<small>${x.L.map((t) => e(t.vt.cliente)).join(" · ")}</small></b><em>${pmKm(x.d)}</em></div>`)
+          .map((x) => `<div class="pm-mini"><b>${e(x.p.nome)}<small>${x.L.map((t) => e(t.vt.cliente)).join(" · ")}</small></b><em>${pmDTxt(x)}</em></div>`)
           .join("");
   } else
     h += perto
       .map(
         (g) =>
-          `<div class="pm-card"><div class="pm-dist"><b>${pmKm(g.d)}</b><small>≈ ${pmMin(g.d)} min</small></div><h4>${e(g.p.nome)}</h4><div class="pm-end">${e(g.p.end || "")}${g.p.tp ? " · " + e(g.p.tp) : ""}</div>${g.L.map(pmCli).join("")}${pmBtns(g)}</div>`,
+          `<div class="pm-card"><div class="pm-dist${pmRua(g) ? "" : " reta"}"><b>${pmDTxt(g)}</b><small>≈ ${pmTTxt(g)} min</small></div><h4>${e(g.p.nome)}</h4><div class="pm-end">${e(g.p.end || "")}${g.p.tp ? " · " + e(g.p.tp) : ""}</div>${g.L.map(pmCli).join("")}${pmBtns(g)}</div>`,
       )
       .join("");
   if (sem.length)
