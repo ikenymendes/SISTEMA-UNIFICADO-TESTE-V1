@@ -17,6 +17,12 @@ var ADMIN = (function () {
     backup:      '<ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/><path d="M4 11.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
     sair:        '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
     tv:          '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    led:         '<rect x="2.5" y="3" width="19" height="12" rx="1.5"/><path d="M8 15v6M16 15v6M5.5 21h13"/><g fill="currentColor" stroke="none"><circle cx="6.5" cy="6.8" r="1"/><circle cx="10.2" cy="6.8" r="1"/><circle cx="13.8" cy="6.8" r="1"/><circle cx="17.5" cy="6.8" r="1"/><circle cx="6.5" cy="11.2" r="1"/><circle cx="10.2" cy="11.2" r="1"/><circle cx="13.8" cy="11.2" r="1"/><circle cx="17.5" cy="11.2" r="1"/></g>',
+    foto:        '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    lona:        '<rect x="3" y="4" width="18" height="11" rx="1"/><path d="M7 15v6M17 15v6M3 8h18"/>',
+    pin:         '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+    zap:         '<path d="M4 4h16v12H4z"/><path d="M9 20h6"/><path d="M8 9l2.5 2.5L16 7"/>',
+    moto:        '<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-3-7h4M14 10l2-3h2"/>',
     chave:       '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
     arquivo:     '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
     chat:        '<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>',
@@ -93,37 +99,41 @@ var ADMIN = (function () {
       b.innerHTML = icone(ico) + '<span>' + rot + '</span>'; return b;
     }
 
-    function atalho(rot, ico, fn) {
-      var b = h('button', { class: 'adm-atalho', type: 'button', onclick: fn });
-      b.innerHTML = '<span class="ai">' + icone(ico) + '</span><span>' + rot + '</span>'; return b;
-    }
-    function kpi(ico, rot, cls, destino) {
-      var c = h('button', { class: 'adm-card kpi ' + cls + ' anim', type: 'button', onclick: function () { abrir(destino); } });
-      c.innerHTML = '<span class="kpi-ico">' + icone(ico) + '</span><span class="kpi-rot">' + rot + '</span><span class="kpi-val">—</span><span class="kpi-sub">carregando…</span>';
+    function op(cmd) { return function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval(cmd); } catch (e) {} }); }; }
+    /* 🚦 cartões de atenção (semáforo) */
+    function aten(ico, rot, acao, fn) {
+      var c = h('button', { class: 'adm-at anim', type: 'button', onclick: fn });
+      c.innerHTML = '<span class="at-top"><span class="at-luz"></span><span class="at-ico">' + icone(ico) + '</span><span class="at-rot">' + rot + '</span></span><span class="at-val">—</span><span class="at-sub">carregando…</span><span class="at-lk">' + acao + ' →</span>';
       return c;
     }
-    var kCamp = kpi('tv', 'Campanhas no ar', 'k1', 'operacional');
-    var kMan = kpi('chave', 'Manutenções abertas', 'k2', 'operacional');
-    var kProp = kpi('arquivo', 'Propostas no mês', 'k3', 'comercial');
-    var kSug = kpi('chat', 'Sugestões pendentes', 'k4', 'comercial');
-    var kEst = kpi('arquivo', 'Estáticos com aviso', 'k5', 'operacional');
-    var kFot = kpi('tv', 'Fotos para validar', 'k6', 'operacional');
-    kFot.onclick = function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='fp';fpF='f';render()"); } catch (e) {} }); };
-    kEst.onclick = function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='i';render()"); } catch (e) {} }); };
-    function kSet(card, valor, sub, tom) {
-      var v = card.querySelector('.kpi-val'), s = card.querySelector('.kpi-sub');
-      if (valor == null) { v.textContent = '—'; } else contar(v, valor);
-      s.innerHTML = sub || ''; if (tom) s.classList.add(tom);
+    function aSet(c, n, sub, cor) {
+      contar(c.querySelector('.at-val'), n);
+      c.querySelector('.at-sub').innerHTML = sub;
+      c.classList.remove('r', 'y', 'g'); c.classList.add(cor);
     }
-
-    var cGraf = h('section', { class: 'adm-card graf anim' });
-    cGraf.innerHTML = '<header><div><h2>Propostas por mês</h2><p>Últimos 6 meses · gerados no Comercial</p></div></header><div class="graf-corpo"><div class="vazio">carregando…</div></div>';
-    var cRos = h('section', { class: 'adm-card ros anim' });
-    cRos.innerHTML = '<header><div><h2>Situação das campanhas</h2><p>VTs da Gestão Operacional</p></div></header><div class="ros-corpo"><div class="vazio">carregando…</div></div>';
-    var cMan = h('section', { class: 'adm-card lista anim' });
-    cMan.innerHTML = '<header><div><h2>Manutenções que pedem atenção</h2><p>Abertas, das mais atrasadas para as mais novas</p></div></header><ul class="lst"><li class="vazio">carregando…</li></ul>';
-    var cSug = h('section', { class: 'adm-card lista anim' });
-    cSug.innerHTML = '<header><div><h2>Sugestões aguardando você</h2><p>Pedidos do time comercial</p></div></header><ul class="lst"><li class="vazio">carregando…</li></ul>';
+    function aFalhou(c, msg) { c.querySelector('.at-val').textContent = '—'; c.querySelector('.at-sub').textContent = msg || 'não consegui ler'; }
+    var aFot = aten('foto', 'Fotos', 'Ver fotos', op("view='fp';fpF='p';render()"));
+    var aEst = aten('lona', 'Estáticos', 'Instalação', op("view='i';render()"));
+    var aPl = aten('led', 'Players', 'Players', op("view='pl';render()"));
+    var aMan = aten('chave', 'Manutenção', 'Chamados', op("view='t';render()"));
+    var aSug = aten('chat', 'Sugestões', 'Comercial', function () { abrir('comercial'); });
+    aSug.style.display = 'none';
+    /* ⚙️ administração */
+    function adm(ico, cor, rot, botao, fn) {
+      var c = h('div', { class: 'adm-ad anim ' + cor });
+      c.innerHTML = '<span class="ad-ico">' + icone(ico) + '</span><span class="ad-tx"><b>' + rot + '</b><small class="ad-st">carregando…</small></span>';
+      var b = h('button', { class: 'ad-bt', type: 'button', text: botao, onclick: fn });
+      c.appendChild(b);
+      c.addEventListener('click', function (ev) { if (ev.target !== b) fn(); });
+      return c;
+    }
+    function adSt(c, t, alerta) { var s = c.querySelector('.ad-st'); s.innerHTML = t; s.classList.toggle('al', !!alerta); }
+    var dUsu = adm('usuarios', 'p1', 'Usuários', '+ Novo', function () { abrir('usuarios'); });
+    var dAvi = adm('avisos', 'p2', 'Avisos', 'Enviar', function () { abrir('avisos'); });
+    var dPts = adm('pin', 'p4', 'Pontos e coordenadas', 'Abrir', op("view='a';adm='f';render()"));
+    var dBkp = adm('backup', 'p3', 'Backup', 'Baixar', function () { abrir('backup'); });
+    var dWpp = adm('chat', 'p4', 'Backup WhatsApp', 'Abrir', op("view='fv';fvAba='wpp';render()"));
+    var dMot = adm('moto', 'p5', 'Motoboys e rotas', 'Abrir', op("view='a';adm='c';render()"));
 
     /* LEDs por propriedade: Mercado Central e Parque Guanabara são circuitos = 1 LED cada */
     /* LED por propriedade: Mercado Central (MEGA) e Parque Guanabara (MEGA/R2) são circuitos = 1 LED cada.
@@ -146,7 +156,7 @@ var ADMIN = (function () {
     }
     function telaBox(cls, rot) {
       var b = h('div', { class: 'tl-box ' + cls, tabindex: '0' });
-      b.innerHTML = '<span class="tl-ico">' + icone('tv') + '</span><span class="tl-txt"><span class="tl-rot">' + rot + '</span><span class="tl-val">—</span><span class="tl-sub">carregando…</span></span>';
+      b.innerHTML = '<span class="tl-ico">' + icone('led') + '</span><span class="tl-txt"><span class="tl-rot">' + rot + '</span><span class="tl-val">—</span><span class="tl-sub">carregando…</span></span>';
       b.addEventListener('pointerenter', function (ev) { if (ev.pointerType !== 'mouse') return; clearTimeout(b._t); if (!pop || pop._dono !== b) { abrePop(b); b._abriu = Date.now(); } });
       b.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') b._t = setTimeout(fechaPop, 150); });
       b.addEventListener('click', function (ev) {
@@ -166,74 +176,112 @@ var ADMIN = (function () {
     var telas = h('div', { class: 'adm-telas' }, [tMega, tR2, tSem]);
     window.addEventListener('resize', fechaPop);
 
-    var raiz = h('div', { class: 'adm-pg' }, [
-      h('div', { class: 'adm-cab anim' }, [
-        h('div', { class: 'adm-tit' }, [sau, h('h1', { text: 'Visão geral' }), data, ctx.climaEl ? ctx.climaEl('adm-local') : null]),
-        telas,
-        h('div', { class: 'adm-dir' }, [hora, h('div', { class: 'adm-btns' }, [botao('Comercial', 'comercial', 'vidro', 'comercial'), botao('Operacional', 'operacional', 'rosa', 'operacional')])])
+    var raiz = h('div', { class: 'adm-pg v2' }, [
+      h('div', { class: 'adm-cab v2 anim' }, [
+        h('div', { class: 'adm-tit' }, [sau, h('h1', { html: 'Visão <i>geral</i>' }), data, ctx.climaEl ? ctx.climaEl('adm-local') : null]),
+        h('div', { class: 'adm-dir' }, [hora, h('div', { class: 'adm-btns' }, [botao('Comercial', 'comercial', 'vidro', 'comercial'), botao('Operacional', 'operacional', 'rosa', 'operacional')])]),
+        telas
       ]),
-      h('div', { class: 'adm-atalhos anim' }, [
-        atalho('Montar proposta', 'arquivo', function () { abrir('comercial'); }),
-        atalho('Instalar estático', 'operacional', function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='i';render()"); } catch (e) {} }); }),
-        atalho('Financeiro', 'financeiro', function () { abrir('financeiro'); }),
-        atalho('Players', 'tv', function () { abrir('operacional', function (fr) { try { fr.contentWindow.eval("view='pl';render()"); } catch (e) {} }); })
-      ]),
-      h('div', { class: 'adm-kpis' }, [kCamp, kMan, kFot, kEst, kProp, kSug]),
-      h('div', { class: 'adm-linha' }, [cGraf, cRos]),
-      h('div', { class: 'adm-linha dois' }, [cMan, cSug])
+      h('div', { class: 'adm-sec anim', html: '🚦 Precisa da sua atenção' }),
+      h('div', { class: 'adm-ats' }, [aFot, aEst, aPl, aMan, aSug]),
+      h('div', { class: 'adm-sec anim', html: '⚙️ Administração' }),
+      h('div', { class: 'adm-ads' }, [dUsu, dAvi, dPts, dBkp, dWpp, dMot])
     ]);
     raiz.querySelectorAll('.anim').forEach(function (el, i) { el.style.setProperty('--d', (i * 70) + 'ms'); });
 
     /* ----- dados (cada parte falha sozinha, sem derrubar o resto) ----- */
-    function falhou(card, msg) { var v = card.querySelector('.kpi-val'); if (v) { v.textContent = '—'; card.querySelector('.kpi-sub').textContent = msg || 'sem dados'; } }
+    var hoje = hojeISO(), dd = function (iso) { return Math.round((new Date(iso + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 864e5); };
+    function dm(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
 
     (async function operacional() {
       try {
-        var r = await client.from('registros').select('tipo,dados').in('tipo', ['vt', 'mn', 'es', 'ft']).eq('excluido', false);
-        if (r.error) throw r.error;
-        var hoje = hojeISO(), agora = Date.now(), noAr = 0, aIniciar = 0, fim = 0, abertas = [];
-        (r.data || []).forEach(function (x) {
-          var d = x.dados || {};
-          if (x.tipo === 'vt') {
-            if (d.ini && d.ini > hoje) aIniciar++; else if (d.fim && d.fim < hoje) fim++; else noAr++;
-          } else if (x.tipo === 'mn' && d.status !== 'resolvida') abertas.push(d);
+        var rs = await Promise.all([
+          client.from('registros').select('chave,tipo,dados').in('tipo', ['vt', 'mn', 'es', 'ft', 'cfg']).eq('excluido', false),
+          client.from('registros').select('chave').in('tipo', ['fx', 'vr']).eq('excluido', false)
+        ]);
+        if (rs[0].error) throw rs[0].error;
+        var R = rs[0].data || [], ok = {}, ft = {}, agora = Date.now();
+        (rs[1].data || []).forEach(function (x) { ok[x.chave.slice(3)] = 1; });
+        R.forEach(function (x) { if (x.tipo === 'ft') ft[x.chave.slice(3)] = x.dados || {}; });
+        /* fotos: mesma regra da tela Fotos por ponto (cliente no ar hoje) */
+        var falta = {}, confere = {}, urg = 0;
+        R.forEach(function (x) {
+          if (x.tipo !== 'vt') return;
+          var v = x.dados || {};
+          if ((v.ini && v.ini > hoje) || (v.fim && v.fim < hoje) || (v.man && v.conc)) return;
+          var dn = v.ini ? -dd(v.ini) : 0;
+          (v.paineis || []).forEach(function (pid) {
+            if (!ok[pid]) return;
+            var st = (ft[v.id + '__' + pid] || {}).status || 'pendente';
+            if (st === 'pendente' || st === 'refazer') { falta[pid] = 1; if (dn >= 3) urg++; }
+            else if (st === 'feita') { confere[pid] = 1; if (dn >= 3) urg++; }
+          });
         });
-        var avE = 0, dd = function (iso) { return Math.round((new Date(iso + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 864e5); };
-        (r.data || []).forEach(function (x) {
-          var e = x.dados || {};
-          if (x.tipo !== 'es' || e.oc !== 'cli' || !e.ini || !e.fim || e.ret) return;
-          var di = dd(e.ini), df = dd(e.fim);
-          if (!e.inst ? (df < 0 || di <= 2) : df <= 2) avE++;
-        });
-        kSet(kEst, avE, avE ? 'instalar ou retirar lona' : 'tudo em dia', avE ? 'alerta' : 'bom');
-        /* fotos marcadas como feitas (ex.: motoboy na rua) esperando validação */
-        var feitas = (r.data || []).filter(function (x) { return x.tipo === 'ft' && x.dados && x.dados.status === 'feita'; })
-          .map(function (x) { return x.dados; }).sort(function (a, b) { return (b.fts || b.ts || 0) - (a.fts || a.ts || 0); });
-        var ult = feitas[0], quando = ult ? new Date(ult.fts || ult.ts || 0) : null;
-        kSet(kFot, feitas.length, feitas.length
-          ? 'última: ' + esc(ult.by || 'alguém') + (quando && quando.getTime() ? ' · ' + quando.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + quando.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '')
-          : 'nada esperando', feitas.length ? 'alerta' : 'bom');
-        var atrasadas = abertas.filter(function (m) { return m.pz && m.pz < agora; });
-        kSet(kCamp, noAr, aIniciar + ' a iniciar · ' + fim + ' encerradas');
-        kSet(kMan, abertas.length, atrasadas.length ? '<b>' + atrasadas.length + ' atrasada(s)</b>' : 'nenhuma atrasada', atrasadas.length ? 'alerta' : 'bom');
-        var tot = noAr + aIniciar + fim;
-        cRos.querySelector('.ros-corpo').innerHTML = tot
-          ? '<div class="ros-graf">' + rosca([{ v: noAr, rot: 'No ar', cls: 'f1' }, { v: aIniciar, rot: 'A iniciar', cls: 'f2' }, { v: fim, rot: 'Encerradas', cls: 'f3' }], tot) + '<div class="ros-centro"><b>' + tot + '</b><span>campanhas</span></div></div>' +
-            '<ul class="leg"><li><i class="f1"></i>No ar<b>' + noAr + '</b></li><li><i class="f2"></i>A iniciar<b>' + aIniciar + '</b></li><li><i class="f3"></i>Encerradas<b>' + fim + '</b></li></ul>'
-          : '<div class="vazio">Nenhuma campanha cadastrada ainda.</div>';
-        setTimeout(function () { var g = cRos.querySelector('.graf-rosca'); if (g) g.classList.add('go'); }, 60);
-        abertas.sort(function (a, b) { return (a.pz || 0) - (b.pz || 0); });
-        var ul = cMan.querySelector('.lst');
-        ul.innerHTML = abertas.length ? abertas.slice(0, 5).map(function (m) {
-          var atr = m.pz && m.pz < agora, hrs = m.pz ? (m.pz - agora) / 36e5 : null;
-          var chip = hrs == null ? '' : atr ? '<span class="chip ruim">atrasada há ' + horasTxt(hrs) + '</span>' : '<span class="chip">prazo em ' + horasTxt(hrs) + '</span>';
-          return '<li><span class="pto ' + (atr ? 'ruim' : '') + '"></span><div><b>' + esc(m.def || 'Chamado de manutenção') + '</b><small>' + (m.status === 'eld' ? 'em atendimento' : 'pendente') + (m.moto ? ' · ' + esc(m.moto) : '') + '</small></div>' + chip + '</li>';
-        }).join('') : '<li class="vazio">Nenhuma manutenção aberta. Tudo em dia.</li>';
+        var nF = Object.keys(falta).length, nC = Object.keys(confere).length;
+        aSet(aFot, nF, nF ? 'pontos sem foto' + (nC ? ' · <b>' + nC + ' para conferir</b>' : '') + (urg ? ' · <b>' + urg + ' urgente' + (urg > 1 ? 's' : '') + '</b>' : '') : nC ? '<b>' + nC + ' para conferir</b>' : 'tudo com foto 🎉', nF ? 'r' : nC ? 'y' : 'g');
+        /* estáticos de cliente: lona ainda não instalada (e campanha não terminou) */
+        var est = R.filter(function (x) { var e = x.dados || {}; return x.tipo === 'es' && e.oc === 'cli' && e.ini && e.fim && !e.ret && !e.inst && e.fim >= hoje; })
+          .map(function (x) { return x.dados; }).sort(function (a, b) { return a.ini.localeCompare(b.ini); });
+        var retirar = R.filter(function (x) { var e = x.dados || {}; return x.tipo === 'es' && e.oc === 'cli' && e.inst && !e.ret && e.fim && dd(e.fim) <= 2; }).length;
+        var atrE = est.filter(function (e) { return dd(e.ini) < 0; }).length, pertoE = est.filter(function (e) { return dd(e.ini) <= 2; }).length;
+        aSet(aEst, est.length, est.length
+          ? 'a instalar · ' + (atrE ? '<b>' + atrE + ' já deveria' + (atrE > 1 ? 'm' : '') + ' estar instalada' + (atrE > 1 ? 's' : '') + '</b>' : 'próxima em ' + dm(est[0].ini)) + (retirar ? ' · ' + retirar + ' para retirar' : '')
+          : retirar ? retirar + ' lona(s) para retirar' : 'nenhuma lona para instalar', atrE || retirar ? 'r' : pertoE ? 'y' : est.length ? 'y' : 'g');
+        /* manutenção */
+        var abertas = R.filter(function (x) { return x.tipo === 'mn' && (x.dados || {}).status !== 'resolvida'; }).map(function (x) { return x.dados; });
+        var atrM = abertas.filter(function (m) { return m.pz && m.pz < agora; }).length;
+        aSet(aMan, abertas.length, abertas.length ? (abertas.length === 1 ? 'aberta' : 'abertas') + (atrM ? ' · <b>' + atrM + ' atrasada' + (atrM > 1 ? 's' : '') + '</b>' : ' · no prazo') : 'nenhum chamado aberto', atrM ? 'r' : abertas.length ? 'y' : 'g');
+        /* administração */
+        var cfg = R.filter(function (x) { return x.chave === 'cfg:base'; })[0], motos = cfg && cfg.dados && cfg.dados.motos;
+        adSt(dMot, motos && motos.length ? esc(motos.join(' · ')) : 'nomes, partida e prioridades');
+        adSt(dPts, Object.keys(ok).length + ' pontos cadastrados');
       } catch (e) {
-        falhou(kCamp, 'não consegui ler'); falhou(kMan, 'não consegui ler'); falhou(kEst, 'não consegui ler'); falhou(kFot, 'não consegui ler');
-        cRos.querySelector('.ros-corpo').innerHTML = '<div class="vazio">Não consegui carregar a operação.</div>';
-        cMan.querySelector('.lst').innerHTML = '<li class="vazio">Não consegui carregar.</li>';
+        aFalhou(aFot); aFalhou(aEst); aFalhou(aMan);
       }
+    })();
+
+    /* players: 1 consulta a cada 10 min (o 4YouSee limita consultas seguidas) */
+    (async function players() {
+      var ch = null;
+      try { ch = JSON.parse(localStorage.getItem('adm_pl') || 'null'); } catch (e) {}
+      function mostra(d) {
+        var L = (d && d.players) || [], fora = L.filter(function (p) { return p.minutos == null || p.minutos > 30; }), longe = fora.filter(function (p) { return p.minutos == null || p.minutos >= 24 * 60; });
+        aSet(aPl, fora.length, fora.length ? 'fora do ar · de ' + L.length + (longe.length ? ' · <b>' + longe.length + ' há mais de 24 h</b>' : '') : 'todos os ' + L.length + ' no ar', longe.length ? 'r' : fora.length ? 'y' : 'g');
+      }
+      if (ch && Date.now() - ch.t < 10 * 6e4) return mostra(ch.d);
+      try {
+        var r = await client.functions.invoke('players-status', { body: {} });
+        if (r.error || !r.data || !r.data.players) throw r.error || new Error('sem dados');
+        try { localStorage.setItem('adm_pl', JSON.stringify({ t: Date.now(), d: { players: r.data.players.map(function (p) { return { minutos: p.minutos }; }) } })); } catch (e) {}
+        mostra(r.data);
+      } catch (e) {
+        if (ch) mostra(ch.d); else aFalhou(aPl, 'abra Players para ver');
+      }
+    })();
+
+    (async function administracao() {
+      try {
+        var u = await client.from('profiles').select('papel,ativo');
+        if (u.error) throw u.error;
+        var at = (u.data || []).filter(function (x) { return x.ativo && x.papel !== 'bloqueado'; }), mt = at.filter(function (x) { return x.papel === 'motoboy'; }).length, pend = (u.data || []).filter(function (x) { return x.papel === 'pendente'; }).length;
+        adSt(dUsu, at.length + ' ativos' + (mt ? ' · ' + mt + ' motoboy' + (mt > 1 ? 's' : '') : '') + (pend ? ' · <b>' + pend + ' aguardando liberação</b>' : ''), pend);
+      } catch (e) { adSt(dUsu, 'criar, bloquear e trocar papel'); }
+      try {
+        var ini = new Date(); ini.setHours(0, 0, 0, 0);
+        var a = await client.from('avisos').select('id', { count: 'exact', head: true }).gte('criado_em', ini.toISOString());
+        if (a.error) throw a.error;
+        adSt(dAvi, a.count ? a.count + ' enviado' + (a.count > 1 ? 's' : '') + ' hoje' : 'nenhum enviado hoje');
+      } catch (e) { adSt(dAvi, 'notificar todos, um papel ou uma pessoa'); }
+      try {
+        var w = await client.from('registros').select('em:dados->em').eq('chave', 'wpp:backup').maybeSingle();
+        if (w.error) throw w.error;
+        adSt(dWpp, w.data && w.data.em ? 'importado em ' + new Date(+w.data.em).toLocaleDateString('pt-BR') : 'ainda não importado');
+      } catch (e) { adSt(dWpp, 'histórico de rotas do grupo'); }
+      adSt(dBkp, 'cópia automática todo dia às 05:00');
+      try {
+        var s = await client.from('sugestoes').select('id', { count: 'exact', head: true }).eq('status', 'pendente');
+        if (!s.error && s.count) { aSug.style.display = ''; aSet(aSug, s.count, 'sugestões do comercial aguardando você', 'y'); raiz.querySelector('.adm-ats').classList.add('cinco'); }
+      } catch (e) {}
     })();
 
     (async function contarTelas() {
@@ -296,39 +344,6 @@ var ADMIN = (function () {
         }
       } catch (e) {
         [tMega, tR2].forEach(function (b) { b.querySelector('.tl-val').textContent = '—'; b.querySelector('.tl-sub').textContent = 'não consegui ler'; });
-      }
-    })();
-
-    (async function comercial() {
-      try {
-        var r = await client.from('propostas').select('criado_em,total_negociado').order('criado_em', { ascending: false }).limit(3000);
-        if (r.error) throw r.error;
-        var meses = [], base = new Date(d0.getFullYear(), d0.getMonth(), 1);
-        for (var i = 5; i >= 0; i--) { var m = new Date(base.getFullYear(), base.getMonth() - i, 1); meses.push({ k: m.getFullYear() + '-' + pad(m.getMonth() + 1), rot: MESES_CURTOS[m.getMonth()], v: 0, soma: 0 }); }
-        (r.data || []).forEach(function (p) {
-          var k = String(p.criado_em || '').slice(0, 7), m = meses.filter(function (x) { return x.k === k; })[0];
-          if (m) { m.v++; m.soma += Number(p.total_negociado) || 0; }
-        });
-        meses.forEach(function (m) { m.extra = m.soma ? 'R$ ' + Math.round(m.soma).toLocaleString('pt-BR') : ''; });
-        var atual = meses[5].v, ant = meses[4].v, dif = atual - ant;
-        kSet(kProp, atual, ant || atual ? (dif >= 0 ? '▲ ' : '▼ ') + Math.abs(dif) + ' vs mês anterior' : 'sem propostas ainda', dif >= 0 ? 'bom' : 'alerta');
-        var tem = meses.some(function (m) { return m.v; });
-        cGraf.querySelector('.graf-corpo').innerHTML = tem ? barras(meses) : '<div class="vazio">Ainda não há propostas geradas.</div>';
-        setTimeout(function () { var g = cGraf.querySelector('.graf-barras'); if (g) g.classList.add('go'); }, 60);
-      } catch (e) {
-        falhou(kProp, 'não consegui ler'); cGraf.querySelector('.graf-corpo').innerHTML = '<div class="vazio">Não consegui carregar as propostas.</div>';
-      }
-      try {
-        var s = await client.from('sugestoes').select('tipo,criado_por_nome,criado_por_email,criado_em,status').eq('status', 'pendente').order('criado_em', { ascending: false }).limit(200);
-        if (s.error) throw s.error;
-        var lst = s.data || [];
-        kSet(kSug, lst.length, lst.length ? 'aguardando aprovação' : 'nada pendente', lst.length ? 'alerta' : 'bom');
-        cSug.querySelector('.lst').innerHTML = lst.length ? lst.slice(0, 5).map(function (x) {
-          var quem = x.criado_por_nome || x.criado_por_email || 'Usuário', quando = x.criado_em ? horasTxt((Date.now() - new Date(x.criado_em).getTime()) / 36e5) : '';
-          return '<li><span class="pto"></span><div><b>' + (x.tipo === 'adicionar' ? 'Adicionar ponto' : 'Alterar ponto') + '</b><small>' + esc(quem) + '</small></div><span class="chip">há ' + quando + '</span></li>';
-        }).join('') : '<li class="vazio">Nenhuma sugestão pendente.</li>';
-      } catch (e) {
-        falhou(kSug, 'não consegui ler'); cSug.querySelector('.lst').innerHTML = '<li class="vazio">Não consegui carregar.</li>';
       }
     })();
 

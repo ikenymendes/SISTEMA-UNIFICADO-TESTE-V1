@@ -318,3 +318,27 @@ button, input { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .lg-bl, .bv-bg::before, .bv-bg::after, .mg-logo, .login .cartao, .bv-mk img, .bv-mk::before, .bv-mk::after, .bv-pl, .bv-sau, .bv-hora, .bv-data, .bv-barra i, .bv-dem .go { animation: none !important; opacity: 1; clip-path: none; }
 }
+
+/* luz rosa que acompanha o mouse */
+.lg-luz { position: absolute; left: 0; top: 0; width: 520px; height: 520px; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle, #ff0066aa 0%, #ff006655 35%, transparent 68%); filter: blur(30px); opacity: 0; transition: opacity .5s; mix-blend-mode: screen; }
+.login.mouse .lg-luz { opacity: 1; }
+
+/* abertura depois do login: o cartão recolhe, as faixas abrem e o logo cresce (estilo vinheta) */
+.login.saindo .cartao { animation: lgRecolhe .45s cubic-bezier(.6,0,.4,1) forwards; transform-origin: 50% 0; }
+.login.saindo .versao, .login.saindo .teste-box { animation: lgSome .3s forwards; }
+.login.saindo .mg-logo { animation: lgSome .35s .25s forwards; }
+.login.saindo .lg-grade { animation: lgSome .6s forwards; }
+@keyframes lgRecolhe { 60% { opacity: 1; } to { transform: scaleY(0) translateY(-30px); opacity: 0; } }
+@keyframes lgSome { to { opacity: 0; transform: translateY(-10px); } }
+.lg-intro { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; overflow: hidden; pointer-events: none; }
+.li-faixas { position: absolute; inset: 0; display: flex; justify-content: center; align-items: stretch; gap: 0; }
+.li-faixas i { display: block; flex: 0 0 4vw; max-width: 60px; background: linear-gradient(180deg, transparent, var(--c) 30%, var(--c) 70%, transparent); opacity: 0; transform: scaleY(0);
+  animation: liFaixa 1.5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i) * 35ms); filter: blur(1px); box-shadow: 0 0 30px var(--c); }
+@keyframes liFaixa { 0% { opacity: 0; transform: scaleY(0) translateX(0); } 35% { opacity: .9; transform: scaleY(1); } 70% { opacity: .7; transform: scaleY(1.1) translateX(calc((var(--i) - 6.5) * 6vw)); } 100% { opacity: 0; transform: scaleY(1.2) translateX(calc((var(--i) - 6.5) * 14vw)); } }
+.li-marca { position: relative; width: 120px; opacity: 0; transform: scale(.4); filter: drop-shadow(0 0 30px #ff0066) drop-shadow(0 0 70px #ff006699);
+  animation: liMarca 1.85s cubic-bezier(.3,.7,.2,1) .15s forwards; }
+@keyframes liMarca { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.15); } 55% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1.6); } 100% { opacity: 0; transform: scale(14); } }
+.li-flash { position: absolute; inset: 0; background: radial-gradient(circle, #ffffff, #ff3d86 30%, #1d46b8 70%); opacity: 0; animation: liFlash 1.9s forwards; }
+@keyframes liFlash { 0%, 78% { opacity: 0; } 88% { opacity: .55; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lg-luz { display: none; } }

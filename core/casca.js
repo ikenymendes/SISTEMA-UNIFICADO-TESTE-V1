@@ -113,6 +113,38 @@ var MEGA = (function () {
     ]);
   }
 
+  /* a luz rosa acompanha o mouse (com um pequeno atraso, suave) */
+  function seguirMouse(tela, luz) {
+    if (!window.matchMedia || !matchMedia('(pointer: fine)').matches) return;
+    var alvo = { x: innerWidth * 0.3, y: innerHeight * 0.3 }, pos = { x: alvo.x, y: alvo.y }, viva = true;
+    tela.addEventListener('pointermove', function (ev) { alvo.x = ev.clientX; alvo.y = ev.clientY; tela.classList.add('mouse'); });
+    tela.addEventListener('pointerleave', function () { tela.classList.remove('mouse'); });
+    (function passo() {
+      if (!document.body.contains(tela)) return;
+      pos.x += (alvo.x - pos.x) * 0.12; pos.y += (alvo.y - pos.y) * 0.12;
+      luz.style.transform = 'translate(' + (pos.x - 260) + 'px,' + (pos.y - 260) + 'px)';
+      requestAnimationFrame(passo);
+    })();
+  }
+
+  /* abertura depois do login (estilo vinheta): o cartão recolhe, as faixas abrem e o logo Mega cresce */
+  function abertura(tela) {
+    return new Promise(function (ok) {
+      var reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduz || !tela) return ok();
+      var faixas = [];
+      for (var i = 0; i < 14; i++) faixas.push(h('i', { style: '--i:' + i + ';--c:' + ['#ff0066', '#ff3d86', '#c13cff', '#7a2bff', '#4d7cff', '#38bdf8', '#ff5a8c'][i % 7] }));
+      var intro = h('div', { class: 'lg-intro', 'aria-hidden': 'true' }, [
+        h('div', { class: 'li-faixas' }, faixas),
+        h('img', { class: 'li-marca', src: 'core/assets/marca.png', alt: '' }),
+        h('div', { class: 'li-flash' })
+      ]);
+      tela.classList.add('saindo');
+      setTimeout(function () { tela.appendChild(intro); }, 420);
+      setTimeout(ok, 2300);
+    });
+  }
+
   function telaLogin(mensagem) {
     var app = limparTela();
     var emailSalvo = ''; try { emailSalvo = localStorage.getItem('mega_email') || ''; } catch (e) {}
@@ -135,6 +167,7 @@ var MEGA = (function () {
           else { localStorage.removeItem('mega_email'); localStorage.setItem('mega_email_x', '1'); }
         } catch (e) {}
         sessaoAtual = r.data.session;
+        await abertura(tela);
         await depoisDoLogin();
       } catch (e) {
         erro.textContent = msgErro(e); erro.hidden = false;
@@ -164,14 +197,17 @@ var MEGA = (function () {
     }
 
     var cartao = h('div', { class: 'cartao' }, [form].concat(extra));
-    app.appendChild(h('div', { class: 'login' }, [
-      h('div', { class: 'lg-bl b1' }), h('div', { class: 'lg-bl b2' }), h('div', { class: 'lg-bl b3' }), h('div', { class: 'lg-grade' }),
+    var luz = h('div', { class: 'lg-luz', 'aria-hidden': 'true' });
+    var tela = h('div', { class: 'login' }, [
+      h('div', { class: 'lg-bl b1' }), h('div', { class: 'lg-bl b2' }), h('div', { class: 'lg-bl b3' }), luz, h('div', { class: 'lg-grade' }),
       h('div', { class: 'lg-in' }, [
         marcaMega('mg-logo'),
         cartao,
         h('div', { class: 'versao', text: 'Mega Mídia OOH · sistema unificado · versão 10/11' })
       ])
-    ]));
+    ]);
+    app.appendChild(tela);
+    seguirMouse(tela, luz);
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }
 
@@ -396,7 +432,7 @@ var MEGA = (function () {
     var adm = h('div', { class: 'adm tema-' + tema });
     var ordem = ordemItens(perm);
     var trilho = h('nav', { class: 'trilho', 'aria-label': 'Menu principal' });
-    trilho.appendChild(h('img', { class: 'marca', src: 'core/assets/logoW.png', alt: 'Mega', title: 'Visão geral', onclick: function () { abrir('inicio'); } }));
+    trilho.appendChild(h('img', { class: 'marca', src: 'core/assets/marca.png', alt: 'Mega', title: 'Visão geral', onclick: function () { abrir('inicio'); } }));
     var folha = h('div', { class: 'folha', hidden: 'hidden' });
     var viuSep = false;
     ordem.forEach(function (id) {
