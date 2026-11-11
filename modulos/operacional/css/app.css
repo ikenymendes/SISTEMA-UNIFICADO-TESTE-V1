@@ -2129,3 +2129,15 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
 .cc-bt a.b{display:inline-flex;align-items:center;text-decoration:none;border:1px solid #d9d7ee;border-radius:9px;padding:5px 10px;color:#22226a;font-size:12.5px;background:#fff}
 .cc-cola{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.cc-cola input{flex:1 1 240px}
 .pm-dist.reta{background:linear-gradient(135deg,#6b6fb8,#8a8fd6)}
+
+/* Fotos validadas › abas (sistema / backup WhatsApp) */
+.fv-abas{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.fpw .fv-abas button{border:1px solid var(--borda);background:#ffffff12;color:#fff;border-radius:14px;padding:9px 16px;font:600 13.5px Poppins,sans-serif;cursor:pointer;box-shadow:none;display:inline-flex;align-items:center;gap:8px}
+.fpw .fv-abas button.on{background:#ffffff33;border-color:#ffffff80}
+.fv-abas i{font-style:normal;font-size:11px;font-weight:700;background:#25d366;color:#05300f;border-radius:99px;padding:1px 8px}
+.wb-nota{font-size:12.5px;color:var(--tx2);margin:-4px 2px 10px}
+.fv-dia.wb .fv-dcab{background:linear-gradient(90deg,#25d36626,transparent)}
+.fv-it.wb .fv-h{color:#7ee8a6}
+.fv-cli b.wb-msg{font-weight:500;font-style:italic;color:#ffffffd9}
+.wb-tag{font-style:normal;font-weight:700;color:#ffd590;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
+.wb-imp{display:inline-flex;align-items:center;margin-left:6px;cursor:pointer;color:#fff;font-weight:600;border:1px solid var(--borda);background:#ffffff14;border-radius:10px;padding:3px 10px}

@@ -89,15 +89,24 @@ function fotosValidadas() {
     ["tudo", "Tudo"],
     ["faixa", "Escolher datas"],
   ];
-  const n = (fvCorpo().match(/<span id="fvn" hidden>(\d+)<\/span>/) || [])[1] || 0;
+  const wpp = fvAba === "wpp";
+  if (wpp && !WB.L && !WB.busy && !WB.err) wbCarregar();
+  const corpo = wpp ? wbCorpo() : fvCorpo(),
+    n = (corpo.match(/<span id="(?:fvn|wbn)" hidden>(\d+)<\/span>/) || [])[1] || 0;
+  const abas = `<div class="fv-abas"><button type="button" class="${wpp ? "" : "on"}" data-a="fvaba" data-v="sis">✅ Fotos do sistema</button><button type="button" class="${wpp ? "on" : ""}" data-a="fvaba" data-v="wpp">📲 Backup WhatsApp${WB.L ? `<i>${WB.L.length}</i>` : ""}</button></div>`;
   return `<div class="fpw"><div class="fp-blob a"></div><div class="fp-blob b"></div><div class="fp-in">
 <div class="fp-cab"><div><small>Fluxo do VT</small><h1>✅ Fotos <i>validadas</i></h1></div>
 <div class="fp-kp"><div class="v"><b>${nHoje}</b><span>hoje</span></div><div class="f"><b>${nMes}</b><span>este mês</span></div><div class="p"><b>${all.length}</b><span>no total</span></div></div></div>
-<label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fvq" type="search" autocomplete="off" placeholder="Buscar cliente, PI, endereço, data (ex.: 05/11), quem fez…" value="${e(fvQ)}"><em id="fvc">${n} ${n == 1 ? "foto" : "fotos"}</em></label>
+${abas}${wpp ? `<div class="wb-nota">Pedidos de rota que você mandou no grupo do operacional (sem cliente). Use a data para achar as fotos no Google Fotos.${WB.em ? " Importado em " + fmt(fvDia(WB.em)) + "." : ""}${eAdm() ? ` <label class="wb-imp">⬆ Importar arquivo<input type="file" id="wbarq" accept=".json,application/json" hidden></label>` : ""}</div>` : ""}
+<label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>${
+    wpp
+      ? `<input id="wbq" type="search" autocomplete="off" placeholder="Buscar endereço, motoboy, data (ex.: 05/11), palavra da mensagem…" value="${e(wbQ)}"><em id="wbc">${n} ${n == 1 ? "pedido" : "pedidos"}</em>`
+      : `<input id="fvq" type="search" autocomplete="off" placeholder="Buscar cliente, PI, endereço, data (ex.: 05/11), quem fez…" value="${e(fvQ)}"><em id="fvc">${n} ${n == 1 ? "foto" : "fotos"}</em>`
+  }</label>
 <div class="fv-bar"><div class="fp-fil">${per.map(([k, r]) => `<button class="${fvP === k ? "on" : ""}" data-a="fvper" data-v="${k}">${r}</button>`).join("")}</div>
-<button type="button" class="fv-xls" data-a="fvxls">⬇ Baixar Excel</button></div>
+<button type="button" class="fv-xls" data-a="${wpp ? "wbxls" : "fvxls"}">⬇ Baixar Excel</button></div>
 ${fvP === "faixa" ? `<div class="fv-faixa"><label>De <input type="date" id="fvde" value="${e(fvDe)}"></label><label>Até <input type="date" id="fvate" value="${e(fvAte)}"></label></div>` : ""}
-<div id="fvl">${fvCorpo()}</div></div></div>`;
+<div id="fvl">${corpo}</div></div></div>`;
 }
 function fvPinta() {
   const l = $("fvl");

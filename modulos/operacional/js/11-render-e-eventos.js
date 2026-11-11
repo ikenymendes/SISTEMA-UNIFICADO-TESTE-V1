@@ -373,6 +373,26 @@ document.addEventListener("click", async (ev) => {
     render();
     return;
   }
+  if (a === "fvaba") {
+    fvAba = v;
+    render();
+    return;
+  }
+  if (a === "wbrec") {
+    WB.err = "";
+    wbCarregar();
+    render();
+    return;
+  }
+  if (a === "wbmais") {
+    wbN += 200;
+    wbPinta();
+    return;
+  }
+  if (a === "wbxls") {
+    wbExcel();
+    return;
+  }
   if (a === "fvper") {
     fvP = v;
     fvN = 150;
@@ -1409,9 +1429,21 @@ document.addEventListener("click", async (ev) => {
   }
   render();
 });
+document.addEventListener("change", (ev) => {
+  if (ev.target && ev.target.id === "wbarq" && ev.target.files && ev.target.files[0]) {
+    wbImportar(ev.target.files[0]);
+    ev.target.value = "";
+  }
+});
 document.addEventListener("input", (ev) => {
   if (ev.target.id === "pmtx") {
     PM.probTxt = ev.target.value;
+    return;
+  }
+  if (ev.target.id === "wbq") {
+    wbQ = ev.target.value;
+    wbN = 200;
+    wbPinta();
     return;
   }
   if (ev.target.id === "fvq" || ev.target.id === "fvde" || ev.target.id === "fvate") {
@@ -1419,7 +1451,8 @@ document.addEventListener("input", (ev) => {
     else if (ev.target.id === "fvde") fvDe = ev.target.value;
     else fvAte = ev.target.value;
     fvN = 150;
-    fvPinta();
+    if (fvAba === "wpp") wbPinta();
+    else fvPinta();
     return;
   }
   if (ev.target.id === "fpq") {
