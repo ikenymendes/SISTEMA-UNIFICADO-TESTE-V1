@@ -266,6 +266,23 @@ function ilustra(g,k,led){
  if(k==="led"){const x=130,y=250,w=480,h=150;rr(g,x,y,w,h,14);g.fillStyle=L;g.fill();rr(g,x+12,y+12,w-24,h-24,8);g.fillStyle="#1B1B90";g.fill();marca(g,x+w/2-75,y+32,86,"#E4E5F7","#FF0066");pernas(g,x,y+h,w,58);sombra(g,x+w/2,y+h+64,w+60)}
  else if(k==="frontlight"||k==="mensal"){const x=120,y=270,w=500,h=140;if(k==="frontlight")[.2,.5,.8].forEach(f=>{const lx=x+w*f;g.fillStyle="rgba(255,255,255,.4)";g.fillRect(lx-1,y-70,3,70);g.fillStyle="#FF0066";g.beginPath();g.arc(lx,y-76,9,0,7);g.fill()});
   rr(g,x,y,w,h,12);g.fillStyle=L;g.fill();rr(g,x+10,y+10,w-20,h-20,6);g.fillStyle=P;g.fill();marca(g,x+60,y+28,80,"#000066","#FFFFFF");pernas(g,x,y+h,w,60);sombra(g,x+w/2,y+h+66,w+80)}
+ else if(k==="shopping"){g.save();g.translate(60,40);g.scale(.84,.84);const x=95,y=205,w=560,h=300;
+  // prédio
+  rr(g,x,y,w,h,10);g.fillStyle="rgba(255,255,255,.16)";g.fill();
+  g.fillStyle="rgba(255,255,255,.22)";for(let r=0;r<2;r++)for(let c=0;c<4;c++)g.fillRect(x+26+c*58,y+22+r*34,34,18);
+  // letreiro
+  par(g,x+150,y-38,260,30,14,"#FF0066");g.fillStyle="#FFFFFF";g.font="700 20px Poppins, Arial";g.textAlign="center";g.fillText("SHOPPING CIDADE",x+150+137,y-16);g.textAlign="left";
+  // vitrine grande 6x3 com a marca
+  rr(g,x+30,y+100,260,140,8);g.fillStyle="rgba(255,255,255,.30)";g.fill();rr(g,x+40,y+110,240,120,5);g.fillStyle="#FF0066";g.fill();marca(g,x+120,y+136,68,"#000066","#FFFFFF");
+  g.fillStyle="rgba(255,255,255,.7)";g.font="600 13px Poppins, Arial";g.fillText("VITRINE 6x3m",x+40,y+258);
+  // entradas com testeiras
+  [[x+315,"ALIMENTAÇÃO"],[x+395,"ALIMENTAÇÃO"],[x+475,"ELEVADORES"]].forEach(([ex,t])=>{rr(g,ex,y+100,66,26,4);g.fillStyle="#FF0066";g.fill();
+   g.fillStyle="#FFFFFF";g.font="700 9px Poppins, Arial";g.textAlign="center";g.fillText("TESTEIRA",ex+33,y+117);g.textAlign="left";
+   rr(g,ex+4,y+132,58,108,3);g.fillStyle="rgba(10,10,60,.55)";g.fill();g.fillStyle="rgba(255,255,255,.25)";g.fillRect(ex+32,y+136,2,100)});
+  // marquise da entrada Rio de Janeiro
+  par(g,x+300,y+62,250,18,10,"rgba(255,255,255,.35)");rr(g,x+380,y+40,90,22,4);g.fillStyle="#FF0066";g.fill();
+  g.fillStyle="#FFFFFF";g.font="700 9px Poppins, Arial";g.textAlign="center";g.fillText("TESTEIRA",x+425,y+55);g.textAlign="left";
+  sombra(g,x+w/2,y+h+10,w+80);g.restore()}
  else if(k==="banca"){const x=170,y=260,w=300,h=190;
   par(g,x-20,y-34,w+110,26,60,"#FF0066");
   g.fillStyle="rgba(255,255,255,.26)";g.beginPath();g.moveTo(x+w,y);g.lineTo(x+w+90,y-26);g.lineTo(x+w+90,y+h-30);g.lineTo(x+w,y+h);g.closePath();g.fill();
@@ -477,7 +494,7 @@ function rodape(p,idx,total){
  const fy=6.0,col=(x,w,l,v,sz,h)=>[TX(x,fy,w,.25,[[R(l,9,PINK,1,2)]]),TX(x,fy+.28,w,h||.9,[[R(v||"—",sz||15,NAVY,1)]])];
  if(gjOn(p.grupo))return[...col(.7,1.3,"PAINEL",`${String(idx).padStart(2,"0")} / ${String(total).padStart(2,"0")}`),...col(2.1,2.1,"TIPO",pretty(normTipo(p.tipo))),...col(4.3,6.3,"GRUPO",p.grupo+" · "+gQtd(p.grupo)+" telas",13.5),logo(LOGO_COR,10.83,6.45,1.8)];
  return [...col(.7,1.3,"PAINEL",`${String(idx).padStart(2,"0")} / ${String(total).padStart(2,"0")}`),
-  ...(p.tela?[...col(1.9,1.4,"TIPO",pretty(normTipo(p.tipo))),...col(3.4,1.4,"FORMATO",p.fmt),...col(4.9,2.5,"TELA",p.tela,15),...col(7.5,3.2,"LOCALIZAÇÃO",p.loc,12)]:[...col(2.1,2.1,"TIPO",pretty(normTipo(p.tipo))),...col(4.3,1.8,"FORMATO",p.fmt),...col(6.2,4.4,"LOCALIZAÇÃO",p.loc,13.5)]),
+  ...(p.tela?[...col(1.9,1.4,"TIPO",pretty(normTipo(p.tipo))),...col(3.4,1.4,"FORMATO",p.fmt),...col(4.9,2.5,"TELA",p.tela,15),...col(7.5,3.2,"LOCALIZAÇÃO",p.loc,12)]:[...col(2.1,2.1,"TIPO",pretty(normTipo(p.tipo)),(p.tipo||"").length>18?11:15),...col(4.3,1.8,"FORMATO",p.fmt),...col(6.2,4.4,"LOCALIZAÇÃO",p.loc,13.5)]),
   logo(LOGO_COR,10.83,6.45,1.8)];
 }
 function buildSlides(){
@@ -515,7 +532,7 @@ function buildSlides(){
      TX(4.3,y,8.2,.5,[[R((p.loc||"—")+(p.tela?"  —  "+p.tela:""),12.5,INK,0)]],{valign:"middle"}))});
    out.push({bg:bgURL("soft"),items:it})}}
  // painéis (agrupados por tipo)
- const grupos=[];ps.forEach(p=>{const t=normTipo(p.tipo)||"PAINEL",k=t+"|"+(p.grupo||"");let g=grupos.find(x=>x.k===k);if(!g)grupos.push(g={t,k,gr:p.grupo||"",l:[]});g.l.push(p)});
+ const grupos=[];ps.forEach(p=>{const t=normTipo(p.tipo)||"PAINEL",k=p.grupo?"G|"+p.grupo:t+"|";let g=grupos.find(x=>x.k===k);if(!g)grupos.push(g={t,k,gr:p.grupo||"",l:[]});g.l.push(p)});
  const total=ps.length,usados=new Set();
  grupos.forEach((g,gi)=>{
   if(S.opt.sep){const mem=g.gr?S.paineis.filter(x=>x.grupo===g.gr):g.l,n=mem.length,tit=(g.gr||tituloTipo(g.t,n)).split(" "),l1=tit[0],l2=tit.slice(1).join(" "),praca=titleCase(S.cli.praca),per=periodo(),
@@ -523,7 +540,7 @@ function buildSlides(){
     txt=`Registro fotográfico da veiculação de ${S.cli.cliente||"—"}${praca?" em "+praca:""}${per?", no período de "+per:""}. Cada ponto foi fotografado pela operação Mega.`,
     ends=mem.map(p=>(p.loc||"—")+(p.tela?" · "+p.tela:"")),bl=ends.slice(0,3);if(ends.length>3)bl[2]=`${ends[2]}  + ${ends.length-3} ${ends.length-3===1?"endereço":"endereços"}`;
    const tile=(x,v,l,pk)=>[RC(x,4.16,2.15,1.35,pk?PINK:"FFFFFF",{a:pk?1:.10,r:.12}),TX(x+.25,4.3,1.82,.78,[[R(v,v.length<=7?30:v.length<=11?20:v.length<=14?16:v.length<=17?13:v.length<=21?11:9,"FFFFFF",0)]],{valign:"middle"}),TX(x+.25,5.05,1.8,.3,[[R(l,9,pk?"FFFFFF":"C9CCF2",0)]])];
-   out.push({bg:bgURL(`kit:${kindTipo(g.t)}:${/LED/.test(g.t)?1:0}:${gi}:${grupos.length}`),items:[
+   out.push({bg:bgURL(`kit:${/SHOPPING CIDADE/i.test(g.gr)?"shopping":kindTipo(g.t)}:${/LED/.test(g.t)?1:0}:${gi}:${grupos.length}`),items:[
    logo(LOGO_BRANCA,0.94,0.55,2.0),
    TX(0.71,3.62,4.3,.3,[[R(`${String(gi+1).padStart(2,"0")} · TIPO DE MÍDIA`,8.5,PINK,1,3)]]),
    TX(0.71,3.98,4.3,1.35,l2?[[R(l1,34,"FFFFFF",0)],[R(l2,34,"FFFFFF",0)]]:[[R(l1,34,"FFFFFF",0)]]),
@@ -660,7 +677,7 @@ function render0(){
 }
 function renderPaineis(focus){
  const ps=S.paineis;
- $("#t1").innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">Painéis, endereços e fotos</h2><p class="hint" style="margin:2px 0 0">Para cada painel: tipo, formato, localização e as fotos (arraste ou clique). Cada foto vira um slide.</p></div><span class="sp"></span><button class="b" id="bMC" title="Separa Mercado Central em Estacionamento 5x2, Saída de pedestres 2x1 e LEDs dos corredores, cada um com sua capa">Aplicar modelo Mercado Central</button><button class="b pri" id="bAdd">+ Painel</button></div><datalist id="grDl"><option value="ESTACIONAMENTO 5x2"><option value="SAÍDA DE PEDESTRES 2x1"><option value="LEDS DOS CORREDORES"></datalist>
+ $("#t1").innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">Painéis, endereços e fotos</h2><p class="hint" style="margin:2px 0 0">Para cada painel: tipo, formato, localização e as fotos (arraste ou clique). Cada foto vira um slide.</p></div><span class="sp"></span>${fixosDo(S.cli.cliente).length&&(S.fixFora||[]).length?`<button class="b" id="bFix" title="Traz de volta os ativos fixos do Shopping Cidade que foram removidos">↺ Repor ativos do Shopping Cidade (${S.fixFora.length})</button>`:""}<button class="b" id="bMC" title="Separa Mercado Central em Estacionamento 5x2, Saída de pedestres 2x1 e LEDs dos corredores, cada um com sua capa">Aplicar modelo Mercado Central</button><button class="b pri" id="bAdd">+ Painel</button></div><datalist id="grDl"><option value="ESTACIONAMENTO 5x2"><option value="SAÍDA DE PEDESTRES 2x1"><option value="LEDS DOS CORREDORES"></datalist>
   <div class="row" style="margin-top:14px"><textarea id="bulk" rows="2" style="flex:1;margin:0;min-height:48px" placeholder="Colar vários endereços (um por linha) para criar os painéis de uma vez"></textarea><button class="b nv" id="bBulk">Criar painéis</button></div></div>`
   +(ps.length?"":`<div class="card hint">Nenhum painel ainda. Importe um VT da Matriz, cole endereços acima ou clique em “+ Painel”.</div>`)
   +ps.map((p,i)=>`${p.grupo&&(i===0||ps[i-1].grupo!==p.grupo)?`<div class="gbanner"><b>📌 Capa própria: ${esc(p.grupo)}</b><span>${gQtd(p.grupo)} ${gQtd(p.grupo)===1?"tela":"telas"}</span><label class="gj"><input type="checkbox" data-gj="${esc(p.grupo)}" ${gjOn(p.grupo)?"checked":""}> Todas as fotos juntas (um só espaço)</label></div>`:""}<div class="painel" data-pid="${p.id}"><div class="hd"><span class="num">${String(i+1).padStart(2,"0")}</span><span class="tt">${esc((p.loc||"Novo painel")+(p.tela?" · "+p.tela:""))}</span>${p.st?`<span class="pill ${p.st==="validada"?"":"pk"}">foto: ${esc(p.st)}</span>`:""}<span class="pill ${p.fotos.length?"":"pk"}">${p.fotos.length} foto(s)</span>
@@ -668,6 +685,7 @@ function renderPaineis(focus){
    <div class="grid" style="grid-template-columns:1fr 1fr 1.4fr 3fr"><div><label class="f">Tipo</label>${p.outro||(p.tipo&&!TIPOS.includes(p.tipo)&&p.outro)?`<input type="text" data-f="tipo" placeholder="Digite o tipo" value="${esc(p.tipo)}">`:tipoSel(p.tipo,'data-f="tipo"')}</div><div><label class="f">Formato</label><input type="text" data-f="fmt" value="${esc(p.fmt)}"></div><div><label class="f">Tela (circuito)</label><input type="text" data-f="tela" placeholder="opcional" value="${esc(p.tela||"")}"></div><div><label class="f">Localização</label><input type="text" data-f="loc" value="${esc(p.loc)}"></div></div><div style="margin-top:10px"><label class="f">Capa própria / grupo (opcional)</label><input type="text" data-f="grupo" list="grDl" placeholder="Ex.: ESTACIONAMENTO 5x2  ·  SAÍDA DE PEDESTRES 2x1  ·  LEDS DOS CORREDORES" value="${esc(p.grupo||"")}"></div>
    ${segue(p)?`<div class="hint" style="margin:10px 0 0">As fotos deste grupo ficam no primeiro painel do grupo (“${esc(p.grupo)}”).</div>`:`<div class="drop" data-a="drop">${dropTxt(p)}</div>`}
    <div class="fotos">${p.fotos.map((f,k)=>`<div class="foto" data-fid="${f.id}"><img src="${f.src}"><div class="c"><input type="text" data-cap placeholder="Legenda (ex.: Início)" value="${esc(f.cap)}"></div><div class="ac"><button data-a="fl">←</button><button data-a="fr">→</button><button class="x" data-a="fx">✕</button></div></div>`).join("")}</div></div>`).join("");
+ if($("#bFix"))$("#bFix").onclick=()=>{const n=aplicarFixos(true);agruparOrdem();save();renderPaineis();toast(n+" ativo(s) do Shopping Cidade de volta")};
  $("#bMC").onclick=aplicarMercado;$("#bAdd").onclick=()=>{S.paineis.push({id:uid(),tipo:S.cli.tipoPad,fmt:S.cli.fmtPad,loc:"",fotos:[]});save();renderPaineis()};
  $("#bBulk").onclick=()=>{const l=$("#bulk").value.split("\n").map(s=>s.trim()).filter(Boolean);l.forEach(x=>S.paineis.push({id:uid(),tipo:S.cli.tipoPad,fmt:S.cli.fmtPad,loc:x,fotos:[]}));save();renderPaineis();toast(l.length+" painéis criados")};
  if(focus){const el=document.querySelector(`[data-pid="${focus}"]`);if(el&&tab===1)el.scrollIntoView({block:"nearest"})}
@@ -750,7 +768,7 @@ document.addEventListener("click",async e=>{
  if(a==="up"&&i>0)[S.paineis[i-1],S.paineis[i]]=[S.paineis[i],S.paineis[i-1]];
  else if(a==="dn"&&i<S.paineis.length-1)[S.paineis[i+1],S.paineis[i]]=[S.paineis[i],S.paineis[i+1]];
  else if(a==="dup")S.paineis.splice(i+1,0,{id:uid(),tipo:p.tipo,fmt:p.fmt,loc:p.loc,tela:p.tela||"",fotos:[]});
- else if(a==="del"){if(!await ask4("Remover este painel"+(p.fotos.length?" e suas "+p.fotos.length+" fotos":"")+"?"))return;S.paineis.splice(S.paineis.findIndex(x=>x.id===pid),1)}
+ else if(a==="del"){if(!await ask4("Remover este painel"+(p.fotos.length?" e suas "+p.fotos.length+" fotos":"")+"?"))return;if(p.fixo){S.fixFora=S.fixFora||[];if(!S.fixFora.includes(p.fixo))S.fixFora.push(p.fixo)}S.paineis.splice(S.paineis.findIndex(x=>x.id===pid),1)}
  else if(["fl","fr","fx"].includes(a)){const fid=bt.closest(".foto").dataset.fid,k=p.fotos.findIndex(f=>f.id===fid);
   if(a==="fx")p.fotos.splice(k,1);else if(a==="fl"&&k>0)[p.fotos[k-1],p.fotos[k]]=[p.fotos[k],p.fotos[k-1]];else if(a==="fr"&&k<p.fotos.length-1)[p.fotos[k+1],p.fotos[k]]=[p.fotos[k],p.fotos[k+1]]}
  save();renderPaineis(pid)});
@@ -767,12 +785,32 @@ $("#fileProj").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{con
 $("#bNovo").onclick=async()=>{if(!await ask4("Começar um novo checking? Os dados atuais serão apagados (salve o projeto antes se quiser guardar)."))return;const emp=S.emp,opt=S.opt;S=blank();S.emp=emp;S.opt=opt;save();go(0)};
 
 /* ---------------- início ---------------- */
+/* ===== Ativos fixos de clientes específicos =====
+   Valenet: sempre entram os ativos do Shopping Cidade (com capa própria). Dá para remover algum
+   neste checking; os removidos não voltam sozinhos (botão "Repor" traz de volta). */
+const SC_GRUPO="SHOPPING CIDADE";
+const FIXOS_CLIENTE=[{re:/VALENET/i,itens:[
+ {k:"sc-vitrine",tipo:"ATIVAÇÃO SHOPPING CIDADE - VITRINE",fmt:"6x3m",loc:"RUA RIO DE JANEIRO, 910 – Centro, Belo Horizonte – MG, 30190-060",tela:""},
+ {k:"sc-test1",tipo:"TESTEIRA",fmt:"",loc:"RUA GOITACASES – ENTRADA DA PRAÇA DE ALIMENTAÇÃO",tela:"Testeira 1"},
+ {k:"sc-test2",tipo:"TESTEIRA",fmt:"",loc:"RUA GOITACASES – ENTRADA DA PRAÇA DE ALIMENTAÇÃO",tela:"Testeira 2"},
+ {k:"sc-test3",tipo:"TESTEIRA",fmt:"",loc:"RUA DOS TUPIS – ENTRADA DOS ELEVADORES",tela:""},
+ {k:"sc-test4",tipo:"TESTEIRA",fmt:"",loc:"ENTRADA DA RUA RIO DE JANEIRO",tela:""},
+]}];
+const fixosDo=cli=>{const f=FIXOS_CLIENTE.find(x=>x.re.test(cli||""));return f?f.itens:[]};
+function aplicarFixos(repor){
+ const L=fixosDo(S.cli.cliente);if(!L.length)return 0;
+ S.fixFora=S.fixFora||[];if(repor)S.fixFora=[];
+ let n=0;L.forEach(it=>{if(S.fixFora.includes(it.k)||S.paineis.some(p=>p.fixo===it.k))return;
+  S.paineis.push({id:uid(),fixo:it.k,tipo:it.tipo,fmt:it.fmt,loc:it.loc,tela:it.tela,grupo:SC_GRUPO,pl:"",st:"",fotos:[]});n++});
+ return n;
+}
 function receberVT(pl){
  const c=S.cli;
  if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:Object.assign({},EMP_PADRAO),opt:S.opt});S.vtId=pl.id}
  Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,campanha:pl.campanha||S.cli.campanha||"",tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
  const antigos=S.paineis,novos=pl.paineis.map(p=>{const loc=locDe(p),ex=antigos.find(a=>a.loc===loc&&(a.tela||"")===(p.tela||""));if(ex){ex.st=p.st;if(p.tp)ex.tipo=normTipo(p.tp);if(p.fm)ex.fmt=p.fm;if(p.pl)ex.pl=p.pl;return ex}return{id:uid(),tipo:normTipo(p.tp)||S.cli.tipoPad,fmt:p.fm||S.cli.fmtPad,loc,tela:p.tela||"",pl:p.pl||"",st:p.st,fotos:[]}});
- S.paineis=novos;
+ S.paineis=novos.concat(antigos.filter(a=>a.fixo));
+ aplicarFixos(false);
  S.cli.praca=[...new Set(pl.paineis.map(p=>cidade(p.end)).filter(Boolean))].map(s=>s.toUpperCase()).join(" / ");
  save();
 }
