@@ -141,20 +141,13 @@ var MEGA = (function () {
     })();
   }
 
-  /* abertura depois do login: o cartão se dissolve, o "M" acende com um clarão,
-     "MEGA OOH" se escreve embaixo e tudo se dissolve suavemente */
+  /* ao entrar: os campos descem e o cartão se dissolve; em seguida vem a boas-vindas com o "M" acendendo */
   function abertura(tela) {
     return new Promise(function (ok) {
       var reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduz || !tela) return ok();
-      var intro = h('div', { class: 'lg-intro', 'aria-hidden': 'true' }, [
-        h('div', { class: 'li-fundo' }), h('div', { class: 'li-halo' }),
-        h('img', { class: 'li-m', src: 'core/assets/marca.png', alt: '' }),
-        h('img', { class: 'li-p', src: 'core/assets/palavra.png', alt: '' })
-      ]);
       tela.classList.add('saindo');
-      setTimeout(function () { tela.appendChild(intro); }, 380);
-      setTimeout(ok, 2850);
+      setTimeout(ok, 620);
     });
   }
 
@@ -334,7 +327,7 @@ var MEGA = (function () {
     var d = new Date(), pn = primeiroNome(), moto = perfil && perfil.papel === 'motoboy';
     var dem = h('div', { class: 'bv-dem' });
     var el = h('div', { class: 'bv' + (moto ? ' moto' : ''), role: 'status' }, [
-      h('div', { class: 'bv-bg' }), h('div', { class: 'lg-grade' }),
+      h('div', { class: 'bv-bg' }), h('div', { class: 'lg-grade' }), h('div', { class: 'bv-halo' }),
       h('div', { class: 'bv-top' }, [
         h('div', { class: 'bv-mk' }, [h('img', { src: 'core/assets/marca.png', alt: '' })]),
         h('img', { class: 'bv-pl', src: 'core/assets/palavra.png', alt: 'Mega Mídia OOH' }),
@@ -347,7 +340,7 @@ var MEGA = (function () {
     ]);
     document.body.appendChild(el);
     var fim = function () { if (!el.parentNode) return; el.classList.add('sai'); setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 450); };
-    if (!moto) { el.addEventListener('click', fim); setTimeout(fim, 2600); return; }
+    if (!moto) { el.addEventListener('click', fim); setTimeout(fim, 3200); return; }
 
     /* motoboy: depois da animação mostra as demandas do dia */
     var kpi = function (cls, rot) { var b = h('b', { text: '–' }); return { el: h('div', { class: 'k ' + cls }, [b, h('span', { text: rot })]), b: b }; };
@@ -372,7 +365,7 @@ var MEGA = (function () {
         conta(kp, r.pontos); conta(kf, r.fotos); conta(ka, r.atr); conta(kr, r.rf);
         if (!r.atr) ka.el.classList.add('zero');
       });
-    }, 2700);
+    }, 3200);
   }
 
   /* mesmas regras da tela "Fotos perto de você": cliente no ar hoje, foto pendente ou para refazer, sem problema relatado */

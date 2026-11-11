@@ -2200,3 +2200,8 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
 }
 /* celular: campos com 16px (no iPhone, menos que isso faz a tela dar zoom ao tocar) */
 @media (max-width: 700px) { input, textarea, select { font-size: 16px !important; } }
+/* dentro do sistema unificado: "carregando" discreto (no lugar da tela de login antiga) */
+#login.hostload{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:linear-gradient(160deg,#07073f,#0d0d70 40%,#1d46b8);color:#ffffffd0;font:500 14px Poppins,sans-serif}
+#login.hostload .hl-c{display:flex;flex-direction:column;align-items:center;gap:14px}
+#login.hostload .hl-s{width:34px;height:34px;border-radius:50%;border:3px solid #ffffff2e;border-top-color:#ff3d86;animation:hlg .8s linear infinite}
+@keyframes hlg{to{transform:rotate(360deg)}}

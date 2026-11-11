@@ -235,6 +235,22 @@ function loginClock() {
   if (t) t.textContent = d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 }
 function loginUI(msg, busy) {
+  /* dentro da casca: nunca mostra a tela de login antiga; só um "carregando" discreto */
+  if (HOST) {
+    if (!busy) {
+      HOST.sair(msg || "");
+      return;
+    }
+    let ld = document.getElementById("login");
+    if (!ld) {
+      ld = document.createElement("div");
+      ld.id = "login";
+      document.body.appendChild(ld);
+    }
+    ld.className = "hostload";
+    ld.innerHTML = '<div class="hl-c"><span class="hl-s"></span><span>Carregando…</span></div>';
+    return;
+  }
   loginCSS();
   let el = document.getElementById("login");
   if (!el) {
