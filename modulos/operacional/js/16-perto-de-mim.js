@@ -104,10 +104,9 @@ function pmResumo() {
   r.pontos = r.pontos.size;
   return r;
 }
-/* navegação pelo ENDEREÇO escrito (a coordenada cadastrada pode estar errada); sem endereço, usa a coordenada */
-const pmIr = (p) =>
-  "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(p.end ? endQ(p) : p.ll.join(","));
-const pmWaze = (p) => (p.end ? "https://waze.com/ul?navigate=yes&q=" + encodeURIComponent(endQ(p)) : "https://waze.com/ul?ll=" + p.ll.join(",") + "&navigate=yes");
+/* navegação: coordenada exata do Google; se o ponto só tiver coordenada aproximada, vai pelo endereço */
+const pmIr = (p) => "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(endQ(p));
+const pmWaze = (p) => (llExato(p) ? "https://waze.com/ul?ll=" + p.ll.join(",") + "&navigate=yes" : "https://waze.com/ul?navigate=yes&q=" + encodeURIComponent(endQ(p)));
 function pmCli(t) {
   const f = S.fotos[t.key] || {},
     dn = fpDiasNoAr(t.vt),

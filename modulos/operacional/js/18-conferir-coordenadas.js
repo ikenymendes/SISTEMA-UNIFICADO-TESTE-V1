@@ -90,7 +90,7 @@ const ccPts = () => [...S.fixos, ...S.vars];
 const ccOk = (p) => p.ll && p.llOk && p.llOk === p.ll.join(",");
 async function ccRodar() {
   if (CC.run) return;
-  const L = ccPts().filter((p) => p.end && !ccOk(p));
+  const L = ccPts().filter((p) => (p.nome || p.end) && !ccOk(p));
   CC.run = true;
   CC.feito = false;
   CC.i = 0;
@@ -102,7 +102,7 @@ async function ccRodar() {
     CC.i++;
     ccPinta();
     try {
-      const g = await ccGeo(p.end);
+      const g = await ccGeo([p.nome, p.end].filter(Boolean).join(" - "));
       if (g.nada) CC.res[p.id] = { tipo: "nao" };
       else if (!p.ll) CC.res[p.id] = { tipo: "sem", g };
       else {
@@ -121,7 +121,7 @@ async function ccRodar() {
 function ccLinha(p) {
   const r = CC.res[p.id];
   if (!r) return "";
-  const gm = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.end),
+  const gm = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent([p.nome, p.end].filter(Boolean).join(", ")),
     atual = p.ll ? "https://www.google.com/maps/search/?api=1&query=" + p.ll.join(",") : "";
   let txt, cls;
   if (r.tipo === "longe") {
@@ -138,7 +138,7 @@ function ccLinha(p) {
     CC.cola === p.id
       ? `<div class="cc-cola"><input id="ccll" placeholder="Cole aqui o link do Google Maps ou as coordenadas"><button class="pri sm" data-a="ccset" data-v="${p.id}">Salvar</button><button class="sm" data-a="cccola" data-v="">Cancelar</button></div>`
       : "";
-  return `<div class="cc-it ${cls}"><div class="cc-tx"><b>${e(p.nome)}</b><small>${e(p.end)}</small><span>${txt}</span>${
+  return `<div class="cc-it ${cls}"><div class="cc-tx"><b>${e(p.nome)}</b><small>${e(p.end || "")}</small><span>${txt}</span>${
     r.g && !r.g.nada ? `<small>Endereço encontrado: ${e(r.g.nome)}${r.g.casa ? "" : " (só a rua, sem o número)"}</small>` : ""
   }</div><div class="cc-bt"><a class="sm b" href="${gm}" target="_blank" rel="noopener">🗺 Endereço no Maps</a>${
     atual ? `<a class="sm b" href="${atual}" target="_blank" rel="noopener">📍 Onde está hoje</a>` : ""
@@ -148,7 +148,7 @@ function ccLinha(p) {
 }
 function ccCorpo() {
   const L = ccPts(),
-    semEnd = L.filter((p) => !p.end).length,
+    semEnd = L.filter((p) => !p.end && !p.nome).length,
     marcados = L.filter(ccOk).length;
   if (CC.run)
     return `<div class="cc-prog"><div><b>Conferindo ${CC.i} de ${CC.tot}…</b><small>Uma consulta por segundo (regra do mapa gratuito). Pode continuar usando o sistema; não feche esta aba.</small></div><i style="--p:${CC.tot ? Math.round((CC.i / CC.tot) * 100) : 0}%"></i></div>${ccLista()}`;

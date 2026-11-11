@@ -145,9 +145,12 @@ function divide(ps, k) {
     h = Math.ceil(s.length / 2);
   return [s.slice(0, h), s.slice(h)];
 }
-/* endereço para o Google Maps/Waze: só o endereço escrito (o nome do ponto confunde a busca) + estado */
+/* destino para o Google Maps/Waze: a coordenada exata, se houver; senão o endereço (nome do ponto + bairro/cidade) + estado */
+/* coordenada exata (do Google Maps, 5+ casas decimais) vale mais que o texto do endereço */
+const llExato = (p) => !!(p && p.ll && String(p.ll[0]).split(".")[1] && String(p.ll[0]).split(".")[1].length >= 5);
 const endQ = (p) => {
-  const t = String(p.end || p.nome || "").trim();
+  if (llExato(p)) return p.ll.join(",");
+  const t = [p.nome, p.end].filter(Boolean).join(", ").trim();
   return /\b(MG|Minas|Belo Horizonte|BH|Contagem|Betim|Nova Lima|Sabar[áa]|Santa Luzia|Ribeir[ãa]o das Neves|Vespasiano|Lagoa Santa)\b/i.test(t) ? t : t + ", MG";
 };
 const qs = (p) => [p.nome, p.end].filter(Boolean).join(", "),
