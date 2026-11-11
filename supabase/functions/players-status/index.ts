@@ -75,9 +75,26 @@ async function buscarPlayers(token: string) {
   return { lista: [...todos.values()], diag };
 }
 
+// Limite de chamadas por IP (protege contra quem tentar bombardear a funcao):
+// ate 6 chamadas por minuto; quem passar disso leva 429 por 1 minuto.
+// Fica na memoria da funcao (zera quando o Supabase reinicia a funcao) e e so a primeira barreira.
+const LIM = { max: 6, janela: 60_000 };
+const vistos = new Map<string, number[]>();
+function passouDoLimite(req: Request): boolean {
+  const ip = (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "?").split(",")[0].trim();
+  const agora = Date.now();
+  const L = (vistos.get(ip) || []).filter((t) => agora - t < LIM.janela);
+  L.push(agora);
+  vistos.set(ip, L);
+  if (vistos.size > 5000) for (const [k, v] of vistos) if (!v.length || agora - v[v.length - 1] > LIM.janela) vistos.delete(k);
+  return L.length > LIM.max;
+}
+
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  const perfil = await quemE(req);
+  if (passouDoLimite(req)) return new Response(JSON.stringify({ ok: false, erro: "Muitas consultas seguidas. Aguarde 1 minuto." }), { status: 429, headers: { ...CORS, "Content-Type": "application/json", "Retry-After": "60" } });
+  const quem = await quemE(req);
+  const perfil = quem.perfil;
   if (!perfil) return J({ ok: false, erro: "Nao autorizado. Entre no sistema novamente." }, 401);
   if (perfil.papel !== "admin") return J({ ok: false, erro: "Somente o administrador pode ver os players." }, 403);
   const contas: { nome: string; token: string }[] = [];

@@ -56,8 +56,24 @@ var MEGA = (function () {
     var m = (e && (e.message || e.error_description)) || String(e || '');
     if (/invalid login|invalid_credentials|Invalid login/i.test(m)) return 'E-mail ou senha incorretos.';
     if (/failed to fetch|network/i.test(m)) return 'Sem conexão com o servidor. Verifique a internet.';
+    if (/rate limit|too many|429/i.test(m)) return 'Muitas tentativas de entrar. Aguarde alguns minutos e tente de novo.';
     return m;
   }
+
+  /* ---------- limite de tentativas de login (neste aparelho) ----------
+     5 erros seguidos → espera 30 s; cada novo erro dobra a espera (até 15 min).
+     Acertar a senha zera. O limite de verdade fica no Supabase (Auth → Rate Limits). */
+  var TRAVA = 'mega_lg_trava';
+  function travaLer() { try { return JSON.parse(localStorage.getItem(TRAVA) || '{}'); } catch (e) { return {}; } }
+  function travaGravar(t) { try { localStorage.setItem(TRAVA, JSON.stringify(t)); } catch (e) {} }
+  function travaFalta() { var t = travaLer(); return t.ate && t.ate > Date.now() ? Math.ceil((t.ate - Date.now()) / 1000) : 0; }
+  function travaErro() {
+    var t = travaLer(); t.n = (t.n || 0) + 1;
+    if (t.n >= 5) t.ate = Date.now() + Math.min(900, 30 * Math.pow(2, t.n - 5)) * 1000;
+    travaGravar(t);
+  }
+  function travaZerar() { try { localStorage.removeItem(TRAVA); } catch (e) {} }
+  function travaTxt(s) { return s >= 60 ? Math.ceil(s / 60) + ' min' : s + ' s'; }
 
   /* ---------- ponte com os módulos (usada pelo Operacional e pelo Comercial) ---------- */
   function paraFormatoOperacional(s) {
@@ -162,11 +178,34 @@ var MEGA = (function () {
       var ver = inSenha.type === 'password'; inSenha.type = ver ? 'text' : 'password'; olho.classList.toggle('on', ver); olho.title = ver ? 'Esconder senha' : 'Mostrar senha'; inSenha.focus();
     } });
 
+    var relogio = null;
+    function esperar() {
+      var f = travaFalta();
+      clearInterval(relogio);
+      if (!f) { btn.disabled = false; btn.firstChild.textContent = 'Entrar'; return false; }
+      btn.disabled = true;
+      erro.textContent = 'Muitas tentativas com senha errada. Tente de novo em ' + travaTxt(f) + '.'; erro.hidden = false;
+      btn.firstChild.textContent = 'Aguarde ' + travaTxt(f);
+      relogio = setInterval(function () {
+        var g = travaFalta();
+        if (!document.body.contains(btn)) return clearInterval(relogio);
+        if (!g) { clearInterval(relogio); btn.disabled = false; btn.firstChild.textContent = 'Entrar'; erro.hidden = true; return; }
+        btn.firstChild.textContent = 'Aguarde ' + travaTxt(g);
+        erro.textContent = 'Muitas tentativas com senha errada. Tente de novo em ' + travaTxt(g) + '.';
+      }, 1000);
+      return true;
+    }
+
     async function entrar(email, senha) {
+      if (esperar()) return;
       btn.disabled = true; btn.firstChild.textContent = 'Entrando…'; erro.hidden = true;
       try {
         var r = await client.auth.signInWithPassword({ email: email.trim(), password: senha });
-        if (r.error) throw r.error;
+        if (r.error) {
+          if (/invalid login|invalid_credentials/i.test(r.error.message || '')) travaErro();
+          throw r.error;
+        }
+        travaZerar();
         try {
           if (lembrar.checked) { localStorage.setItem('mega_email', email.trim()); localStorage.removeItem('mega_email_x'); }
           else { localStorage.removeItem('mega_email'); localStorage.setItem('mega_email_x', '1'); }
@@ -178,6 +217,7 @@ var MEGA = (function () {
         erro.textContent = msgErro(e); erro.hidden = false;
         btn.disabled = false; btn.firstChild.textContent = 'Entrar';
         cartao.classList.remove('treme'); void cartao.offsetWidth; cartao.classList.add('treme');
+        esperar();
       }
     }
 
@@ -192,6 +232,7 @@ var MEGA = (function () {
     ]);
 
     if (mensagem) { erro.textContent = mensagem; erro.hidden = false; }
+    setTimeout(esperar, 0); /* se este aparelho ainda estiver na espera, já mostra a contagem */
 
     var extra = [];
     if (teste) {
