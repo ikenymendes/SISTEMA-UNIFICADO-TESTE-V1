@@ -365,6 +365,10 @@ function aplicaGrupo(p,k){ var g=grupoPorK(k); if(!g) return;
   if(g.sec.length>1) p.secao=(!p.cidade||/belo horizonte/i.test(p.cidade))?'led_bh':'led_rm'; }
 function ptsOf(D,sec){ if(GRUPO_NOVOS[sec]) return D.pontos.filter(function(p){return grupoDe(p).k===sec;}); return D.pontos.filter(function(p){return p.secao===sec;}); }
 function num(v){ v=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(v)?0:v; }
+/* circuito com desconto: separado = soma dos valores individuais; desconto em % ou em R$ */
+function circCalc(D,sep){ var c=D.circ; if(!c||!c.on) return null; var v=Math.max(0,+String(c.v||0).replace(',','.')||0), d=c.tipo==='rs'?v:sep*v/100; d=Math.min(d,sep); if(!(d>0)) return null;
+  return {sep:sep,desc:d,circ:sep-d,pct:sep?d/sep*100:0}; }
+function pctTxt(p){ var r=Math.round(p*10)/10; return String(r).replace('.',',')+'%'; }
 function brl(v){ return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function logoAt(S,asset,x,y,h){ if(!asset) return 0; var w=h*asset.w/asset.h; S.img(x,y,w,h,asset,{contain:true}); return w; }
 
@@ -682,22 +686,37 @@ function buildSlides(D0,A,mode){ migKit(D0);
   window.LAST_ROWS=rows;
   if(!full&&!noPrice){
   S=frame(null,A,'Investimento','Tabela de preços','Valor de tabela, desconto e valor negociado ('+(D.modoGeral==='liquido'?'líquido de comissão':'bruto')+')');
-  card(S,0.6,1.95,12.13,4.85,0.2);
   var tb=[['Formato','Pontos','Período','Mín. inserções/dia','Valor tabela','Desc.','Valor negociado'+(D.modoGeral==='liquido'?' (líq.)':' (bruto)')]], totT=0, totN=0;
   rows.forEach(function(c){ totT+=c.tabela; totN+=c.final; tb.push([c.nome,String(c.pontos),c.periodo,c.insercoes||'—',brl(c.tabela),(c.desc||0)+'%',brl(c.final)]); });
-  tb.push(['Total','','','',brl(totT),'',brl(totN)]);
-  var hh=Math.min(0.41,(4.85-0.3-0.4)/(tb.length-1));
-  table(S,0.85,2.1,11.63,tb,[3.9,0.9,1.2,1.3,1.6,0.8,2.3],{rowH:hh,headH:0.4,size:10,total:true,aligns:['l','c','l','c','r','c','r']}); push(S);
+  var CI=circCalc(D,totN), ch=CI?3.7:4.85;
+  if(CI) S.items.forEach(function(it){ if(it.t==='text'&&/^Valor de tabela, desconto/.test(it.str)) it.str='Valores individuais (fechando separado) e condição especial para o circuito completo'; });
+  card(S,0.6,1.95,12.13,ch,0.2);
+  tb.push([CI?'Total fechando separado':'Total','','','',brl(totT),'',brl(totN)]);
+  var hh=Math.min(0.41,(ch-0.3-0.4)/(tb.length-1));
+  table(S,0.85,2.1,11.63,tb,[3.9,0.9,1.2,1.3,1.6,0.8,2.3],{rowH:hh,headH:0.4,size:10,total:true,aligns:['l','c','l','c','r','c','r']});
+  if(CI){ S.rect(0.6,5.85,12.13,0.95,{fill:C.PINK,r:0.2}); S.rect(0.85,6.1,1.15,0.46,{fill:C.WHITE,r:0.23}); S.text(0.85,6.1,1.15,0.46,'−'+pctTxt(CI.pct),{size:14,f:'B',color:C.PINK,align:'c',valign:'m',bold:true});
+    S.text(2.2,5.95,5.6,0.4,'PACOTE COMPLETO · CIRCUITO',{size:14,f:'B',color:C.WHITE,bold:true,spc:60}); S.text(2.2,6.35,5.8,0.35,'Fechando todos os pontos juntos · economia de '+brl(CI.desc),{size:10,f:'L',color:C.WHITE});
+    S.text(7.9,5.95,2.0,0.35,'separado',{size:9,f:'L',color:C.WHITE,align:'r',a:80}); S.text(7.9,6.22,2.0,0.4,brl(CI.sep),{size:12,f:'L',color:C.WHITE,align:'r',valign:'m',a:85}); S.line(8.86,6.43,9.9,6.43,{c:C.WHITE,lw:1.4,a:90});
+    S.text(9.95,5.9,2.6,0.85,brl(CI.circ),{size:24,f:'M',color:C.WHITE,align:'r',valign:'m'}); }
+  push(S);
 
   // INVESTIMENTO
   S=new Slide({g:[C.NAVY_D,C.NAVY]}); slantMotif(S,8.4,-0.4,8.6,10);
   logoAt(S,A.logoW,0.75,0.55,0.75); S.text(0.75,1.95,7,0.3,'INVESTIMENTO TOTAL',{size:10,f:'B',color:C.PINK,spc:240}); S.text(0.75,2.3,7.5,0.9,D.kit.investTitulo||'Plataforma de mídia OOH',{size:28,f:'L',color:C.WHITE});
-  S.text(0.75,3.2,8,1.5,brl(totN),{size:60,f:'M',color:C.WHITE}); S.rect(0.85,4.8,1.3,0.07,{fill:C.PINK});
   var modoTxt=D.modoGeral==='liquido'?'Valor líquido negociado (descontados comissão de '+D.comissao+'%'+(num(D.bv)?' e BV de '+D.bv+'%':'')+')':'Valor bruto negociado'; 
-  S.text(0.75,5.0,7.5,0.35,modoTxt,{size:12,f:'L',color:'CCCCE0'});
+  if(CI){ /* separado × circuito, lado a lado; o circuito em rosa, maior, com a etiqueta do desconto */
+    S.rect(0.75,3.25,3.55,1.75,{fill:C.WHITE,r:0.2,a:9}); S.text(1.0,3.42,3.1,0.3,'FECHANDO SEPARADO',{size:8.5,f:'B',color:'CCCCE0',spc:160,bold:true});
+    S.text(1.0,3.75,3.2,0.6,brl(CI.sep),{size:24,f:'M',color:C.WHITE,valign:'m'}); S.text(1.0,4.45,3.1,0.35,'cada ponto pelo valor individual',{size:9.5,f:'L',color:'CCCCE0'});
+    S.rect(4.5,3.05,4.2,2.15,{fill:C.PINK,r:0.24,shadow:true}); S.text(4.8,3.25,3.0,0.3,'CIRCUITO COMPLETO',{size:9,f:'B',color:C.WHITE,spc:160,bold:true});
+    S.text(4.8,3.6,3.8,0.85,brl(CI.circ),{size:31,f:'M',color:C.WHITE,valign:'m'}); S.text(4.8,4.55,3.8,0.4,'economia de '+brl(CI.desc),{size:11,f:'M',color:C.WHITE});
+    S.rect(7.5,2.82,1.35,0.5,{fill:C.WHITE,r:0.25,shadow:true}); S.text(7.5,2.82,1.35,0.5,'−'+pctTxt(CI.pct),{size:15,f:'B',color:C.PINK,align:'c',valign:'m',bold:true});
+    S.rect(0.85,5.35,1.3,0.07,{fill:C.PINK}); S.text(0.75,5.47,7.9,0.35,modoTxt+' · condição do circuito válida fechando todos os pontos',{size:10,f:'L',color:'CCCCE0'}); }
+  else { S.text(0.75,3.2,8,1.5,brl(totN),{size:60,f:'M',color:C.WHITE}); S.rect(0.85,4.8,1.3,0.07,{fill:C.PINK});
+  S.text(0.75,5.0,7.5,0.35,modoTxt,{size:12,f:'L',color:'CCCCE0'}); }
   S.rect(9.0,1.7,3.73,5.1,{fill:C.WHITE,r:0.2,a:8}); S.text(9.25,1.9,3.3,0.3,'COMPOSIÇÃO DO INVESTIMENTO',{size:8.5,f:'B',color:C.PINK,spc:160});
-  var n=rows.length, rh=Math.min(0.52,4.2/n);
-  rows.forEach(function(c,i){ var yy=2.4+i*rh; S.text(9.25,yy,2.25,rh-0.05,c.nome,{size:9,f:'L',color:C.WHITE,valign:'m',ls:0.95}); S.text(11.4,yy,1.15,rh-0.05,brl(c.final),{size:9,f:'M',color:C.WHITE,align:'r',valign:'m'}); if(i<n-1) S.line(9.25,yy+rh-0.02,12.55,yy+rh-0.02,{c:C.WHITE,lw:0.75,a:22}); });
+  var comp=rows.map(function(c){ return [c.nome,brl(c.final),0]; }); if(CI){ comp.push(['Desconto do circuito ('+pctTxt(CI.pct)+')','− '+brl(CI.desc),1]); comp.push(['Total do circuito',brl(CI.circ),2]); }
+  var n=comp.length, rh=Math.min(0.52,4.2/n);
+  comp.forEach(function(c,i){ var yy=2.4+i*rh, cor=c[2]===1?'FF7EB3':C.WHITE; S.text(9.25,yy,2.25,rh-0.05,c[0],{size:9,f:c[2]===2?'M':'L',color:cor,valign:'m',ls:0.95}); S.text(11.4,yy,1.15,rh-0.05,c[1],{size:9,f:'M',color:cor,align:'r',valign:'m'}); if(i<n-1) S.line(9.25,yy+rh-0.02,12.55,yy+rh-0.02,{c:C.WHITE,lw:0.75,a:22}); });
   S.rect(0.8,5.85,7.9,1.0,{fill:C.WHITE,r:0.18,a:9}); S.text(1.05,5.88,7.4,0.95,[D.kit.pagamento||'',D.kit.validade||''],{size:10,f:'L',color:C.WHITE,valign:'m',after:3}); push(S);
   }
 

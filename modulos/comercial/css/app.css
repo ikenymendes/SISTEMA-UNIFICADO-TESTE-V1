@@ -512,3 +512,15 @@ details.novo{border:1.5px solid var(--pink);margin-bottom:18px}
 .incprod input{width:auto;flex:none}
 tr.abaixo td{background:#fff8ec}
 @media(max-width:900px){.prebox{justify-content:flex-start;width:100%}.prebox label.pre{flex:1 1 45%}.prebox label.pre input{width:100%;text-align:left}.prebox .legado{text-align:left}}
+
+/* ===== circuito com desconto (proposta) ===== */
+.circbox{margin-top:16px;border:1.5px dashed #ffb3cf;border-radius:16px;padding:14px 16px;background:#fff}
+.circbox.on{border-style:solid;border-color:#ff0066;background:#fff5f9;box-shadow:0 8px 22px -14px #ff006680}
+.circon{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.circon input{width:20px;height:20px;accent-color:#ff0066;margin-top:2px;flex:none}
+.circon b{display:block;color:var(--navy)}.circon small{color:var(--mid);font-size:12.5px}
+.circcorpo{margin-top:12px}.circcorpo[hidden]{display:none}
+.circlin{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.circv{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e2ef;border-radius:12px;padding:0 10px}.circv input{border:0;outline:0;width:120px;padding:10px 0;font:inherit;background:transparent}
+.circun{color:#ff0066}
+.circres{margin-top:10px;font-size:14px;color:var(--navy)}.circres .pk{color:#ff0066;font-size:16px}
+.resumo .rcirc b{color:#ff0066}

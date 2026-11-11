@@ -434,6 +434,24 @@ function perfilBox(panel,tipo,comValores){ var PF=[['direto','Líquido (cliente 
       box.appendChild(gr);
       if(!cur&&D.perfilEsc) box.appendChild(h('div',{class:'hint',text:'Percentuais personalizados em uso (comissão '+num(D.comissao)+'% · BV '+num(D.bv)+'%). Escolha um perfil acima para voltar ao padrão.'}));
       panel.appendChild(box); }
+/* circuito com desconto (passo Preços da proposta): separado = valores individuais; circuito = total com desconto */
+function propTotal(){ var t=0; D.precos.forEach(function(r){ if(!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) t+=calcPreco(D,r).final; }); return t; }
+function circBox(panel){
+  var c=D.circ=D.circ||{on:false,tipo:'pct',v:''}, box=h('div',{class:'circbox'+(c.on?' on':'')}), res=h('div',{class:'circres'});
+  function upd(){ box.classList.toggle('on',!!c.on); corpo.hidden=!c.on; var t=propTotal(), cc=circCalc(D,t);
+    res.innerHTML=''; if(!c.on) return; if(!cc){ res.textContent='Informe o desconto do circuito.'; return; }
+    res.appendChild(h('span',{text:'Separado '})); res.appendChild(h('b',{text:brl(cc.sep)})); res.appendChild(h('span',{text:' → Circuito '})); res.appendChild(h('b',{class:'pk',text:brl(cc.circ)}));
+    res.appendChild(h('span',{text:' · −'+pctTxt(cc.pct)+' · economia de '+brl(cc.desc)})); }
+  var sv=function(){ try{ persistLocal(); }catch(e){} upd(); };
+  var ck=h('input',{type:'checkbox'}); ck.checked=!!c.on; ck.addEventListener('change',function(){ c.on=ck.checked; sv(); });
+  var tp=h('div',{class:'seg'}); [['pct','Porcentagem (%)'],['rs','Valor (R$)']].forEach(function(o){ tp.appendChild(h('button',{type:'button',class:'segb'+(c.tipo===o[0]?' on':''),text:o[1],onclick:function(){ c.tipo=o[0]; tp.querySelectorAll('.segb').forEach(function(b,k){ b.classList.toggle('on',(k?'rs':'pct')===c.tipo); }); vi.placeholder=c.tipo==='rs'?'Ex.: 4200':'Ex.: 15'; un.textContent=c.tipo==='rs'?'R$':'%'; sv(); }})); });
+  var vi=h('input',{type:'text',inputmode:'decimal'}); vi.value=c.v||''; vi.placeholder=c.tipo==='rs'?'Ex.: 4200':'Ex.: 15'; vi.addEventListener('input',function(){ c.v=vi.value; sv(); });
+  var un=h('b',{class:'circun',text:c.tipo==='rs'?'R$':'%'});
+  var corpo=h('div',{class:'circcorpo'},[h('div',{class:'circlin'},[tp,h('label',{class:'circv'},[un,vi])]),res]);
+  box.appendChild(h('label',{class:'circon'},[ck,h('span',{},[h('b',{text:'Oferecer circuito completo com desconto'}),h('small',{text:'A proposta mostra os valores separados e, em destaque, o valor do pacote fechando todos os pontos.'})])]));
+  box.appendChild(corpo); panel.appendChild(box); window.__onPrecoCirc=upd; upd();
+  var o=window.__onPreco; window.__onPreco=function(){ if(o) o(); upd(); };
+}
 function viewFluxo(v,tipo){
   var prop=tipo==='prop', mode=prop?'proposta':'kit';
   var passos=prop?[['cliente','Cliente'],['pontos','Pontos'],['precos','Preços'],['gerar','Gerar']]:[['cliente','Cliente'],['pontos','Pontos'],['gerar','Gerar']];
@@ -465,12 +483,13 @@ function viewFluxo(v,tipo){
     panel.appendChild(h('p',{class:'hint',text:'Aparecem só os formatos dos pontos que você escolheu. Preencha o valor de tabela e o desconto; o total é calculado sozinho.'}));
     perfilBox(panel,tipo,true);
     var bs=h('select',{},[['','Base padrão'],['sp','Base SP (valores maiores)']].map(function(o){ return h('option',{value:o[0],text:o[1]}); })); bs.value=D.baseSP?'sp':''; bs.addEventListener('change',function(){ D.baseSP=bs.value==='sp'; try{ persistLocal(); }catch(e){} showTab(tipo); }); panel.appendChild(field('Base de preços',bs,'Escolha SP para usar os valores mínimos da base SP nesta proposta.'));
-    viewPrecos(panel,true); setTimeout(function(){ if(window.__onPreco) window.__onPreco(); },0);
+    viewPrecos(panel,true); circBox(panel); setTimeout(function(){ if(window.__onPreco) window.__onPreco(); },0);
   } else {
     var comp=!prop&&window.__completo, n=nSel(), tot=0;
     if(prop) D.precos.forEach(function(r){ if(!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) tot+=calcPreco(D,r).final; });
     var sm=h('div',{class:'resumo'},[h('div',{},[h('b',{text:D.kit.cliente||'(sem cliente)'}),h('span',{text:'cliente / campanha'})]),h('div',{},[h('b',{text:String(comp?D.pontos.length:n)}),h('span',{text:comp?'pontos (todos)':'pontos escolhidos'})])]);
-    if(prop) sm.appendChild(h('div',{},[h('b',{text:brl(tot)}),h('span',{text:'investimento ('+(D.modoGeral==='liquido'?'líquido':'bruto')+')'})]));
+    if(prop) sm.appendChild(h('div',{},[h('b',{text:brl(tot)}),h('span',{text:'investimento ('+(D.modoGeral==='liquido'?'líquido':'bruto')+')'+(circCalc(D,tot)?' · separado':'')})]));
+    if(prop&&circCalc(D,tot)){ var cc=circCalc(D,tot); sm.appendChild(h('div',{class:'rcirc'},[h('b',{text:brl(cc.circ)}),h('span',{text:'circuito completo · −'+pctTxt(cc.pct)})])); }
     panel.appendChild(h('h3',{text:'Tudo pronto'})); panel.appendChild(sm);
     var qa=h('p',{class:'qinfo bad'}); qa.hidden=true; panel.appendChild(qa); (function(){ var escolhidos=comp?D.pontos:D.pontos.filter(function(p){return p.sel}); function qu(){ var n=fqConta(escolhidos); qa.hidden=!n; qa.textContent='⚠ '+n+' ponto'+(n>1?'s':'')+' com foto em baixa qualidade ou sem foto. Peça ao administrador para substituir antes de enviar ao cliente.'; } fqScan(qu); qu(); })();
     var md=comp?'completo':mode, b=h('div',{class:'bar'});
