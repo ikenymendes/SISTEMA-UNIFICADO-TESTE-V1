@@ -576,6 +576,26 @@ document.addEventListener("click", async (ev) => {
       x.vok = x.vok === "sim" ? "nao" : x.vok === "nao" ? "" : "sim";
       save();
     }
+  } else if (a === "dvx") {
+    S.col["dx|" + v] = !S.col["dx|" + v];
+    const el = ev.target.closest(".dv");
+    if (el) el.classList.toggle("ab", !!S.col["dx|" + v]);
+    return;
+  } else if (a === "vokp") {
+    const k = v.indexOf("|"),
+      id = v.slice(0, k),
+      pid = v.slice(k + 1),
+      x = S.vts.find((q) => q.id === id);
+    if (x) {
+      const cur = vpSt(x, pid);
+      x.vokp = { ...(x.vokp || {}) };
+      x.vokp[pid] = cur === "sim" ? "nao" : cur === "nao" ? "" : "sim";
+      /* o status geral do VT acompanha os endereços */
+      const st = vIds(x).map((i) => x.vokp[i] || "");
+      x.vok = st.includes("nao") ? "nao" : st.every((q) => q === "sim") ? "sim" : "";
+      x.u = Date.now();
+      save();
+    }
   } else if (a === "vted") {
     const x = S.vts.find((q) => q.id === v);
     if (x) {

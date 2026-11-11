@@ -378,3 +378,7 @@ body:has(.bv:not(.sai)) .app-convite, body:has(.lg-intro) .app-convite { opacity
 .bv-sau { animation-delay: 1s !important; } .bv-hora { animation-delay: 1.2s !important; } .bv-data { animation-delay: 1.35s !important; }
 @media (max-width: 600px) { .bv-mk, .bv-mk img { width: 104px; } }
 @media (max-height: 780px) and (min-width: 701px) { .bv.fase2 .bv-top { transform: translateY(-150px) scale(.7); } }
+/* acabamento: bordas mais suaves no login */
+.login .cartao { border-color: #ffffff2e; box-shadow: 0 30px 60px -26px #00001fcc, inset 0 1px 0 #ffffff1f; }
+.login .campo { border-color: #ffffff2a; }
+.bv-dem { border-color: #ffffff2e; }

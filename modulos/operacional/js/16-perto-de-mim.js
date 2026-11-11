@@ -74,6 +74,7 @@ function pmGps() {
         mudou = !PM.pos || pmDist(PM.pos, novo) > 25;
       PM.pos = novo;
       PM.err = "";
+      pmChegou(novo);
       if (mudou && view === "pm" && !PM.sim) pmPinta();
     },
     (e2) => {
@@ -166,8 +167,11 @@ function pmCli(t) {
   return `<div class="pm-cl"><span><b>${e(t.vt.cliente)}</b>${sub ? `<small>${sub}</small>` : ""}</span><div class="pm-mb"><button type="button" class="ok" data-a="pmfez1" data-v="${t.key}">✓ Fiz</button><button type="button" class="pr" data-a="pmprob" data-v="${t.key}" title="Tenho um problema" aria-label="Tenho um problema">⚠</button></div></div>`;
 }
 const pmPend = (g) => g.L.filter((t) => (t.status === "pendente" || t.status === "refazer") && !(S.fotos[t.key] || {}).prob).length;
+/* navegação: só os ícones do Google Maps e do Waze, para a tela ficar mais limpa */
+const PM_IC_ROTA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  PM_IC_CARRO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v2H3z"/><circle cx="7.5" cy="13" r="1"/><circle cx="16.5" cy="13" r="1"/></svg>';
 const pmBtns = (g) =>
-  `<div class="pm-bt"><a class="pm-b" href="${pmIr(g.p)}" target="_blank" rel="noopener">🧭 Rota</a><a class="pm-b w" href="${pmWaze(g.p)}" target="_blank" rel="noopener" title="Abrir no Waze">Waze</a>${
+  `<div class="pm-bt"><a class="pm-ic maps" href="${pmIr(g.p)}" target="_blank" rel="noopener" title="Abrir rota no Google Maps" aria-label="Abrir rota no Google Maps"><img src="assets/ic-maps.png" alt=""></a><a class="pm-ic waze" href="${pmWaze(g.p)}" target="_blank" rel="noopener" title="Abrir no Waze" aria-label="Abrir no Waze"><img src="assets/ic-waze.png" alt=""></a>${
     pmPend(g) > 1 ? `<button type="button" class="pm-b pri" data-a="pmfez" data-v="${g.p.id}">📷 Fiz todas</button>` : ""
   }</div>`;
 function pmHero() {
@@ -275,4 +279,42 @@ function pertoDeMim() {
 <div class="pm-modo"><button class="${PM.modo === "lista" ? "on" : ""}" data-a="pmmodo" data-v="lista">📋 Lista</button><button class="${PM.modo === "prox" ? "on" : ""}" data-a="pmmodo" data-v="prox">🎯 Próximo ponto</button></div>
 <div id="pmc">${pmCorpo()}</div>
 ${mot ? "" : `<div class="pm-teste"><span>🧪 Teste no escritório</span>${simSel}</div>`}</div></div>`;
+}
+
+/* ===== Aviso de chegada: motoboy a até 70 m de um ponto com foto pendente → aviso (sininho) para o admin =====
+   Só funciona com o app aberto na tela do celular (o navegador não acompanha a localização com a tela apagada). */
+const PM_CHEGA = 70; /* metros */
+let pmCheg = {};
+try {
+  pmCheg = JSON.parse(localStorage.getItem("pm_cheg") || "{}");
+} catch (_) {}
+async function pmChegou(onde) {
+  if (!eMoto() || !moto || PM.sim) return;
+  if (PM.acc && PM.acc > 80) return; /* GPS ainda impreciso: espera melhorar para não avisar errado */
+  const hj = dia();
+  Object.keys(pmCheg).forEach((k) => {
+    if (!k.startsWith(hj)) delete pmCheg[k];
+  });
+  const { com } = pmPontos(null),
+    perto = com.filter((g) => g.p.ll && pmDist(onde, g.p.ll) <= PM_CHEGA && !pmCheg[hj + "|" + g.p.id]);
+  for (const g of perto) {
+    const k = hj + "|" + g.p.id;
+    pmCheg[k] = Date.now();
+    try {
+      localStorage.setItem("pm_cheg", JSON.stringify(pmCheg));
+    } catch (_) {}
+    const cli = [...new Set(g.L.filter((t) => t.status === "pendente" || t.status === "refazer").map((t) => t.vt.cliente))];
+    try {
+      await sb("/rest/v1/avisos", {
+        method: "POST",
+        body: {
+          titulo: ("🛵 " + moto + " chegou em " + g.p.nome).slice(0, 120),
+          texto: ((cli.length ? "Fotos: " + cli.join(", ") : "") + (g.p.end ? " · " + g.p.end : "")).slice(0, 600),
+          destino: "admin",
+          abrir: "fp",
+          criado_por_nome: moto,
+        },
+      });
+    } catch (_) {}
+  }
 }

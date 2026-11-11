@@ -2205,3 +2205,47 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
 #login.hostload .hl-c{display:flex;flex-direction:column;align-items:center;gap:14px}
 #login.hostload .hl-s{width:34px;height:34px;border-radius:50%;border:3px solid #ffffff2e;border-top-color:#ff3d86;animation:hlg .8s linear infinite}
 @keyframes hlg{to{transform:rotate(360deg)}}
+/* acabamento: bordas mais suaves nas telas de vidro (fotos, perto de você, validadas) */
+.fpw{--borda:#ffffff29}
+.fp-pt2,.pm-card,.fv-dia,.fp-luz,.pm-hero,.pm-gps,.fp-dica,.fp-busca{box-shadow:var(--sombra),inset 0 1px 0 #ffffff14}
+.fp-pt2.urg{border-color:#ff3d6e66;box-shadow:0 0 0 1px #ff3d6e33,var(--sombra)}
+.pm-card::before{left:18px;right:18px;border-radius:0 0 3px 3px}
+/* motoboy: botões de navegação só com ícone */
+.fpw .pm-ic{flex:0 0 auto;width:54px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:14px;padding:7px 0 5px;text-decoration:none;color:#fff;border:1px solid var(--borda);background:#ffffff1a}
+.fpw .pm-ic svg{width:22px;height:22px}
+.fpw .pm-ic small{font-size:9.5px;font-weight:600;opacity:.75;letter-spacing:.02em}
+.fpw .pm-ic.maps svg{color:#7fd1ff}.fpw .pm-ic.waze svg{color:#9ef0c8}
+.fpw .pm-ic:active{transform:scale(.95)}
+.pm-bt{align-items:stretch}
+.fpw .pm-bt .pm-b.pri{flex:1}
+.fpw .pm-ic{width:56px;padding:0;background:#ffffffeb;border-color:#ffffff}
+.fpw .pm-ic img{display:block;width:30px;height:30px;object-fit:contain}
+.fpw .pm-ic.waze img{width:34px;height:34px;border-radius:9px}
+/* Campanhas para iniciar: abre os formatos ao passar o mouse (ou ao tocar) */
+.dv.xp .dvh{cursor:pointer}
+.dvx-seta{font-style:normal;color:#8a8fbf;font-size:13px;transition:transform .3s}
+.dv.xp .dvx{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease .12s}
+.dv.xp .dvx-in{overflow:hidden;min-height:0}
+.dv.xp.ab .dvx{grid-template-rows:1fr;transition-delay:0s}
+.dv.xp.ab .dvx-seta{transform:rotate(180deg)}
+@media (hover:hover) and (pointer:fine){
+  .dv.xp:hover .dvx{grid-template-rows:1fr}
+  .dv.xp:hover .dvx-seta{transform:rotate(180deg)}
+}
+.dvx-cab{margin:12px 0 8px;padding-top:10px;border-top:1px solid #eceef8;font-size:12px;font-weight:600;color:#5a5f94;text-transform:uppercase;letter-spacing:.04em}
+.dvx-cab span{text-transform:none;letter-spacing:0;font-weight:400;color:#9a9ec4;margin-left:6px}
+.vf{border-radius:12px;padding:9px 12px;margin-bottom:7px;background:#f6f7fc;border:1px solid #eceef8}
+.vf.sim{background:#effaf3;border-color:#c9eed8}
+.vf.nao{background:#fff1f4;border-color:#ffd0dc}
+.vf-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vf-h b{font-size:14px!important}
+.vf-n{min-width:0;display:flex;flex-direction:column}
+.vf-n small{color:#8a8fbf;font-size:12.5px}
+.vf-h small{color:#8a8fbf}
+.vf-h .sp{flex:1}
+.vf-st{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:999px;padding:5px 12px;cursor:pointer;background:#e6e8f6;color:#3a3f78;min-height:32px}
+.vf.sim .vf-st{background:#d6f3e2;color:#0d7a3f}
+.vf.nao .vf-st{background:#ffdbe5;color:#c2185b}
+.vf-pt{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.vf-pt span{font-size:12.5px;background:#fff;border:1px solid #e6e8f4;border-radius:8px;padding:3px 8px;color:#3a3f78}
+body.dark .dvx-cab{border-color:#ffffff1f}

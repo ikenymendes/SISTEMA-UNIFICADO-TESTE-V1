@@ -190,29 +190,30 @@ function plAlert() {
     localStorage.setItem("mvt_pl_al", JSON.stringify(PLAL));
   } catch (_) {}
   if (!novos.length) return;
-  const old = document.getElementById("plpop");
-  if (old) old.remove();
-  const el = document.createElement("div");
-  el.id = "plpop";
-  el.setAttribute("role", "alertdialog");
-  el.style.cssText =
-    "position:fixed;inset:0;z-index:99999;background:rgba(15,18,60,.55);display:flex;align-items:center;justify-content:center;padding:16px";
-  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:440px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #e5484d"><div style="font-size:20px;font-weight:800;color:#c62828">🚨 Player fora do ar há mais de 2 horas</div><div style="margin:12px 0;max-height:46vh;overflow:auto">${novos
-    .sort((a, b) => b.minutos - a.minutos)
-    .map(
-      (p) =>
-        `<div style="padding:8px 0;border-bottom:1px solid #eee"><b>${e(p.nome)}</b><div style="font-size:13px;color:#555">${e(plFmt(p.minutos))}${(PL.d.contas || []).length > 1 && p.conta ? " · " + e(plCn(p.conta)) : ""}</div></div>`,
-    )
-    .join(
-      "",
-    )}</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="plpx">Fechar</button><button class="btn pri" id="plpv">Ver players</button></div></div>`;
-  document.body.appendChild(el);
-  el.querySelector("#plpx").onclick = () => el.remove();
-  el.querySelector("#plpv").onclick = () => {
-    el.remove();
-    view = "pl";
-    render();
-  };
+  /* sem janela na tela: a verificação é rotineira e manual. Vai só um aviso (sininho) para o próprio admin. */
+  plAvisar(novos);
+}
+async function plAvisar(novos) {
+  const uid = SES && SES.uid;
+  if (!uid) return;
+  const L = novos.sort((a, b) => b.minutos - a.minutos),
+    nomes = L.slice(0, 6).map((p) => p.nome + " (" + plFmt(p.minutos) + ")"),
+    titulo = L.length === 1 ? "Player fora do ar: " + L[0].nome : L.length + " players fora do ar há mais de 2 h";
+  try {
+    await sb("/rest/v1/avisos", {
+      method: "POST",
+      body: {
+        titulo: titulo.slice(0, 120),
+        texto: nomes.join(" · ") + (L.length > 6 ? " · +" + (L.length - 6) : ""),
+        destino: "usuario",
+        destino_id: uid,
+        abrir: "pl",
+        criado_por_nome: "Verificação de players",
+      },
+    });
+  } catch (_) {
+    /* sem internet: na próxima verificação ele tenta de novo só se o player continuar fora */
+  }
 }
 async function plLoad() {
   if (!CLD || ROLE !== "admin" || PL.busy) return;

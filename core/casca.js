@@ -461,7 +461,7 @@ var MEGA = (function () {
     document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fecharFolha(); });
     var topoM = h('div', { class: 'topo-m' }, [h('img', { src: 'core/assets/logoW.png', alt: 'Mega', onclick: function () { abrir('inicio'); } }), menuM]);
 
-    adm.appendChild(h('div', { class: 'fundo' }));
+    adm.appendChild(h('div', { class: 'fundo' }, [h('i', { class: 'rosa r1' }), h('i', { class: 'rosa r2' }), h('i', { class: 'rosa r3' })]));
     adm.appendChild(trilho); adm.appendChild(topoM); adm.appendChild(folha);
     adm.appendChild(h('div', { class: 'palco', id: 'palco' }));
     app.appendChild(adm);

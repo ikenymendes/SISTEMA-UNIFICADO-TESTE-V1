@@ -33,6 +33,7 @@ const MP_PONTO = {
     chkd: "checking_data",
     chka: "checking_automatico",
     vok: "vt_correto",
+    vokp: "vt_por_endereco",
     fat: "faturado",
     nfat: "nao_faturavel",
     fdt: "faturamento_data",

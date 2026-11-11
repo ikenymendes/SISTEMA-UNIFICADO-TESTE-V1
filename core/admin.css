@@ -366,3 +366,29 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
   .adm-cab.v2 .adm-btn { min-width: 0; padding-left: 8px; padding-right: 8px; justify-content: center; }
   .adm-cab.v2 .adm-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ===== acabamento: bordas mais suaves e nada "vazando" para fora dos cartões ===== */
+.adm:not(.tema-branco) { --borda: #ffffff26; }
+.adm-cab, .adm-cab.v2 { overflow: hidden; }
+.adm-cab::before { left: 28px; right: 28px; height: 2px; border-radius: 0 0 2px 2px; opacity: .55; }
+.adm-cab::after { right: -40px; top: -60px; opacity: .7; }
+.adm-cab, .adm-at, .adm-ad, .tl-box, .adm .trilho { box-shadow: var(--sombra), inset 0 1px 0 #ffffff14; }
+.adm-at { border-width: 1px; }
+.adm-at.r { border-color: #ff3d6e66; } .adm-at.y { border-color: #ffc2474d; }
+.adm-cab.v2 .tl-box { border-color: #ffffff1f; }
+.ad-bt, .adm-btn.vidro { border-color: #ffffff2b; }
+.adm-sec::after { background: linear-gradient(90deg, #ffffff26, transparent); }
+.adm-cab::after { display: none; }
+
+/* ---------- rosa se movendo bem devagar atrás de tudo (não pega clique, não passa na frente) ---------- */
+.adm .fundo { overflow: hidden; }
+.adm .fundo .rosa { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
+  background: radial-gradient(circle, var(--rosa, #ff006673) 0%, transparent 68%); }
+.adm .fundo .r1 { width: 62vmax; height: 62vmax; left: 4vw; top: -18vmax; animation: rosaA 46s ease-in-out infinite alternate; }
+.adm .fundo .r2 { width: 48vmax; height: 48vmax; right: -10vw; top: 30vh; --rosa: #ff3d8659; animation: rosaB 58s ease-in-out infinite alternate; }
+.adm .fundo .r3 { width: 40vmax; height: 40vmax; left: 30vw; bottom: -22vmax; --rosa: #c026d347; animation: rosaC 64s ease-in-out infinite alternate; }
+.adm.tema-branco .fundo .r1 { --rosa: #ff006624; } .adm.tema-branco .fundo .r2 { --rosa: #ff3d861f; } .adm.tema-branco .fundo .r3 { --rosa: #c026d31a; }
+@keyframes rosaA { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(28vw, 14vh) scale(1.12); } 66% { transform: translate(10vw, 38vh) scale(.94); } 100% { transform: translate(40vw, 6vh) scale(1.06); } }
+@keyframes rosaB { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-34vw, -22vh) scale(1.15); } 100% { transform: translate(-12vw, 18vh) scale(.92); } }
+@keyframes rosaC { 0% { transform: translate(0, 0); } 50% { transform: translate(-22vw, -30vh) scale(1.1); } 100% { transform: translate(18vw, -12vh) scale(.95); } }
+@media (max-width: 700px) { .adm .fundo .r3 { display: none; } }

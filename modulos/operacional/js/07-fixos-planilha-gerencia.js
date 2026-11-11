@@ -645,7 +645,7 @@ function dashboard() {
     iniciar
       .map((v) => {
         const d = dias(v.ini);
-        return `<div class="dv bl"><div class="dvh"><b>${e(v.cliente)}</b>${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}<span class="mu">inicia em ${e(fmt(v.ini))} · ${vIds(v).length} painéis</span><span class="pill ${d <= 2 ? "a" : "b"}">${d === 1 ? "amanhã" : "em " + d + " dias"}</span>${vokBadge(v)}</div></div>`;
+        return `<div class="dv bl xp${S.col["dx|" + v.id] ? " ab" : ""}"><div class="dvh" data-a="dvx" data-v="${v.id}"><b>${e(v.cliente)}</b>${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}<span class="mu">inicia em ${e(fmt(v.ini))} · ${vIds(v).length} painéis</span><span class="pill ${d <= 2 ? "a" : "b"}">${d === 1 ? "amanhã" : "em " + d + " dias"}</span>${vokBadge(v)}${vfResumo(v)}<span class="sp"></span><i class="dvx-seta" aria-hidden="true">▾</i></div>${vfPainel(v)}</div>`;
       })
       .join("") || '<div class="dvz">Nenhuma campanha agendada para começar.</div>';
   // vt pendente
@@ -679,3 +679,24 @@ function dashboard() {
 }
 const foot = () =>
   `<div class="card mu" style="margin-top:14px">${CLD ? "Dados salvos na nuvem (Supabase) e" : "Dados salvos"} neste navegador${mem ? " — <b>armazenamento bloqueado: nada está sendo salvo</b>" : ""}${BK.st === "on" ? " e sincronizados pela pasta do backup" : ""}. Backup, sincronização e planilha ficam em Admin.</div>`;
+
+/* ===== VT por endereço (Campanhas para iniciar): ao passar o mouse (ou tocar) abre os endereços da campanha,
+   cada um com "o vídeo está correto?" ===== */
+const vpSt = (v, id) => (v.vokp && v.vokp[id]) || (v.vok === "sim" ? "sim" : "");
+function vfResumo(v) {
+  const L = vIds(v);
+  if (L.length < 2) return "";
+  const ok = L.filter((i) => vpSt(v, i) === "sim").length,
+    aj = L.filter((i) => vpSt(v, i) === "nao").length;
+  return `<span class="pill ${ok === L.length ? "g" : aj ? "p" : "b"}">${ok}/${L.length} endereços ok${aj ? ` · ${aj} a ajustar` : ""}</span>`;
+}
+function vfPainel(v) {
+  const L = vIds(v);
+  if (!L.length) return "";
+  const TX = { sim: "✔ Vídeo correto", nao: "⚠ A ajustar", "": "Não verificado" };
+  return `<div class="dvx"><div class="dvx-in"><div class="dvx-cab">Endereços desta campanha <span>toque no status para mudar</span></div>${L.map((i) => {
+    const p = PMf(i),
+      st = vpSt(v, i);
+    return `<div class="vf ${st || "nv"}"><div class="vf-h"><div class="vf-n"><b>${e(p.nome)}</b><small>${e(p.end || "")}</small></div><span class="sp"></span><button type="button" class="vf-st" data-a="vokp" data-v="${v.id}|${e(i)}" title="Alternar: não verificado → correto → a ajustar">${TX[st]}</button></div></div>`;
+  }).join("")}</div></div>`;
+}
