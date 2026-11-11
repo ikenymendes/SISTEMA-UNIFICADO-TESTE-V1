@@ -136,7 +136,7 @@ function mtec() {
       9,
     );
     if (pts.length)
-      h += `<div class="mtbar"><a class="chip" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/${pts.map((p) => encodeURIComponent(qs(p))).join("/")}">🧭 Montar rota no Google Maps (${pts.length} ponto${pts.length > 1 ? "s" : ""})</a><span class="chip" data-a="mwcopy">📋 Copiar lista</span></div><textarea id="mwtxt" style="display:none">${e(mMsg("all"))}</textarea>`;
+      h += `<div class="mtbar"><a class="chip" style="text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/${pts.map((p) => encodeURIComponent(endQ(p))).join("/")}">🧭 Montar rota no Google Maps (${pts.length} ponto${pts.length > 1 ? "s" : ""})</a><span class="chip" data-a="mwcopy">📋 Copiar lista</span></div><textarea id="mwtxt" style="display:none">${e(mMsg("all"))}</textarea>`;
     const groups =
       mtG === "prio"
         ? (() => {

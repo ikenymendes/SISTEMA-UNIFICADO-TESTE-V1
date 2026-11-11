@@ -45,6 +45,10 @@ const ADMIN_ONLY = new Set([
   "x_ph",
   "base",
   "cpushall",
+  "ccrun",
+  "ccset",
+  "ccfix",
+  "ccok",
 ]);
 const emptyS = () => ({
   fixos: [],

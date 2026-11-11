@@ -2114,3 +2114,16 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
 .fpw .fp-pr button{border:1px solid var(--borda);background:#ffffff1a;color:#fff;border-radius:11px;padding:8px 12px;font:700 12.5px Poppins,sans-serif;cursor:pointer;box-shadow:none}
 .fpw .fp-pr button.ok{background:#5ee6a82e;border-color:#5ee6a880;color:#c9f8e2}
 .fp-pb{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:#ffd590;background:#ffb54729;border-radius:99px;padding:2px 8px}
+
+/* conferir coordenadas dos pontos */
+.card.cc{border:1px solid #c9c7f0;background:linear-gradient(180deg,#f7f6ff,#fff)}
+.cc-prog{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
+.cc-prog small{display:block;color:var(--mu,#667);font-size:12px}
+.cc-prog i{display:block;height:6px;border-radius:6px;background:linear-gradient(90deg,#ff0066 var(--p),#e6e4f5 var(--p))}
+.cc-lista{display:flex;flex-direction:column;gap:8px}
+.cc-it{border:1px solid #e3e1f3;border-left:4px solid #ff0066;border-radius:12px;padding:10px 12px;background:#fff}
+.cc-it.sem{border-left-color:#ffb547}.cc-it.nao{border-left-color:#9aa0c0}
+.cc-tx>b{display:block}.cc-tx small{display:block;color:#667;font-size:12px}.cc-tx span{display:block;margin:4px 0 2px;font-size:13px}
+.cc-bt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cc-bt a.b{display:inline-flex;align-items:center;text-decoration:none;border:1px solid #d9d7ee;border-radius:9px;padding:5px 10px;color:#22226a;font-size:12.5px;background:#fff}
+.cc-cola{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.cc-cola input{flex:1 1 240px}

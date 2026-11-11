@@ -28,8 +28,8 @@ function admin() {
   }
   const h = `<div class="tabs">${subs.map(([k, n]) => `<button class="sm ${adm === k ? "on" : ""}" data-a="sub" data-v="${k}">${n}</button>`).join("")}</div>`;
   if (adm === "u" && CLD && ROLE === "admin") return h + usuarios();
-  if (adm === "f") return h + pontos("fixos");
-  if (adm === "v") return h + pontos("vars");
+  if (adm === "f") return h + ccCard() + pontos("fixos");
+  if (adm === "v") return h + ccCard() + pontos("vars");
   if (adm === "s") return h + adminVT();
   if (adm === "n") return h + adminM();
   if (adm === "c")

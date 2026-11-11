@@ -145,10 +145,15 @@ function divide(ps, k) {
     h = Math.ceil(s.length / 2);
   return [s.slice(0, h), s.slice(h)];
 }
+/* endereço para o Google Maps/Waze: só o endereço escrito (o nome do ponto confunde a busca) + estado */
+const endQ = (p) => {
+  const t = String(p.end || p.nome || "").trim();
+  return /\b(MG|Minas|Belo Horizonte|BH|Contagem|Betim|Nova Lima|Sabar[áa]|Santa Luzia|Ribeir[ãa]o das Neves|Vespasiano|Lagoa Santa)\b/i.test(t) ? t : t + ", MG";
+};
 const qs = (p) => [p.nome, p.end].filter(Boolean).join(", "),
   enc = encodeURIComponent;
 function links(stops) {
-  const L = (S.base.end ? [S.base.end] : []).concat(stops.map(qs)),
+  const L = (S.base.end ? [S.base.end] : []).concat(stops.map(endQ)),
     o = [],
     u = "https://www.google.com/maps/dir/?api=1&travelmode=driving";
   if (L.length === 1) return [u + "&destination=" + enc(L[0])];
@@ -220,7 +225,7 @@ function setF(k, d) {
   }
   save();
 }
-const mapa = (p) => "https://www.google.com/maps/search/?api=1&query=" + enc(qs(p));
+const mapa = (p) => "https://www.google.com/maps/search/?api=1&query=" + enc(endQ(p));
 const chips = (sel, a, ra) =>
   regs()
     .map((r) => {

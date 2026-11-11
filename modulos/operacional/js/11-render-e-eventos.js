@@ -334,6 +334,37 @@ document.addEventListener("click", async (ev) => {
       '<div class="warn">Só o administrador pode alterar ou apagar pontos e configurações.</div>';
     return;
   }
+  if (a === "ccrun") {
+    ccRodar();
+    return;
+  }
+  if (a === "cccola") {
+    CC.cola = v || null;
+    ccPinta();
+    const i = $("ccll");
+    if (i) i.focus();
+    return;
+  }
+  if (a === "ccset" || a === "ccfix" || a === "ccok") {
+    const p = ccPts().find((x) => x.id === v),
+      r = CC.res[v];
+    if (!p) return;
+    if (a === "ccset") {
+      const ll = ccParse(($("ccll") || {}).value);
+      if (!ll) {
+        $("warn").innerHTML = '<div class="warn">Não achei coordenadas nesse texto. Cole o link do Google Maps do lugar (com o alfinete) ou algo como -19.93, -43.98.</div>';
+        return;
+      }
+      p.ll = ll;
+    } else if (a === "ccfix" && r && r.g && r.g.ll) p.ll = r.g.ll;
+    p.llOk = p.ll ? p.ll.join(",") : "";
+    delete CC.res[v];
+    CC.cola = null;
+    $("warn").innerHTML = "";
+    save();
+    render();
+    return;
+  }
   if (a === "pmmodo") {
     PM.modo = v;
     try {
@@ -986,7 +1017,7 @@ document.addEventListener("click", async (ev) => {
         nome: n,
         end: $("ae").value.trim(),
         reg: $("ar").value.trim() || "Outros",
-        ll: parseLL($("al").value),
+        ll: ccParse($("al").value),
         tp: ($("at") ? $("at").value : "").trim(),
         fm: ($("af") ? $("af").value : "").trim(),
         pl: ($("apl") ? $("apl").value : "").trim(),
