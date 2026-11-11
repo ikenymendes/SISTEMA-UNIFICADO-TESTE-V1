@@ -38,7 +38,7 @@ const ckPronto = (v) =>
   !!(v.paineis && v.paineis.length) && v.paineis.every((i) => ckSt(v, i) === "validada");
 /* alerta: campanha no ar há 3 dias ou mais e o checking ainda não foi feito */
 const ckAtr = (v) => !v.chk && !!v.ini && fpDiasNoAr(v) >= 3;
-const ckLista = () => S.vts.filter((v) => !v.chk && ckPronto(v));
+const ckLista = () => S.vts.filter((v) => (!v.chk || v.ckPend) && ckPronto(v));
 function ckPayload(x) {
   const tr = ck.troca && ck.id === x.id ? ck.troca : null;
   return {
@@ -55,7 +55,7 @@ function ckPayload(x) {
     tp: x.tp || "",
     fm: x.fm || "",
     obs: tr
-      ? "Novo checking por troca de vídeo" + (tr.ini ? " — novo vídeo em veiculação a partir de " + fmt(tr.ini) : "") + "."
+      ? "Checking reaberto" + (tr.mot ? " — motivo: " + tr.mot : "") + (tr.ini ? " — novo vídeo em veiculação a partir de " + fmt(tr.ini) : "") + "."
       : "",
     paineis: (x.paineis || []).flatMap((i) => {
       const p = PMf(i);
@@ -140,7 +140,8 @@ addEventListener("message", (ev) => {
     if (x && ck.troca) {
       x.rck = x.rck || [];
       if (!x.rck.some((r) => r.n === ck.troca.n)) {
-        x.rck.push({ n: ck.troca.n, d: dia(), ini: ck.troca.ini || "", nome: ck.troca.nome || "" });
+        x.rck.push({ n: ck.troca.n, d: dia(), ini: ck.troca.ini || "", nome: ck.troca.nome || "", mot: ck.troca.mot || "" });
+        if (x.ckPend && x.ckPend.n === ck.troca.n) delete x.ckPend;
         save();
         if (view === "k" || view === "c") render();
       }
@@ -168,13 +169,13 @@ function ckview() {
       ckDrop();
       return ckview();
     }
-    return `<div class="card"><div class="row"><div><b>${ck.troca ? "Novo checking (troca de vídeo)" : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
+    return `<div class="card"><div class="row"><div><b>${ck.troca ? "Checking reaberto" + (ck.troca.mot ? " (" + e(ck.troca.mot) + ")" : "") : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
   }
   const L = ckLista().sort((a, b) => (a.ini || "9").localeCompare(b.ini || "9")),
     W = S.vts.filter(
       (v) =>
-        (!v.chk && !ckPronto(v) && (v.paineis || []).length && !isConc(v)) ||
-        (!v.chk && !ckPronto(v) && isConc(v) && (v.paineis || []).length),
+        ((!v.chk || v.ckPend) && !ckPronto(v) && (v.paineis || []).length && !isConc(v)) ||
+        ((!v.chk || v.ckPend) && !ckPronto(v) && isConc(v) && (v.paineis || []).length),
     );
   let h = `<div class="card"><b>${L.length}</b> <span class="mu">VT(s) com todas as fotos validadas, prontos para checking. Escolha um, arraste as fotos nos endereços e gere o PowerPoint/PDF. As fotos não ficam guardadas.</span></div>`;
   if (ck.id && !ck.show) {
@@ -185,7 +186,7 @@ function ckview() {
   h +=
     L.map(
       (v) =>
-        `<div class="card${ckAtr(v) ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> ${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""} <span class="mu">${e(fmt(v.ini) || "")} → ${e(fmt(v.fim) || "")} · ${(v.paineis || []).length} painéis · todos validados</span>${ckAtr(v) ? `<div class="ck-alerta">⚠ Checking atrasado · campanha no ar há ${fpDiasNoAr(v)} dias</div>` : ""}</div>${ckAbtn(v)}<button class="sm pri" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`,
+        `<div class="card${ckAtr(v) ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> ${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}${v.ckPend ? ` <span class="b s-pendente">↺ reaberto · ${e(v.ckPend.mot)}</span>` : ""} <span class="mu">${e(fmt(v.ini) || "")} → ${e(fmt(v.fim) || "")} · ${(v.paineis || []).length} painéis · todos validados</span>${ckAtr(v) ? `<div class="ck-alerta">⚠ Checking atrasado · campanha no ar há ${fpDiasNoAr(v)} dias</div>` : ""}</div>${ckAbtn(v)}<button class="sm pri" data-a="${v.ckPend ? "ckpend" : "ckopen"}" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`,
     ).join("") ||
     '<div class="card mu">Nenhum VT pronto ainda. Quando todas as fotos de um VT forem validadas na Gestão, ele aparece aqui automaticamente.</div>';
   const pend = W.filter((v) => (v.paineis || []).some((i) => ckSt(v, i) === "validada")).sort((a, b) =>
@@ -198,13 +199,17 @@ function ckview() {
         .map((v) => {
           const n = v.paineis.filter((i) => ckSt(v, i) === "validada").length;
           const at = ckAtr(v);
-          return `<div class="card${at ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> <span class="mu">${n}/${v.paineis.length} fotos validadas</span>${at ? `<div class="ck-alerta">⚠ Campanha no ar há ${fpDiasNoAr(v)} dias e ${v.paineis.length - n} foto(s) ainda não feitas ou verificadas</div>` : ""}</div>${ckAbtn(v)}<button class="sm" data-a="ckopen" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking mesmo assim</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`;
+          return `<div class="card${at ? " ck-atr" : ""}"><div class="row"><div><b>${e(v.cliente)}</b> <span class="mu">${n}/${v.paineis.length} fotos validadas</span>${at ? `<div class="ck-alerta">⚠ Campanha no ar há ${fpDiasNoAr(v)} dias e ${v.paineis.length - n} foto(s) ainda não feitas ou verificadas</div>` : ""}</div>${ckAbtn(v)}<button class="sm" data-a="${v.ckPend ? "ckpend" : "ckopen"}" data-v="${v.id}" style="flex:0 0 auto;margin-left:auto">Fazer checking mesmo assim</button></div>${ckA.has(v.id) ? ckAdr(v) : ""}</div>`;
         })
         .join("");
   return h;
 }
 
-/* ===== Novo checking por troca de vídeo (mesmos dados do VT; não altera checking original nem faturamento) ===== */
+/* ===== Reabrir checking (ex.: VT novo) =====
+   Pede o motivo, manda TODAS as fotos do VT de volta para os motoboys (com o motivo) e,
+   quando forem validadas, o VT aparece de novo em Checking para gerar o checking novo.
+   O checking original e o faturamento continuam como estão. */
+const CK_MOTIVOS = ["VT novo", "Troca de vídeo", "Foto com problema", "Pedido do cliente"];
 function ckTroca(id) {
   const x = S.vts.find((q) => q.id === id);
   if (!x) return;
@@ -218,21 +223,60 @@ function ckTroca(id) {
   const el = document.createElement("div");
   el.id = "cktr";
   el.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,18,60,.55);display:flex;align-items:center;justify-content:center;padding:16px";
-  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #ff0066">
-    <div style="font-size:18px;font-weight:700;color:#000066;margin-bottom:4px">🎬 Novo checking — troca de vídeo</div>
-    <div class="mu" style="margin-bottom:12px">${e(x.cliente)}${x.pi ? " · PI " + e(x.pi) : ""} · usa os mesmos dados e endereços. O checking original e o faturamento continuam como estão.</div>
-    <div class="mu">Nome do novo vídeo / peça (aparece como “Campanha”)</div>
+  el.innerHTML = `<div style="background:#fff;border-radius:18px;max-width:500px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:6px solid #ff0066">
+    <div style="font-size:18px;font-weight:700;color:#000066;margin-bottom:4px">↺ Reabrir checking</div>
+    <div class="mu" style="margin-bottom:12px">${e(x.cliente)}${x.pi ? " · PI " + e(x.pi) : ""} · as ${(x.paineis || []).length} fotos voltam para os motoboys com o motivo. O checking original e o faturamento continuam como estão.</div>
+    <div class="mu"><b>Motivo</b> (obrigatório)</div>
+    <div class="chips" id="cktrm" style="margin:6px 0">${CK_MOTIVOS.map((m) => `<span class="chip" data-m="${e(m)}">${e(m)}</span>`).join("")}</div>
+    <input id="cktrmo" placeholder="Ou escreva o motivo" style="width:100%;box-sizing:border-box;margin-bottom:10px">
+    <div class="mu">Nome do novo vídeo / peça (opcional · aparece como “Campanha”)</div>
     <input id="cktrn" placeholder="Ex.: Black Friday — VT 2" style="width:100%;box-sizing:border-box;margin-bottom:10px">
     <div class="mu">Novo vídeo em veiculação a partir de</div>
     <input id="cktri" type="date" value="${ini}" ${x.ini ? `min="${x.ini}"` : ""} ${x.fim ? `max="${x.fim}"` : ""} style="width:100%;box-sizing:border-box">
-    <div class="row" style="margin-top:14px"><button class="pri" id="cktrok" style="flex:1">Abrir checking</button><button id="cktrx" style="flex:0 0 auto">Cancelar</button></div></div>`;
+    <div id="cktrer" style="color:#c2185b;font-size:13px;margin-top:8px" hidden>Escolha ou escreva o motivo.</div>
+    <div class="row" style="margin-top:14px"><button class="pri" id="cktrok" style="flex:1">Reabrir e pedir fotos novas</button><button id="cktrx" style="flex:0 0 auto">Cancelar</button></div></div>`;
   document.body.appendChild(el);
+  const mo = el.querySelector("#cktrmo");
+  el.querySelectorAll("#cktrm .chip").forEach((c) =>
+    (c.onclick = () => {
+      el.querySelectorAll("#cktrm .chip").forEach((o) => o.classList.toggle("sel", o === c));
+      mo.value = c.dataset.m;
+    }),
+  );
+  mo.oninput = () => el.querySelectorAll("#cktrm .chip").forEach((o) => o.classList.toggle("sel", o.dataset.m === mo.value.trim()));
   el.querySelector("#cktrx").onclick = () => el.remove();
   el.onclick = (ev) => { if (ev.target === el) el.remove(); };
   el.querySelector("#cktrok").onclick = () => {
-    const nome = el.querySelector("#cktrn").value.trim(), di = el.querySelector("#cktri").value;
+    const mot = mo.value.trim(),
+      nome = el.querySelector("#cktrn").value.trim(),
+      di = el.querySelector("#cktri").value;
+    if (!mot) {
+      el.querySelector("#cktrer").hidden = false;
+      mo.focus();
+      return;
+    }
     el.remove();
-    ckOpen(id, { n, ini: di, nome });
+    ckReabrir(x, { n, ini: di, nome, mot });
   };
-  setTimeout(() => { const i = el.querySelector("#cktrn"); if (i) i.focus(); }, 50);
+  setTimeout(() => mo.focus(), 50);
+}
+function ckReabrir(x, r) {
+  x.ckPend = { n: r.n, ini: r.ini || "", nome: r.nome || "", mot: r.mot, d: dia() };
+  x.man = false;
+  x.conc = 0;
+  (x.paineis || []).forEach((i) => {
+    const k = x.id + "__" + i;
+    S.fotos[k] = { ...(S.fotos[k] || {}), status: "refazer", nota: "Checking reaberto: " + r.mot, by: "", moto: "", prob: null, ts: Date.now() };
+  });
+  x.aberto = false;
+  save();
+  $("warn").innerHTML =
+    '<div class="warn" style="background:#e7f8ef;border-color:#9fe0bd;color:#0d5a34">✓ Checking de ' +
+    e(x.cliente) +
+    " reaberto (" +
+    e(r.mot) +
+    "). As " +
+    (x.paineis || []).length +
+    " fotos foram pedidas de novo aos motoboys. Quando forem validadas, o VT aparece em Checking.</div>";
+  render();
 }

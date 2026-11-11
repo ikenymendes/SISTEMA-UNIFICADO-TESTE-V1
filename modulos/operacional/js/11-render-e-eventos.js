@@ -1154,6 +1154,11 @@ document.addEventListener("click", async (ev) => {
     return;
   } else if (a === "cknovo") {
     ckTroca(v);
+  } else if (a === "ckpend") {
+    const x = S.vts.find((q) => q.id === v);
+    ckA.add(v);
+    if (x && x.ckPend) ckOpen(v, { ...x.ckPend });
+    else ckOpen(v);
   } else if (a === "ckopen") {
     ckA.add(v);
     ckOpen(v);
