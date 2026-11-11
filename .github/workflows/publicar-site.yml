@@ -34,7 +34,9 @@ jobs:
           mkdir -p _site
           rsync -a ./ _site/ \
             --exclude='.git' --exclude='.github' --exclude='_site' \
-            --exclude='Claude outputs' --exclude='*.zip'
+            --exclude='Claude outputs' --exclude='*.zip' \
+            --exclude='docs' --exclude='supabase' --exclude='teste' \
+            --exclude='*.md' --exclude='*.txt' --exclude='*.sql' --exclude='*.bat' --exclude='*.sh' --exclude='*.mjs'
           touch _site/.nojekyll
           du -sh _site
 

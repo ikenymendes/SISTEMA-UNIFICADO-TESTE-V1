@@ -26,7 +26,7 @@ function pmDist(a, b) {
     s = Math.sin(dLa / 2) ** 2 + Math.cos(pmRad(a[0])) * Math.cos(pmRad(b[0])) * Math.sin(dLo / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
-const pmKm = (m) => (m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km");
+const pmKm = (m) => (m < 1000 ? (m < 10 ? Math.round(m) : Math.round(m / 10) * 10) + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km");
 const pmMin = (m) => Math.max(1, Math.round(m / 1000 / 0.35)); /* reserva: moto na cidade ~21 km/h, em linha reta */
 /* distância e tempo PELAS RUAS (OSRM, sem chave): uma consulta para todos os pontos; refaz ao andar 300 m ou a cada 3 min */
 PM.rota = null;
@@ -200,7 +200,7 @@ function pmCorpo() {
   else if (PM.pos && PM.acc > 200)
     gps = `<span class="pm-pu wait"></span><span><b>Localização aproximada (±${pmKm(PM.acc)})</b> · as distâncias podem estar erradas. Ligue o GPS / “localização precisa” do celular.</span>`;
   else if (PM.pos)
-    gps = `<span class="pm-pu"></span><span>GPS ativo${PM.acc ? " · precisão ±" + pmKm(PM.acc) : ""} · ${PM.rota && pmDist(PM.rota.de, PM.pos) < 300 ? "distância pelas ruas" : "distância em linha reta"}</span>`;
+    gps = `<span class="pm-pu"></span><span>GPS ativo${PM.acc ? " · precisão ±" + pmKm(Math.max(5, Math.round(PM.acc))).replace(/^0 m$/, "5 m") : ""} · ${PM.rota && pmDist(PM.rota.de, PM.pos) < 300 ? "distância pelas ruas" : "distância em linha reta"}</span>`;
   else if (PM.err) gps = `<span class="pm-pu off"></span><span>${e(PM.err)}</span>`;
   else gps = `<span class="pm-pu wait"></span><span>Procurando a sua localização…</span>`;
   let h = pmHero() + `<div class="pm-gps">${gps}</div>`;
