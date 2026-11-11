@@ -88,7 +88,7 @@ var MEGA = (function () {
     clearInterval(vigia);
     aviso('Saindo…');
     /* não deixa o "Sair" travar se o servidor demorar: espera no máximo 1,5 s e limpa o login deste navegador */
-    try { await Promise.race([client.auth.signOut(), new Promise(function (r) { setTimeout(r, 1500); })]); } catch (e) {}
+    try { await Promise.race([client.auth.signOut({ scope: 'local' }), new Promise(function (r) { setTimeout(r, 1500); })]); } catch (e) {}
     try { sessionStorage.removeItem('mega_bv'); } catch (e) {}
     try { Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
     try { sessionStorage.removeItem('mk_bv'); } catch (e) {}

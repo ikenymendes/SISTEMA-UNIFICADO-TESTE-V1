@@ -22,7 +22,7 @@ var Store = (function(){
   async function sessao(){ var r=await sb.auth.getSession(); return r.data&&r.data.session||null; }
   async function entrar(email,senha){ return must(await sb.auth.signInWithPassword({email:email,password:senha})); }
   async function cadastrar(email,senha,nome){ return must(await sb.auth.signUp({email:email,password:senha,options:{data:{nome:nome||''}}})); }
-  async function sair(){ await sb.auth.signOut(); }
+  async function sair(){ await sb.auth.signOut({ scope: 'local' }); }
   async function meuPerfil(){ var s=await sessao(); if(!s) return null; var r=await sb.from('profiles').select('*').eq('id',s.user.id).maybeSingle(); return must(r); }
 
   /* ---------- kit: configuração e pontos ---------- */
