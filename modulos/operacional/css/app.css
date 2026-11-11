@@ -2249,3 +2249,7 @@ body.rmoto .fpw{border-radius:0;min-height:100vh;min-height:100dvh;margin:0;box-
 .vf-pt{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .vf-pt span{font-size:12.5px;background:#fff;border:1px solid #e6e8f4;border-radius:8px;padding:3px 8px;color:#3a3f78}
 body.dark .dvx-cab{border-color:#ffffff1f}
+
+/* quantidade de VTs do cliente (motoboy e fotos por ponto) */
+.vt-q{font-style:normal;display:inline-block;vertical-align:middle;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:4px;background:#eef0fb;color:#3a3f78;white-space:nowrap}
+.vt-q.m{background:#ff0066;color:#fff}

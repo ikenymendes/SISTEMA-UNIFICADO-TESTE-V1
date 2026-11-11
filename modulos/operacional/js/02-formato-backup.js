@@ -26,6 +26,7 @@ const MP_PONTO = {
     ev: "evento",
     fif: "fotos_inicio_fim",
     nf: "fotos_por_endereco",
+    nvt: "quantidade_de_vts",
     man: "conclusao_manual",
     conc: "concluido_em",
     aberto: "reaberto",

@@ -153,6 +153,11 @@ function pmResumo() {
 /* navegação: coordenada exata do Google; se o ponto só tiver coordenada aproximada, vai pelo endereço */
 const pmIr = (p) => "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + encodeURIComponent(endQ(p));
 const pmWaze = (p) => (llExato(p) ? "https://waze.com/ul?ll=" + p.ll.join(",") + "&navigate=yes" : "https://waze.com/ul?navigate=yes&q=" + encodeURIComponent(endQ(p)));
+/* quantos VTs (vídeos) o cliente tem: o motoboy confere se todos aparecem na tela */
+const vtQtd = (v) => {
+  const n = Math.max(1, +v.nvt || 1);
+  return `<i class="vt-q${n > 1 ? " m" : ""}" title="Este cliente tem ${n} ${n === 1 ? "vídeo" : "vídeos"} rodando">🎬 ${n} ${n === 1 ? "VT" : "VTs"}</i>`;
+};
 function pmCli(t) {
   const f = S.fotos[t.key] || {},
     dn = fpDiasNoAr(t.vt),
@@ -164,7 +169,7 @@ function pmCli(t) {
   const sub = [camp ? e(camp) : "", t.status === "refazer" && t.nota ? "refazer: " + e(t.nota) : t.status === "refazer" ? "refazer" : "", dn >= 3 ? `<i class="pm-atr">⚠ ${dn} dias no ar</i>` : ""]
     .filter(Boolean)
     .join(" · ");
-  return `<div class="pm-cl"><span><b>${e(t.vt.cliente)}</b>${sub ? `<small>${sub}</small>` : ""}</span><div class="pm-mb"><button type="button" class="ok" data-a="pmfez1" data-v="${t.key}">✓ Fiz</button><button type="button" class="pr" data-a="pmprob" data-v="${t.key}" title="Tenho um problema" aria-label="Tenho um problema">⚠</button></div></div>`;
+  return `<div class="pm-cl"><span><b>${e(t.vt.cliente)} ${vtQtd(t.vt)}</b>${sub ? `<small>${sub}</small>` : ""}</span><div class="pm-mb"><button type="button" class="ok" data-a="pmfez1" data-v="${t.key}">✓ Fiz</button><button type="button" class="pr" data-a="pmprob" data-v="${t.key}" title="Tenho um problema" aria-label="Tenho um problema">⚠</button></div></div>`;
 }
 const pmPend = (g) => g.L.filter((t) => (t.status === "pendente" || t.status === "refazer") && !(S.fotos[t.key] || {}).prob).length;
 /* navegação: só os ícones do Google Maps e do Waze, para a tela ficar mais limpa */

@@ -131,6 +131,7 @@ const novoDraft = () => ({
   orig: [],
   fif: false,
   nf: 2,
+  nvt: 1,
   ret: "",
   ag: "",
   oc: "",

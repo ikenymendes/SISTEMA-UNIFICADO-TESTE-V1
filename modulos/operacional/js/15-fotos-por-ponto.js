@@ -107,7 +107,7 @@ function fpLinha(c, q) {
   else bt = `<button type="button" class="fp-go v" data-a="fpst" data-v="${c.key}" title="Ver / desfazer">✓ aprovada</button>`;
   const quem = k === "f" ? `<small>📷 ${c.by ? e(c.by) : "foto feita"}${c.fts ? " · " + fpQuando(c.fts) : ""}</small>` : "";
   const menu = refazerOpen === c.key || (fpOpen === c.key && k !== "f") ? fpMenu(c) : "";
-  return `<div class="fp-li ${k}"><div class="fp-lt"><b>${fpMark(v.cliente, q)}</b>${fpUrg(c)}${pb}${rf}${quem}</div>${bt}</div>${menu}`;
+  return `<div class="fp-li ${k}"><div class="fp-lt"><b>${fpMark(v.cliente, q)} ${vtQtd(v)}</b>${fpUrg(c)}${pb}${rf}${quem}</div>${bt}</div>${menu}`;
 }
 function fpCard(g, q) {
   const p = g.p,

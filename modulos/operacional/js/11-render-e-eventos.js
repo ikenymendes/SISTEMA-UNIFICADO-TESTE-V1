@@ -204,6 +204,7 @@ function keep() {
     if (ff) {
       draft.fif = ff.checked;
       draft.nf = +$("dnf").value || 2;
+      if ($("dnvt")) draft.nvt = +$("dnvt").value || 1;
     }
   }
   const mp = $("mp");
@@ -614,6 +615,7 @@ document.addEventListener("click", async (ev) => {
         orig: [...x.paineis],
         fif: !!x.fif,
         nf: x.nf || 2,
+        nvt: x.nvt || 1,
         ret: view !== "g" ? view : "",
         ag: x.ag || "",
         oc: x.oc || "",
@@ -712,6 +714,7 @@ document.addEventListener("click", async (ev) => {
         paineis: [...draft.sel],
         fif: !!draft.fif,
         nf: draft.nf || 2,
+        nvt: draft.nvt || 1,
         ag: U(draft.ag),
         oc: U(draft.oc),
         tp: U(draft.tp),
