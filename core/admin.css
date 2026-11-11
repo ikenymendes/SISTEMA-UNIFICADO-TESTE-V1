@@ -211,7 +211,6 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
   .kpi { padding: 16px 14px; } .kpi-val { font-size: 38px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .anim { animation: none; opacity: 1; transform: none; }
   .adm .fundo::before, .adm .fundo::after { animation: none; }
   .gb-bar { transition: none; } .graf-rosca .fatia { opacity: 1; }
 }

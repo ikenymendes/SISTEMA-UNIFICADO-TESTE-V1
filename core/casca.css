@@ -315,9 +315,7 @@ button, input { font: inherit; color: inherit; }
 .bv.fase2 .bv-dem .go { animation: bvpulso 1.6s 1.2s ease-in-out infinite; }
 @keyframes bvpulso { 0%, 100% { box-shadow: 0 14px 28px -12px #ff0066; } 50% { box-shadow: 0 0 0 8px #ff006633, 0 14px 34px -8px #ff0066; } }
 @media (max-height: 640px) { .bv.fase2 .bv-top { transform: translateY(-150px) scale(.62); } }
-@media (prefers-reduced-motion: reduce) {
-  .lg-bl, .bv-bg::before, .bv-bg::after, .mg-logo, .login .cartao, .bv-mk img, .bv-mk::before, .bv-mk::after, .bv-pl, .bv-sau, .bv-hora, .bv-data, .bv-barra i, .bv-dem .go { animation: none !important; opacity: 1; clip-path: none; }
-}
+/* animações da marca: sempre ligadas (mesmo com "efeitos de animação" desligados no sistema) */
 
 /* rastro "cometa" que acompanha o mouse (fica atrás do cartão de vidro) */
 .lg-luz { position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: 0; transition: opacity .6s; }
@@ -379,5 +377,4 @@ body:has(.bv:not(.sai)) .app-convite, body:has(.lg-intro) .app-convite { opacity
 @keyframes bvHalo { 0% { opacity: 0; transform: scale(.2); } 40% { opacity: 1; transform: scale(1); } 100% { opacity: .55; transform: scale(1.05); } }
 .bv-sau { animation-delay: 1s !important; } .bv-hora { animation-delay: 1.2s !important; } .bv-data { animation-delay: 1.35s !important; }
 @media (max-width: 600px) { .bv-mk, .bv-mk img { width: 104px; } }
-@media (prefers-reduced-motion: reduce) { .bv-mk img, .bv-pl, .bv-halo { animation: none !important; clip-path: none; opacity: 1; } }
 @media (max-height: 780px) and (min-width: 701px) { .bv.fase2 .bv-top { transform: translateY(-150px) scale(.7); } }

@@ -45,7 +45,7 @@ var ADMIN = (function () {
 
   /* número que "sobe" até o valor (respeita quem prefere menos movimento) */
   function contar(el, alvo) {
-    var reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduz = false; /* números sempre sobem animados */
     if (reduz || !isFinite(alvo)) { el.textContent = alvo; return; }
     var t0 = null, dur = 700;
     function passo(t) {

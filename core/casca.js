@@ -144,8 +144,7 @@ var MEGA = (function () {
   /* ao entrar: os campos descem e o cartão se dissolve; em seguida vem a boas-vindas com o "M" acendendo */
   function abertura(tela) {
     return new Promise(function (ok) {
-      var reduz = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduz || !tela) return ok();
+      if (!tela) return ok();
       tela.classList.add('saindo');
       setTimeout(ok, 620);
     });
