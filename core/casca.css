@@ -252,7 +252,11 @@ button, input { font: inherit; color: inherit; }
 .login .campo .ico { font-size: 17px; opacity: .8; flex: none; }
 .login .campo input { flex: 1; min-width: 0; border: 0 !important; background: transparent !important; color: #fff !important; padding: 15px 0 !important; font: 500 16px Poppins, system-ui, sans-serif; outline: 0; box-shadow: none !important; }
 .login .campo input::placeholder { color: #ffffff80; font-weight: 400; }
-.login .campo input:-webkit-autofill { -webkit-text-fill-color: #fff; -webkit-box-shadow: 0 0 0 40px #2a2f9a inset; caret-color: #fff; }
+/* preenchimento automático do navegador (Chrome/Edge/Safari): sem o fundo branco/azul-claro, texto branco */
+.login .campo input:-webkit-autofill, .login .campo input:-webkit-autofill:hover, .login .campo input:-webkit-autofill:focus, .login .campo input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff !important; caret-color: #fff; -webkit-box-shadow: 0 0 0 1000px transparent inset !important; box-shadow: 0 0 0 1000px transparent inset !important;
+  transition: background-color 99999s ease-out 0s, color 99999s ease-out 0s !important; background-clip: text !important; }
+.login .campo input:autofill { -webkit-text-fill-color: #fff !important; transition: background-color 99999s ease-out 0s !important; }
 .login .olho { flex: none; border: 0; background: transparent; color: #fff; opacity: .6; font-size: 17px; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; }
 .login .olho.on { opacity: 1; background: #ffffff1f; }
 .login .lembrar { display: flex; align-items: center; gap: 10px; margin: 6px 2px 16px; color: #ffffffc0; font-size: 13px; cursor: pointer; user-select: none; }

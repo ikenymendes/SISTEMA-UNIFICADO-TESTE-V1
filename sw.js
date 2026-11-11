@@ -5,7 +5,7 @@
    - Sem internet, mostra uma tela simples avisando.
    - Já preparado para receber notificações (push) na próxima etapa.
    ===================================================================== */
-const VERSAO = "mega-app-20261110b";
+const VERSAO = "mega-app-20261111a";
 const OFFLINE = "offline.html";
 
 self.addEventListener("install", (ev) => {
@@ -27,7 +27,8 @@ self.addEventListener("activate", (ev) => {
 self.addEventListener("fetch", (ev) => {
   const r = ev.request;
   if (r.mode !== "navigate") return;
-  ev.respondWith(fetch(r).catch(() => caches.match(OFFLINE)));
+  /* sempre a página nova (sem cache do navegador), para as atualizações aparecerem na hora no celular */
+  ev.respondWith(fetch(r.url, { cache: "no-store", credentials: "same-origin" }).catch(() => fetch(r)).catch(() => caches.match(OFFLINE)));
 });
 
 /* ---- notificações (usadas na etapa 2) ---- */

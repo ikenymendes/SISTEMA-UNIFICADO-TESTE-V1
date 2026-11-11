@@ -278,7 +278,7 @@ var MEGA = (function () {
       h('div', { class: 'lg-in' }, [
         marcaMega('mg-logo'),
         cartao,
-        h('div', { class: 'versao', text: 'Mega Mídia OOH · sistema unificado · versão 10/11' })
+        h('div', { class: 'versao', text: 'Mega Mídia OOH · sistema unificado · versão 11/11' })
       ])
     ]);
     app.appendChild(tela);
