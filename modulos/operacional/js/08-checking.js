@@ -77,6 +77,18 @@ function ckPayload(x) {
     }),
   };
 }
+/* apaga as fotos guardadas do checking (neste computador) quando ele é concluído */
+function ckLimparFotos(id) {
+  try {
+    const r = indexedDB.open("megaooh-checking", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("k");
+    r.onsuccess = () => {
+      try {
+        r.result.transaction("k", "readwrite").objectStore("k").delete("fotos:" + id);
+      } catch (_) {}
+    };
+  } catch (_) {}
+}
 function ckDrop() {
   ck.id = null;
   ck.show = false;
@@ -93,11 +105,12 @@ function ckOpen(id, troca) {
     ck.id &&
     ck.id !== id &&
     ck.n > 0 &&
-    !confirm("Há um checking em andamento com fotos na tela. Abrir outro descarta essas fotos. Continuar?")
+    !confirm("Há um checking em andamento com fotos na tela. As fotos ficam guardadas neste computador por 7 dias (até concluir). Abrir o outro checking?")
   )
     return;
   if (ck.id && ck.id !== id) ckDrop();
   ck.troca = troca || null;
+  if (ck.id !== id) ck.ok = ck.tot = 0;
   ck.id = id;
   ck.show = true;
   ck.exp = false;
@@ -115,7 +128,7 @@ function ckOpen(id, troca) {
       f.dataset.ready = "1";
       f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
     };
-    f.src = "gerador-checking.html?v=20261111v";
+    f.src = "gerador-checking.html?v=20261111za";
     h.appendChild(f);
   } else f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
   render();
@@ -133,6 +146,11 @@ addEventListener("message", (ev) => {
     delete ck.oldT;
   }
   if (d.fotos !== undefined) ck.n = d.fotos;
+  if (d.total !== undefined) {
+    ck.ok = d.ok || 0;
+    ck.tot = d.total || 0;
+    ckBarra();
+  }
   if (d.completo && ck.id && !ck.auto) {
     const x = S.vts.find((q) => q.id === ck.id);
     ck.auto = true;
@@ -158,6 +176,17 @@ addEventListener("message", (ev) => {
     if (view === "k") render();
   }
 });
+/* barra de conclusão do checking: endereços com foto / total */
+const ckBarraHtml = () => {
+  const t = ck.tot || 0,
+    o = Math.min(ck.ok || 0, t),
+    pc = t ? Math.round((o / t) * 100) : 0;
+  return `<div class="ckbar${pc === 100 ? " ok" : ""}"><div class="ckbar-t"><b>${pc === 100 ? "✓ Todas as fotos inseridas" : "Checking em andamento"}</b><span>${o} de ${t} ${t === 1 ? "endereço" : "endereços"} com foto · ${pc}%</span></div><div class="ckbar-l"><i style="width:${pc}%"></i></div></div>`;
+};
+function ckBarra() {
+  const el = document.getElementById("ckbarw");
+  if (el) el.innerHTML = ckBarraHtml();
+}
 function ckShow() {
   const h = $("ckhost");
   if (h) h.style.display = view === "k" && ck.id && ck.show ? "block" : "none";
@@ -169,7 +198,7 @@ function ckview() {
       ckDrop();
       return ckview();
     }
-    return `<div class="card"><div class="row"><div><b>${ck.troca ? "Checking reaberto" + (ck.troca.mot ? " (" + e(ck.troca.mot) + ")" : "") : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
+    return `<div class="card"><div class="row"><div><b>${ck.troca ? "Checking reaberto" + (ck.troca.mot ? " (" + e(ck.troca.mot) + ")" : "") : "Checking"} — ${e(x.cliente)}</b> <span class="mu">${x.pi ? "PI " + e(x.pi) + " · " : ""}${(x.paineis || []).length} endereços · arraste as fotos em cada endereço e baixe o PowerPoint/PDF</span></div>${ckAbtn(x)}<button class="sm" data-a="cklist" style="flex:0 0 auto;margin-left:auto">← Lista</button><button class="sm" data-a="ckclose" style="flex:0 0 auto">Fechar sem concluir</button></div><div id="ckbarw">${ckBarraHtml()}</div>${ckA.has(x.id) ? ckAdr(x) : ""}${x.chk ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking marcado como feito${x.chka ? " automaticamente (todas as fotos inseridas)" : ""}. Para desfazer ou refazer, use Concluídos.</span>${ck.exp ? `<button class="sm pri" data-a="ckdone" style="margin-left:auto">Fechar</button>` : ""}</div>` : ck.exp ? `<div class="quick okq" style="margin-top:8px"><span>✔ Checking exportado.</span><button class="sm pri" data-a="ckdone" style="margin-left:auto">Marcar checking como feito e fechar</button></div>` : ""}</div>`;
   }
   const L = ckLista().sort((a, b) => (a.ini || "9").localeCompare(b.ini || "9")),
     W = S.vts.filter(
@@ -177,7 +206,7 @@ function ckview() {
         ((!v.chk || v.ckPend) && !ckPronto(v) && (v.paineis || []).length && !isConc(v)) ||
         ((!v.chk || v.ckPend) && !ckPronto(v) && isConc(v) && (v.paineis || []).length),
     );
-  let h = `<div class="card"><b>${L.length}</b> <span class="mu">VT(s) com todas as fotos validadas, prontos para checking. Escolha um, arraste as fotos nos endereços e gere o PowerPoint/PDF. As fotos não ficam guardadas.</span></div>`;
+  let h = `<div class="card"><b>${L.length}</b> <span class="mu">VT(s) com todas as fotos validadas, prontos para checking. Escolha um, arraste as fotos nos endereços e gere o PowerPoint/PDF. As fotos ficam guardadas neste computador por 7 dias ou até o checking ser concluído.</span></div>`;
   if (ck.id && !ck.show) {
     const x = S.vts.find((q) => q.id === ck.id);
     if (x)

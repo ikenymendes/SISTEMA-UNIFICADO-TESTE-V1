@@ -224,7 +224,23 @@ function db(){return dbp||(dbp=new Promise((ok,no)=>{try{const r=indexedDB.open(
 const semFotos=v=>JSON.parse(JSON.stringify(v,(k,x)=>k==="fotos"?[]:x));
 async function dbSet(v){try{const d=await db();d.transaction("k","readwrite").objectStore("k").put(semFotos(v),"cur")}catch(_){}}
 async function dbGet(){try{const d=await db();return await new Promise(ok=>{const q=d.transaction("k").objectStore("k").get("cur");q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)})}catch(_){return null}}
-let tmr=null;const save=()=>{clearTimeout(tmr);tmr=setTimeout(()=>dbSet(S),500);resumo()};
+/* fotos do checking guardadas neste computador por 7 dias (ou até o checking ser concluído) */
+const FOTO_DIAS=7,FOTO_MS=FOTO_DIAS*864e5;let fotosProntas=true;
+async function dbK(modo,k,v){try{const d=await db();return await new Promise(ok=>{const t=d.transaction("k",modo==="get"?"readonly":"readwrite"),st=t.objectStore("k");
+ if(modo==="get"){const q=st.get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null);return}
+ if(modo==="keys"){const q=st.getAllKeys();q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ok([]);return}
+ if(modo==="put")st.put(v,k);else st.delete(k);t.oncomplete=()=>ok(true);t.onerror=()=>ok(false)})}catch(_){return null}}
+const pKey=p=>[p.fixo||"",p.loc||"",p.tela||"",p.grupo||""].join("|");
+async function fotosGuardar(){if(!S.vtId||!fotosProntas)return;const map={};let n=0;S.paineis.forEach(p=>{if(p.fotos.length){map[pKey(p)]=p.fotos;n+=p.fotos.length}});
+ const k="fotos:"+S.vtId,old=await dbK("get",k);if(!n){if(old)await dbK("del",k);return}
+ await dbK("put",k,{cria:(old&&old.cria)||Date.now(),em:Date.now(),n,map})}
+async function fotosRestaurar(){const id=S.vtId;if(!id){fotosProntas=true;return}
+ try{const r=await dbK("get","fotos:"+id);if(r&&Date.now()-r.cria>FOTO_MS){await dbK("del","fotos:"+id)}
+  else if(r&&S.vtId===id){let n=0;S.paineis.forEach(p=>{const f=r.map[pKey(p)];if(f&&f.length&&!p.fotos.length){p.fotos=f;n+=f.length}});
+   if(n){renderPaineis();const dd=Math.max(1,Math.ceil((r.cria+FOTO_MS-Date.now())/864e5));toast(n+" foto(s) guardada(s) voltaram · ficam guardadas por mais "+dd+(dd===1?" dia":" dias")+" ou até concluir")}}}
+ finally{if(S.vtId===id){fotosProntas=true;resumo()}}}
+async function fotosLimparVelhas(){const ks=await dbK("keys");for(const k of ks||[]){if(String(k).indexOf("fotos:")!==0)continue;const r=await dbK("get",k);if(!r||Date.now()-(r.cria||0)>FOTO_MS)await dbK("del",k)}}
+let tmr=null,tmrF=null;const save=()=>{clearTimeout(tmr);tmr=setTimeout(()=>dbSet(S),500);clearTimeout(tmrF);tmrF=setTimeout(fotosGuardar,900);resumo()};
 
 const EMB=window.parent!==window;if(EMB)document.documentElement.classList.add('emb');
 const tell=o=>{if(EMB)try{parent.postMessage(Object.assign({ck:1,id:S.vtId||null},o),'*')}catch(_){}};
@@ -242,7 +258,7 @@ function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";cl
 
 /* ---------------- helpers de dados ---------------- */
 const nFotos=()=>S.paineis.reduce((a,p)=>a+p.fotos.length,0);
-function resumo(){tell({fotos:nFotos(),completo:S.paineis.length>0&&S.paineis.every(p=>p.fotos.length>0)});$("#resumo").textContent=`${S.paineis.length} painel(is) · ${nFotos()} foto(s)`;const n=$("#nav .n");if(n)n.textContent=S.paineis.length}
+function resumo(){tell({fotos:nFotos(),ok:S.paineis.filter(p=>p.fotos.length>0||segue(p)).length,total:S.paineis.length,completo:S.paineis.length>0&&S.paineis.every(p=>p.fotos.length>0)});$("#resumo").textContent=`${S.paineis.length} painel(is) · ${nFotos()} foto(s)`;const n=$("#nav .n");if(n)n.textContent=S.paineis.length}
 function fmtData(s){if(!s)return"";const[a,m,d]=s.split("-");return`${d}/${m}/${a}`}
 function periodo(){const{ini,fim}=S.cli;if(!ini&&!fim)return"";if(ini&&fim){const[a1,m1,d1]=ini.split("-"),[a2]=fim.split("-");return a1===a2?`${d1}/${m1} a ${fmtData(fim)}`:`${fmtData(ini)} a ${fmtData(fim)}`}return fmtData(ini||fim)}
 function qtdPecas(){const n=S.paineis.length,c={};S.paineis.forEach(p=>{const t=(p.tipo||"").toUpperCase().trim()||"PAINEL";c[t]=(c[t]||0)+(+p.qtd||1)});const k=Object.keys(c);
@@ -816,6 +832,7 @@ function aplicarFixos(repor){
  return n;
 }
 function receberVT(pl){
+ fotosProntas=false;
  const c=S.cli;
  if(S.vtId!==pl.id){S=Object.assign(blank(),{emp:Object.assign({},EMP_PADRAO),opt:S.opt});S.vtId=pl.id}
  Object.assign(S.cli,{cliente:pl.cliente,pi:pl.pi,evento:pl.evento||"",oc:pl.oc||S.cli.oc,agencia:pl.ag||S.cli.agencia,ini:pl.ini,fim:pl.fim,obs:pl.obs||S.cli.obs,campanha:pl.campanha||S.cli.campanha||"",tipoPad:normTipo(pl.tp)||S.cli.tipoPad||"PAINEL DE LED",fmtPad:pl.fm||S.cli.fmtPad});
@@ -827,12 +844,13 @@ function receberVT(pl){
  aplicarFixos(false);
  if(S.paineis.some(p=>!p.grupo&&/mercado central/i.test(p.loc||"")))aplicarMercado(true);
  S.cli.praca=[...new Set(pl.paineis.map(p=>cidade(p.end)).filter(Boolean))].map(s=>s.toUpperCase()).join(" / ");
- save();
+ save();fotosRestaurar();
 }
-addEventListener("message",ev=>{const d=ev.data;if(!d||!d.vt)return;const run=()=>{if(!window.__ready)return setTimeout(run,100);receberVT(d.vt);go(1)};run()});
+addEventListener("message",ev=>{const d=ev.data;if(d&&d.limparFotos){dbK("del","fotos:"+d.limparFotos);return}if(!d||!d.vt)return;const run=()=>{if(!window.__ready)return setTimeout(run,100);receberVT(d.vt);go(1)};run()});
 (async()=>{const d=await dbGet();if(d&&Array.isArray(d.paineis))S=Object.assign(blank(),d,{emp:Object.assign({},EMP_PADRAO)});
  let start=0;
  try{const m=location.hash.match(/^#vt=(.+)$/);if(m){receberVT(JSON.parse(decodeURIComponent(escape(atob(m[1])))));history.replaceState(null,"",location.pathname);start=1;toast("VT carregado da Matriz. Insira as fotos de cada painel.")}}catch(e){console.error(e)}
+ if(!start&&S.vtId){fotosProntas=false;fotosRestaurar()}fotosLimparVelhas();
  resumo();go(start);window.__ready=true})();
 </script>
 </body>

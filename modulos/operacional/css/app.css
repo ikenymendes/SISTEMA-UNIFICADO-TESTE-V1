@@ -2253,3 +2253,9 @@ body.dark .dvx-cab{border-color:#ffffff1f}
 /* quantidade de VTs do cliente (motoboy e fotos por ponto) */
 .vt-q{font-style:normal;display:inline-block;vertical-align:middle;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:4px;background:#eef0fb;color:#3a3f78;white-space:nowrap}
 .vt-q.m{background:#ff0066;color:#fff}
+
+/* barra de conclusão do checking */
+.ckbar{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f6f7fc;border:1px solid #e6e8f4}
+.ckbar-t{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:#3a3f78;margin-bottom:7px}.ckbar-t b{color:#000066}
+.ckbar-l{height:10px;border-radius:99px;background:#e2e4f3;overflow:hidden}.ckbar-l i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#ff0066,#ff5c9a);transition:width .4s ease}
+.ckbar.ok{background:#effaf3;border-color:#c9eed8}.ckbar.ok .ckbar-l i{background:linear-gradient(90deg,#16a34a,#34d399)}.ckbar.ok b{color:#0d7a3f}

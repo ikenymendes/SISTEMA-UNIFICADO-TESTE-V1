@@ -1183,6 +1183,7 @@ document.addEventListener("click", async (ev) => {
   } else if (a === "ckdone") {
     const x = S.vts.find((q) => q.id === ck.id);
     if (x) {
+      ckLimparFotos(ckPayload(x).id);
       if (!x.chk) {
         x.chk = true;
         x.chkd = dia();
