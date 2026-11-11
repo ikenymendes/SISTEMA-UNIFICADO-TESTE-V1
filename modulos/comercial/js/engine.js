@@ -388,12 +388,18 @@ function frame(S0,A,kicker,title,sub,partner){
 function cropRect(aw,ah,aspect,aj){ var z=Math.max(100,Math.min(300,+aj.z||100))/100, sw,sh; if(aw/ah>aspect){ sh=ah; sw=sh*aspect; } else { sw=aw; sh=sw/aspect; } sw/=z; sh/=z;
   var fx=aj.x==null?50:+aj.x, fy=aj.y==null?50:+aj.y; return {sx:(aw-sw)*fx/100,sy:(ah-sh)*fy/100,sw:sw,sh:sh}; }
 var cropCache={};
-function fotoAjustada(a,key,aspect,aj){ var ck=key+'|'+aspect.toFixed(3)+'|'+[aj.x,aj.y,aj.z].join(','); if(cropCache[ck]) return cropCache[ck];
+/* foto girada (0/90/180/270) — algumas fotos de celular chegam deitadas */
+var rotCache={};
+function fotoGirada(a,key,r){ r=((+r||0)%360+360)%360; if(!r||!a||!a.el) return a; var ck=key+'|'+r; if(rotCache[ck]) return rotCache[ck];
+  var lado=r%180!==0, W=lado?a.h:a.w, H=lado?a.w:a.h, cv=document.createElement('canvas'); cv.width=W; cv.height=H; var c=cv.getContext('2d');
+  c.translate(W/2,H/2); c.rotate(r*Math.PI/180); c.drawImage(a.el,-a.w/2,-a.h/2,a.w,a.h);
+  var o={src:cv.toDataURL('image/jpeg',0.92),w:W,h:H,el:cv}; rotCache[ck]=o; return o; }
+function fotoAjustada(a,key,aspect,aj){ var ck=key+'|'+aspect.toFixed(3)+'|'+[aj.x,aj.y,aj.z,aj.r||0].join(','); a=fotoGirada(a,key,aj.r); if(cropCache[ck]) return cropCache[ck];
   var W=1600, H=Math.round(W/aspect), cv=document.createElement('canvas'); cv.width=W; cv.height=H; var c=cv.getContext('2d'), r=cropRect(a.w,a.h,aspect,aj);
   c.drawImage(a.el,r.sx,r.sy,r.sw,r.sh,0,0,W,H); var o={src:cv.toDataURL('image/jpeg',0.92),w:W,h:H,el:cv}; cropCache[ck]=o; return o; }
 function photoSlotP(S,A,p,x,y,w,h,r){ var key=Array.isArray(p.foto)?p.foto[0]:p.foto, a=A.photos[key], aj=p.fotoAj;
-  if(!a||!aj||(!aj.inteira&&(aj.x==null||aj.x==50)&&(aj.y==null||aj.y==50)&&(!aj.z||aj.z==100))) return photoSlot(S,A,key,x,y,w,h,r);
-  if(aj.inteira){ S.rect(x,y,w,h,{fill:C.NAVY,r:r||0}); S.img(x,y,w,h,a,{contain:true,r:r}); return; }
+  if(!a||!aj||(!aj.inteira&&!aj.r&&(aj.x==null||aj.x==50)&&(aj.y==null||aj.y==50)&&(!aj.z||aj.z==100))) return photoSlot(S,A,key,x,y,w,h,r);
+  if(aj.inteira){ S.rect(x,y,w,h,{fill:C.NAVY,r:r||0}); S.img(x,y,w,h,fotoGirada(a,key,aj.r),{contain:true,r:r}); return; }
   S.img(x,y,w,h,fotoAjustada(a,key,w/h,aj),{r:r}); }
 function photoSlot(S,A,key,x,y,w,h,r){ var a=A.photos[key]; if(a) S.img(x,y,w,h,a,{r:r}); else { S.rect(x,y,w,h,{fill:C.NAVY_L,a:100,r:r||0}); slantMotif(S,x+w/2-0.7,y+h/2-0.9,1.8,18); } }
 

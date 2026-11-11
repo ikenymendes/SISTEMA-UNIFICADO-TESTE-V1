@@ -369,6 +369,10 @@ details.novo{border:1.5px solid var(--pink);margin-bottom:18px}
 .fctl{flex:1 1 220px;display:flex;flex-direction:column;gap:10px;min-width:200px}
 .frow{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mid)}.frow input{width:100%;accent-color:var(--pink)}
 .fctl .chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--navy)}
+.fgiro{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--mid)}.fgiro span{flex:1 0 100%}
+.fgiro .btn{flex:1 1 0;min-width:70px;padding:8px 10px}
+.fbts{display:flex;gap:8px;flex-wrap:wrap}.fbts .btn{flex:1 1 140px}
+.fsalvo{color:#0d7a3f;font-size:12px;min-height:16px}
 
 /* ===== validador de fotos ===== */
 .qwarn{display:inline-flex;align-items:center;gap:4px;background:#fff3cd;color:#8a5a00;border:1px solid #f0c35c;border-radius:999px;padding:2px 9px;font:600 11.5px/1.4 Poppins,sans-serif;white-space:nowrap}

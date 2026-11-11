@@ -89,12 +89,24 @@ function fotoAjuste(p){
   function draw(){ if(!nat) return; var a=aj(), st=box.style; aviso.hidden=true; st.backgroundRepeat='no-repeat';
     if(a.inteira){ st.backgroundSize='contain'; st.backgroundPosition='center'; return; }
     var r=cropRect(nat.w,nat.h,AR,a); st.backgroundSize=(nat.w/r.sw*100)+'% '+(nat.h/r.sh*100)+'%'; st.backgroundPosition=(a.x==null?50:a.x)+'% '+(a.y==null?50:a.y)+'%'; }
+  /* a prévia usa a foto já girada (desenhada num canvas), igual ao que vai para o PowerPoint/PDF */
+  function girada(){ var r=((+aj().r||0)%360+360)%360, sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)), w0=Math.round(im.naturalWidth*sc), h0=Math.round(im.naturalHeight*sc), lado=r%180!==0,
+      cv=document.createElement('canvas'); cv.width=lado?h0:w0; cv.height=lado?w0:h0; var c=cv.getContext('2d'); c.translate(cv.width/2,cv.height/2); c.rotate(r*Math.PI/180); c.drawImage(im,-w0/2,-h0/2,w0,h0);
+    nat={w:lado?im.naturalHeight:im.naturalWidth,h:lado?im.naturalWidth:im.naturalHeight}; box.style.backgroundImage='url("'+cv.toDataURL('image/jpeg',0.85)+'")'; draw(); }
   function load(){ var k=Array.isArray(p.foto)?p.foto[0]:p.foto, src=k&&libSrc(k); nat=null; box.style.backgroundImage='none'; if(!src){ aviso.hidden=false; aviso.textContent='Este ponto não tem foto.'; return; } aviso.hidden=false; aviso.textContent='Carregando a foto…';
-    im=new Image(); im.onload=function(){ nat={w:im.naturalWidth,h:im.naturalHeight}; box.style.backgroundImage='url("'+src+'")'; draw(); }; im.onerror=function(){ aviso.hidden=false; aviso.textContent='Não foi possível carregar a foto.'; }; im.src=src; }
+    im=new Image(); im.crossOrigin='anonymous'; im.onload=function(){ try{ girada(); }catch(e){ nat={w:im.naturalWidth,h:im.naturalHeight}; box.style.backgroundImage='url("'+src+'")'; draw(); } }; im.onerror=function(){ if(im.crossOrigin){ var o=im.onload; im=new Image(); im.onload=o; im.onerror=function(){ aviso.hidden=false; aviso.textContent='Não foi possível carregar a foto.'; }; im.src=src; return; } aviso.hidden=false; aviso.textContent='Não foi possível carregar a foto.'; }; im.src=src; }
+  function girar(d){ var a=aj(); a.r=(((+a.r||0)+d)%360+360)%360; if(im&&im.complete&&im.naturalWidth){ try{ girada(); }catch(e){} } dirty(); }
+  var salvo=h('small',{class:'fsalvo'});
+  var bSalvar=h('button',{type:'button',class:'btn pri',text:'💾 Salvar enquadramento',onclick:async function(){
+    if(typeof ME!=='undefined'&&!ME.admin){ toast('Só o administrador salva o enquadramento das fotos dos pontos.',true); return; }
+    bSalvar.disabled=true; bSalvar.textContent='Salvando…'; clearTimeout(saveT);
+    try{ await syncOut(); salvo.textContent='✓ Salvo às '+hora()+'. Vale para o PowerPoint e o PDF.'; }catch(e){ salvo.textContent='Não foi possível salvar agora.'; }
+    bSalvar.disabled=false; bSalvar.textContent='💾 Salvar enquadramento'; }});
   function sl(rot,key,min,max){ var s=h('input',{type:'range',step:1}); s.min=min; s.max=max; s.value=aj()[key]==null?(key==='z'?100:50):aj()[key]; var f=function(){ aj()[key]=+s.value; draw(); dirty(); }; s.addEventListener('input',f); s.addEventListener('change',f); return h('label',{class:'frow'},[h('span',{text:rot}),s]); }
   var inteira=h('input',{type:'checkbox'}); inteira.checked=!!(p.fotoAj&&p.fotoAj.inteira); inteira.addEventListener('change',function(){ aj().inteira=inteira.checked; draw(); dirty(); });
   var reset=h('button',{type:'button',class:'btn',text:'Restaurar',onclick:function(){ delete p.fotoAj; dirty(); var par=wr.parentNode; if(par) par.replaceChild(fotoAjuste(p),wr); }});
-  w.appendChild(box); w.appendChild(h('div',{class:'fctl'},[sl('← Esquerda · Direita →','x',0,100),sl('↑ Cima · Baixo ↓','y',0,100),sl('Zoom','z',100,300),h('label',{class:'chk'},[inteira,h('span',{text:'Mostrar a foto inteira (sem cortar)'})]),reset]));
+  var giro=h('div',{class:'fgiro'},[h('span',{text:'Girar a foto'}),h('button',{type:'button',class:'btn',title:'Girar para a esquerda',text:'↺ 90°',onclick:function(){ girar(-90); }}),h('button',{type:'button',class:'btn',title:'Girar para a direita',text:'↻ 90°',onclick:function(){ girar(90); }}),h('button',{type:'button',class:'btn',title:'Virar de cabeça para baixo',text:'180°',onclick:function(){ girar(180); }})]);
+  w.appendChild(box); w.appendChild(h('div',{class:'fctl'},[giro,sl('← Esquerda · Direita →','x',0,100),sl('↑ Cima · Baixo ↓','y',0,100),sl('Zoom','z',100,300),h('label',{class:'chk'},[inteira,h('span',{text:'Mostrar a foto inteira (sem cortar)'})]),h('div',{class:'fbts'},[bSalvar,reset]),salvo]));
   load(); document.addEventListener('fotochg',function f(){ if(box.isConnected){ box.__c=1; load(); } else if(box.__c){ document.removeEventListener('fotochg',f); } });
   var wr=h('div',{class:'f wide'},[h('span',{text:'Enquadramento da foto no kit'}),w,h('small',{text:'Mexa nos controles até o painel aparecer inteiro. Vale para a ficha deste ponto no PowerPoint e no PDF.'})]); return wr; }
 function photosField(label,obj,path){
