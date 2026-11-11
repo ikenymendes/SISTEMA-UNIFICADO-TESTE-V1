@@ -79,58 +79,89 @@ function fpMenu(c) {
   if (refazerOpen === k)
     return `<div class="fp-menu"><span>Motivo para refazer</span><div class="fp-rf"><input id="rfn" placeholder="Ex.: VT errado na tela, foto escura…"><button type="button" class="fp-b pri" data-a="rfok" data-v="${k}">Enviar</button></div></div>`;
   if (c.st === "pendente" || c.st === "refazer")
-    return `<div class="fp-menu"><span>📷 Quem fez a foto?</span><div class="fp-bs">${fpQuem()
+    return `<div class="fp-menu"><span>📷 Quem tirou a foto?</span><div class="fp-bs">${fpQuem()
       .map((m) => `<button type="button" class="fp-b" data-a="qf" data-v="${k}|${e(m)}">${e(m)}</button>`)
       .join("")}</div></div>`;
   if (c.st === "feita")
     return `<div class="fp-menu"><span>Foto feita${c.by ? " por <b>" + e(c.by) + "</b>" : ""}${c.fts ? " " + fpQuando(c.fts) : ""}. Está certa?</span><div class="fp-bs"><button type="button" class="fp-b ok" data-a="ok" data-v="${k}">✔ Validar</button><button type="button" class="fp-b" data-a="rf" data-v="${k}">↺ Refazer</button><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
   return `<div class="fp-menu"><span>✔ Validada${c.by ? " · foto de <b>" + e(c.by) + "</b>" : ""}</span><div class="fp-bs"><button type="button" class="fp-b ghost" data-a="qundo" data-v="${k}">Desfazer</button></div></div>`;
 }
+/* ===== Semáforo: 🔴 falta foto · 🟡 conferir · 🟢 tudo certo ===== */
+const FP_LUZ = {
+  p: { cor: "r", nome: "Falta foto", sub: "Pontos que ainda não têm foto", dica: "Esses pontos <b>ainda não têm foto</b>. Mande o motoboy ou, se já tirou, aperte <b>“📷 Já tirei”</b>. Os <b>URGENTES</b> vêm primeiro." },
+  f: { cor: "y", nome: "Conferir", sub: "O motoboy tirou, falta você olhar", dica: "O motoboy <b>já tirou</b> essas fotos. Olhe no WhatsApp/Google Fotos e aperte <b>“✓ Aprovar”</b>. Se ficou ruim, <b>“↺ Refazer”</b>." },
+  v: { cor: "g", nome: "Tudo certo", sub: "Fotos já aprovadas", dica: "Esses pontos estão <b>com todas as fotos aprovadas</b>. Nada para fazer aqui 🎉" },
+  a: { cor: "r", nome: "Urgentes", sub: "", dica: "<b>URGENTE</b> = cliente no ar há 3 dias ou mais sem foto (ou sem conferir). Faça esses primeiro." },
+  t: { cor: "", nome: "Todos", sub: "", dica: "Todos os pontos com cliente no ar hoje." },
+};
+const fpUrg = (c) => (fpAtrasado(c) ? `<em class="fp-urg2">URGENTE · ${fpDiasNoAr(c.v)} dias ${c.st === "feita" ? "sem conferir" : "sem foto"}</em>` : "");
+function fpLinha(c, q) {
+  const v = c.v,
+    k = FP_ST[c.st],
+    pb = (S.fotos[c.key] || {}).prob && c.st !== "validada" ? `<em class="fp-pb">⚠ motoboy relatou problema</em>` : "",
+    rf = c.st === "refazer" ? `<em class="fp-rfz">↺ refazer${c.nota ? ": " + e(c.nota) : ""}</em>` : "";
+  let bt;
+  if (k === "p") bt = `<button type="button" class="fp-go r${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}">📷 Já tirei</button>`;
+  else if (k === "f")
+    bt = `<div class="fp-gos"><button type="button" class="fp-go g" data-a="ok" data-v="${c.key}">✓ Aprovar</button><button type="button" class="fp-go x" data-a="rf" data-v="${c.key}" title="Pedir para refazer">↺</button></div>`;
+  else bt = `<button type="button" class="fp-go v" data-a="fpst" data-v="${c.key}" title="Ver / desfazer">✓ aprovada</button>`;
+  const quem = k === "f" ? `<small>📷 ${c.by ? e(c.by) : "foto feita"}${c.fts ? " · " + fpQuando(c.fts) : ""}</small>` : "";
+  const menu = refazerOpen === c.key || (fpOpen === c.key && k !== "f") ? fpMenu(c) : "";
+  return `<div class="fp-li ${k}"><div class="fp-lt"><b>${fpMark(v.cliente, q)}</b>${fpUrg(c)}${pb}${rf}${quem}</div>${bt}</div>${menu}`;
+}
 function fpCard(g, q) {
   const p = g.p,
-    hj = dia();
-  const cl = g.cli
-    .map((c) => {
-      const v = c.v,
-        k = FP_ST[c.st],
-        sub = [(v.ev && v.ev.nome) || "", v.ini ? "início " + fmt(v.ini).slice(0, 5) : "", v.fim ? "até " + fmt(v.fim).slice(0, 5) : ""].filter(Boolean).join(" · "),
-        d = v.fim ? Math.round((new Date(v.fim + "T12:00:00") - new Date(hj + "T12:00:00")) / 864e5) : 99,
-        dn = fpDiasNoAr(v),
-        atr = fpAtrasado(c)
-          ? `<span class="fp-atr">⚠ ${dn} dias no ar ${c.st === "feita" ? "sem verificar" : "sem foto"}</span>`
-          : "",
-        urg = k === "p" && d <= 3 ? ` <span class="fp-urg">⏱ ${d <= 0 ? "sai do ar hoje" : "faltam " + d + (d === 1 ? " dia" : " dias")}</span>` : "";
-      return `<div class="fp-cli${atr ? " atr" : ""}"><span><b>${fpMark(v.cliente, q)}</b>${(S.fotos[c.key] || {}).prob && c.st !== "validada" ? `<span class="fp-pb">⚠ problema relatado</span>` : ""}${atr}<small>${e(sub)}${urg}${c.st === "refazer" && c.nota ? ` · motivo: ${e(c.nota)}` : ""}${c.st === "feita" && (c.by || c.fts) ? ` · <span class="fp-fez">📷 ${c.by ? e(c.by) + " " : ""}${fpQuando(c.fts)}</span>` : ""}</small></span><button type="button" class="fp-st ${k}${fpOpen === c.key ? " on" : ""}" data-a="fpst" data-v="${c.key}" title="Clique para registrar a foto">${fpStTxt(c)}</button></div>${fpOpen === c.key ? fpMenu(c) : ""}`;
-    })
-    .join("");
-  return `<div class="fp-pt ${g.k}${g.atr ? " atrasado" : ""}${g.p.id === fpFixo && fpF !== "t" && g.k !== fpF ? " fixo" : ""}"><span class="fp-num">${g.k === "v" ? FP_OK : g.n}</span>${g.atr ? `<div class="fp-alerta">⚠ ${g.atr} ${g.atr === 1 ? "foto atrasada" : "fotos atrasadas"}</div>` : ""}<h4>${fpMark(p.nome, q)}</h4><div class="fp-end">${fpMark(p.end || "", q)}${p.tp ? ` <b>${e(p.tp)}</b>` : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></div>${cl}</div>`;
+    luz = fpF === "a" || fpF === "t" ? null : fpF,
+    mostra = luz ? g.cli.filter((c) => FP_ST[c.st] === luz) : g.cli,
+    resto = luz ? g.cli.filter((c) => FP_ST[c.st] !== luz) : [],
+    nv = resto.filter((c) => FP_ST[c.st] === "v").length,
+    nf = resto.filter((c) => FP_ST[c.st] === "f").length,
+    np = resto.filter((c) => FP_ST[c.st] === "p").length,
+    lista = (mostra.length ? mostra : g.cli).map((c) => fpLinha(c, q)).join(""),
+    nfe = g.cli.filter((c) => c.st === "feita").length,
+    rod = [
+      np ? `🔴 ${np} ${np === 1 ? "cliente ainda sem foto" : "clientes ainda sem foto"}` : "",
+      nf ? `🟡 ${nf} ${nf === 1 ? "esperando conferir" : "esperando conferir"}` : "",
+      nv ? `🟢 ${nv} ${nv === 1 ? "cliente já está com foto" : "clientes já estão com foto"}` : "",
+    ].filter(Boolean);
+  return `<div class="fp-pt2 ${g.atr ? "urg" : ""}"><div class="fp-ph"><h4>📍 ${fpMark(p.nome, q)}</h4><small>${fpMark(p.end || "", q)}${p.tp ? " · " + e(p.tp) : ""} · <a href="${mapa(p)}" target="_blank" rel="noopener">mapa</a></small></div>${lista}${
+    (luz === "f" || !luz) && nfe > 1 ? `<button type="button" class="fp-todas" data-a="fpvall" data-v="${p.id}">✓ Aprovar as ${nfe} deste ponto</button>` : ""
+  }${rod.length ? `<div class="fp-rod">${rod.join("<br>")}</div>` : ""}</div>`;
 }
 function fpList() {
   const q = fpN(fpQ.trim()),
     all = fpPontos().filter((g) => fpBusca(g, q)),
     c = { p: 0, f: 0, v: 0 };
-  all.forEach((g) => c[g.k]++);
+  all.forEach((g) => {
+    if (g.cli.some((x) => FP_ST[x.st] === "p")) c.p++;
+    if (g.cli.some((x) => FP_ST[x.st] === "f")) c.f++;
+    if (g.k === "v") c.v++;
+  });
   c.a = all.filter((g) => g.atr).length;
+  const tem = (g, k) => (k === "v" ? g.k === "v" : g.cli.some((x) => FP_ST[x.st] === k));
   const vis = all
-    .filter((g) => fpF === "t" || (fpF === "a" ? g.atr : g.k === fpF) || g.p.id === fpFixo)
-    .sort(
-      (a, b) =>
-        ({ p: 0, f: 1, v: 2 })[a.k] - ({ p: 0, f: 1, v: 2 })[b.k] || a.ini.localeCompare(b.ini) || b.n - a.n || a.fim.localeCompare(b.fim),
-    );
-  const ch = (k, rot, dot) =>
-    `<button class="${fpF === k ? "on" : ""}${k === "a" ? " atr" : ""}" data-a="fpf" data-v="${k}">${dot ? `<span class="dot ${k}"></span>` : ""}${rot}<i>${k === "t" ? all.length : c[k]}</i></button>`;
+    .filter((g) => fpF === "t" || (fpF === "a" ? g.atr : tem(g, fpF)) || g.p.id === fpFixo)
+    .sort((a, b) => b.atr - a.atr || ({ p: 0, f: 1, v: 2 })[a.k] - ({ p: 0, f: 1, v: 2 })[b.k] || a.ini.localeCompare(b.ini) || b.n - a.n);
+  const luz = (k) =>
+    `<button type="button" class="fp-luz ${FP_LUZ[k].cor}${fpF === k ? " on" : ""}" data-a="fpf" data-v="${k}"><span class="lz"></span><span class="tx"><b>${c[k]}</b><strong>${FP_LUZ[k].nome}</strong><small>${FP_LUZ[k].sub}</small></span></button>`;
   const vazio = !all.length
     ? q
-      ? "Nenhum ponto com clientes no ar encontrado para essa busca."
+      ? "Nenhum ponto encontrado para essa busca."
       : "Nenhum cliente no ar hoje."
     : fpF === "p"
-      ? "Nenhum ponto precisando de foto. Tudo em dia! 🎉"
-      : fpF === "a"
-        ? "Nenhuma foto atrasada. 👏"
-        : "Nenhum ponto nesta situação.";
+      ? "Nenhum ponto sem foto. Tudo em dia! 🎉"
+      : fpF === "f"
+        ? "Nada para conferir agora 👍 Quando o motoboy marcar “Fiz”, aparece aqui."
+        : fpF === "a"
+          ? "Nenhum urgente. 👏"
+          : "Nenhum ponto aqui.";
   return (
-    `<div class="fp-fil">${c.a ? ch("a", "⚠ Atrasadas") : ""}${ch("p", "Precisa de foto")}${ch("f", "A validar", 1)}${ch("v", "Em dia", 1)}${ch("t", "Todos")}</div>` +
-    (vis.length ? `<div class="fp-grade">${vis.map((g) => fpCard(g, q)).join("")}</div>` : `<div class="fp-vazio">${vazio}</div>`) +
+    `<div class="fp-sem">${luz("p")}${luz("f")}${luz("v")}</div>` +
+    `<div class="fp-dica ${FP_LUZ[fpF].cor}"><span>${fpF === "p" ? "🔴" : fpF === "f" ? "🟡" : fpF === "v" ? "🟢" : fpF === "a" ? "🚨" : "📋"}</span><span>${FP_LUZ[fpF].dica}</span><span class="fp-dlk">${
+      c.a && fpF !== "a" ? `<button type="button" data-a="fpf" data-v="a">🚨 Só urgentes (${c.a})</button>` : ""
+    }${fpF !== "t" ? `<button type="button" data-a="fpf" data-v="t">Ver todos (${all.length})</button>` : `<button type="button" data-a="fpf" data-v="p">Voltar</button>`}</span></div>` +
+    fpProbPainel() +
+    (vis.length ? `<div class="fp-grade2">${vis.map((g) => fpCard(g, q)).join("")}</div>` : `<div class="fp-vazio">${vazio}</div>`) +
     `<span id="fpn" hidden>${all.length}</span>`
   );
 }
@@ -271,16 +302,11 @@ function fpNotifica() {
   t.innerHTML = `<span class="fp-t-ico">📷</span><div><b>${e([...g.by].join(" e ") || "Alguém")} fez as fotos de ${e(g.p.nome)}</b><small>${n} foto(s) para validar · ${fpQuando(g.ts)}</small></div><button type="button" data-a="tab" data-v="fp">Validar</button><button type="button" class="x" data-a="fptx" aria-label="Fechar">×</button>`;
 }
 function fotosPonto() {
-  const all = fpPontos(),
-    c = { p: 0, f: 0, v: 0 };
-  all.forEach((g) => c[g.k]++);
-  const na = all.reduce((s, g) => s + g.atr, 0);
   const n = fpList();
   const tot = (n.match(/<span id="fpn" hidden>(\d+)<\/span>/) || [])[1] || 0;
   return `<div class="fpw"><div class="fp-blob a"></div><div class="fp-blob b"></div><div class="fp-in">
-<div class="fp-cab"><div><small>Fluxo do VT</small><h1>📸 Fotos <i>por ponto</i></h1></div>
-<div class="fp-kp">${na ? `<div class="a" data-a="fpf" data-v="a"><b>${na}</b><span>⚠ fotos atrasadas</span></div>` : ""}<div class="p"><b>${c.p}</b><span>precisam de foto</span></div><div class="f"><b>${c.f}</b><span>a validar</span></div><div class="v"><b>${c.v}</b><span>em dia</span></div></div></div>
+<div class="fp-cab"><div><small>Fluxo do VT</small><h1>📸 Fotos <i>por ponto</i></h1></div></div>
 <label class="fp-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="fpq" type="search" autocomplete="off" placeholder="Buscar endereço, ponto, região ou cliente…" value="${e(fpQ)}"><em id="fpc">${tot} ${tot == 1 ? "ponto" : "pontos"}</em></label>
-${fpProbPainel()}${fpAvisos()}<div id="fpl">${n}</div></div></div>`;
+<div id="fpl">${n}</div></div></div>`;
 }
 const fpPend = () => fpPontos().filter((g) => g.k === "p").length;
