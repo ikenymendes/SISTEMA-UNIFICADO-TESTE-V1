@@ -306,7 +306,7 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 /* ===== Início do admin v2: topo + semáforo + administração ===== */
 .adm-cab.v2 { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 16px 18px; z-index: 3; overflow: visible; }
 .adm-cab.v2::after { overflow: hidden; }
-.adm-cab.v2 .adm-tit h1 i { font-style: normal; background: linear-gradient(90deg, #ff3d86, #9cc0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.adm-cab.v2 .adm-tit h1 i { font-style: normal; background: linear-gradient(90deg, #ff4d8d 0%, #ff7eb3 55%, #d9a5ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .adm-cab.v2 .adm-local { display: inline-flex; margin-top: 10px; padding: 5px 12px; border-radius: 99px; background: #ffffff1a; font-size: 13px; }
 .adm-cab.v2 .adm-dir { flex-direction: column; align-items: flex-end; gap: 12px; }
 .adm-cab.v2 .adm-hora { font-size: 64px; font-weight: 700; line-height: 1; }
@@ -380,14 +380,8 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 .adm-sec::after { background: linear-gradient(90deg, #ffffff26, transparent); }
 .adm-cab::after { display: none; }
 
-/* ---------- rosa bem suave se movendo devagar atrás do vidro (não pega clique, não passa na frente) ---------- */
+/* ---------- fumaça rosa suave se mexendo atrás do vidro (não pega clique, não passa na frente) ---------- */
 .adm.tema-vidro { --blob1: #ff00661a; }
 .adm .fundo { overflow: hidden; }
-.adm .fundo .rosa { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
-  background: radial-gradient(circle, var(--rosa, #ff00661f) 0%, transparent 62%); }
-.adm .fundo .r1 { width: 46vmax; height: 46vmax; left: 10vw; top: -14vmax; animation: rosaA 70s ease-in-out infinite alternate; }
-.adm .fundo .r2 { width: 36vmax; height: 36vmax; right: -8vw; top: 34vh; --rosa: #ff3d8614; animation: rosaB 85s ease-in-out infinite alternate; }
-.adm .fundo .r3 { display: none; }
-.adm.tema-branco .fundo .r1 { --rosa: #ff00660f; } .adm.tema-branco .fundo .r2 { --rosa: #ff3d860b; }
-@keyframes rosaA { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(26vw, 22vh) scale(1.08); } 100% { transform: translate(44vw, 4vh) scale(.96); } }
-@keyframes rosaB { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-30vw, -18vh) scale(1.1); } 100% { transform: translate(-12vw, 14vh) scale(.94); } }
+.adm .fundo .fumaca { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: blur(30px); transform: scale(1.15); }
+.adm.tema-branco .fundo .fumaca { opacity: .45; }

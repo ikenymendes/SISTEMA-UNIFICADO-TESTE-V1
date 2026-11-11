@@ -157,6 +157,35 @@ var MEGA = (function () {
     })();
   }
 
+  /* fumaça rosa atrás do vidro do admin: uma tela bem pequena (barata) ampliada e desfocada pelo CSS,
+     com algumas nuvens rosa/roxas seguindo caminhos suaves. Para sozinha quando a aba fica escondida. */
+  function fumacaRosa(cv) {
+    var W = 96, H = 60, x = cv.getContext && cv.getContext('2d');
+    if (!x) return;
+    cv.width = W; cv.height = H;
+    var cores = ['255,0,102', '255,61,134', '192,38,211', '255,0,102', '124,58,237', '255,92,154'];
+    var P = [];
+    for (var i = 0; i < 8; i++) P.push({ ax: Math.random() * 6.28, ay: Math.random() * 6.28, sx: .00012 + Math.random() * .00016, sy: .0001 + Math.random() * .00014,
+      r: 16 + Math.random() * 20, c: cores[i % cores.length], cx: .15 + Math.random() * .7, cy: .15 + Math.random() * .7 });
+    var ult = 0;
+    (function quadro(t) {
+      if (!document.body.contains(cv)) return;
+      requestAnimationFrame(quadro);
+      if (t - ult < 40) return; /* ~25 quadros por segundo: suave e leve */
+      ult = t;
+      x.clearRect(0, 0, W, H); x.globalCompositeOperation = 'lighter';
+      for (var k = 0; k < P.length; k++) {
+        var p = P[k],
+          px = (p.cx + .4 * Math.sin(t * p.sx + p.ax) + .16 * Math.sin(t * p.sx * 2.3 + k)) * W,
+          py = (p.cy + .36 * Math.cos(t * p.sy + p.ay) + .14 * Math.sin(t * p.sy * 1.7 + k * 2)) * H,
+          r = p.r * (1 + .25 * Math.sin(t * .0004 + k));
+        var g = x.createRadialGradient(px, py, 0, px, py, r);
+        g.addColorStop(0, 'rgba(' + p.c + ',.24)'); g.addColorStop(1, 'rgba(' + p.c + ',0)');
+        x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 6.29); x.fill();
+      }
+    })(0);
+  }
+
   /* ao entrar: os campos descem e o cartão se dissolve; em seguida vem a boas-vindas com o "M" acendendo */
   function abertura(tela) {
     return new Promise(function (ok) {
@@ -502,7 +531,9 @@ var MEGA = (function () {
     document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') fecharFolha(); });
     var topoM = h('div', { class: 'topo-m' }, [h('img', { src: 'core/assets/logoW.png', alt: 'Mega', onclick: function () { abrir('inicio'); } }), menuM]);
 
-    adm.appendChild(h('div', { class: 'fundo' }, [h('i', { class: 'rosa r1' }), h('i', { class: 'rosa r2' }), h('i', { class: 'rosa r3' })]));
+    var fum = h('canvas', { class: 'fumaca', 'aria-hidden': 'true' });
+    adm.appendChild(h('div', { class: 'fundo' }, [fum]));
+    fumacaRosa(fum);
     adm.appendChild(trilho); adm.appendChild(topoM); adm.appendChild(folha);
     adm.appendChild(h('div', { class: 'palco', id: 'palco' }));
     app.appendChild(adm);
