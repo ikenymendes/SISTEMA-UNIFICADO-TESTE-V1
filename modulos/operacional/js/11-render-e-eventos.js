@@ -100,7 +100,10 @@ function render() {
     view = "pm";
     moto = motoLogado();
     document.body.classList.add("rm");
-  } else document.body.classList.remove("rm");
+  } else {
+    document.body.classList.remove("rm");
+    if (view === "pm") view = "g"; /* "Perto de mim" é só a tela do motoboy */
+  }
   const nfx = fxStat(dia().slice(0, 7));
   {
     const T1 = [
@@ -109,7 +112,6 @@ function render() {
         ["fv", "Fotos validadas"],
         ["r", "Rotas"],
         ["m", "Motoboy"],
-        ["pm", "Perto de mim"],
         ["k", "Checking (" + ckLista().length + ")"],
         ["c", "Concluídos (" + S.vts.filter(isConc).length + ")"],
       ],
