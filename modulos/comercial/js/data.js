@@ -1,7 +1,7 @@
 /* Dados do kit: estado padrão, preços, fotos, mapas e geração (PPTX/PDF/prévia). */
 var ONLINE=false; /* false = mapas reais (Esri/OSM) com a internet */
-var INS_DEF={led_mega:500,led_r2:500,banca_mega:500,banca_r2:500,led_bh:500,led_rm:500,banca_led:500,mercado:220,guanabara:250,df_painel:420};
-var PRECO_ORD=['mercado','led_mega','banca_mega','led_r2','banca_r2','guanabara','empena','front','mensal','outdoor','revista','metro','df_painel'];
+var INS_DEF={led_mega:500,led_r2:500,banca_mega:500,banca_r2:500,led_bh:500,led_rm:500,banca_led:500,mercado:220,guanabara:250,df_painel:420,rj:480};
+var PRECO_ORD=['mercado','led_mega','banca_mega','led_r2','banca_r2','guanabara','empena','front','mensal','outdoor','revista','metro','df_painel','rj'];
 function temK(rs,k){ return rs.some(function(r){ return (r.auto||'').split(',').indexOf(k)>=0; }); }
 function juntaLinha(rs,a,b,nome){
   var ra=rs.filter(function(r){ return (r.auto||'').split(',').indexOf(a)>=0; })[0], rb=rs.filter(function(r){ return (r.auto||'').split(',').indexOf(b)>=0&&r!==ra; })[0], alvo=ra||rb; if(!alvo) return false;
@@ -18,7 +18,7 @@ function migPrecos(D){ if(!D.precos) return;
   /* Painéis de LED e Bancas de LED: uma linha só (MEGA e MEGA/R2 são só informação interna) */
   if(juntaLinha(rs,'led_mega','led_r2','Painéis de LED')) mudou=true;
   if(juntaLinha(rs,'banca_mega','banca_r2','Bancas de LED')) mudou=true;
-  [['led_mega,led_r2','Painéis de LED','led_mega'],['banca_mega,banca_r2','Bancas de LED','banca_mega'],['mercado','Circuito Mercado Central','mercado'],['outdoor','Painéis outdoor','outdoor']].forEach(function(n){ if(!temK(rs,n[2])){ rs.push({nome:n[1],auto:n[0],pontos:'',periodo:'Mensal',insercoes:'',tabela:'',desc:'',modo:'geral'}); mudou=true; } });
+  [['led_mega,led_r2','Painéis de LED','led_mega'],['banca_mega,banca_r2','Bancas de LED','banca_mega'],['mercado','Circuito Mercado Central','mercado'],['outdoor','Painéis outdoor','outdoor'],['rj','Painéis de LED · Rio de Janeiro','rj']].forEach(function(n){ if(!temK(rs,n[2])){ rs.push({nome:n[1],auto:n[0],pontos:'',periodo:'Mensal',insercoes:'',tabela:'',desc:'',modo:'geral'}); mudou=true; } });
   /* nenhuma linha repetida (ex.: Bancas Estáticas só uma) */
   var vis={}; for(var i=0;i<rs.length;i++){ var a=rs[i]; if(a.nome==='Bancas de revista') a.nome='Bancas Estáticas'; if(!a.auto) continue; if(vis[a.auto]){ var o=vis[a.auto]; ['tabela','desc','insPor'].forEach(function(c){ if(!String(o[c]==null?'':o[c]).trim()&&String(a[c]==null?'':a[c]).trim()) o[c]=a[c]; }); rs.splice(i,1); i--; mudou=true; } else vis[a.auto]=a; }
   if(mudou){ var ix=function(r){ var j=PRECO_ORD.indexOf((r.auto||'').split(',')[0]); return j<0?99:j; };
@@ -28,7 +28,9 @@ function migPrecos(D){ if(!D.precos) return;
     if(!r.v3){ r.v3=1; if(r.auto) r.periodo=r.auto==='outdoor'?'Bi-semana':'Mensal'; }
     if(!r.v4){ r.v4=1; if(ehEstatico(r)) r.incProd=true; } }); }
 var ESTATICOS=['empena','front','mensal','outdoor','revista','metro'];
-function ehEstatico(r){ return !!r.auto&&ESTATICOS.indexOf(r.auto)>=0; }
+/* formatos com preço por endereço: estáticos + Rio de Janeiro (cada painel tem o seu valor; sem produção) */
+var POR_END=ESTATICOS.concat(['rj']);
+function ehEstatico(r){ return !!r.auto&&POR_END.indexOf(r.auto)>=0; }
 function selEstaticos(D,k){ return ptsOf(D,k).filter(function(p){ return p.sel; }); }
 /* Preço pré-definido (líquido) dos estáticos: o admin cadastra, por ponto, o valor LÍQUIDO (p.liq) e, se houver, a
    produção líquida (p.prod). A linha pode incluir a produção (r.incProd). O valor de tabela da linha é o líquido
@@ -68,7 +70,7 @@ function linhasEst(D,r,todos){ var f=fatorLiq(D), end=r.end||{};
     var tm=num(e.t)>0?num(e.t):(l>0?l/f:vlr(p.preco)), dm=num(e.d);
     return {p:p,tm:tm,dm:dm,nm:tm*(1-dm/100),tp:0,dp:0,np:0,minM:l,minP:pr}; });
   /* Produção: UM valor único por formato (líquido + perfil), em vez de um por endereço. */
-  if(out.length){ var ep=end['#prod']||{}, tv=prodDe(D,ep,sumP); out.push({p:{id:'#prod',endereco:'Produção'},isProd:true,tm:0,dm:0,nm:0,tp:tv,dp:0,np:tv,minM:0,minP:0}); }
+  if(out.length&&r.auto!=='rj'){ var ep=end['#prod']||{}, tv=prodDe(D,ep,sumP); out.push({p:{id:'#prod',endereco:'Produção'},isProd:true,tm:0,dm:0,nm:0,tp:tv,dp:0,np:tv,minM:0,minP:0}); }
   return out; }
 function calcPreco(D,r){
   migPrecos(D);
@@ -84,6 +86,22 @@ function calcPreco(D,r){
   var liqNeg=neg*fatorLiq(D), abaixo=minLiq>0&&liqNeg<minLiq-0.005;
   return {minLiq:minLiq,liqNeg:liqNeg,abaixo:abaixo,incProd:!!r.incProd,nome:r.nome,pontos:pontos,periodo:r.periodo,insPor:ip,insercoes:ins?String(ins).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—',insN:ins,linhas:LE,tabelaUnit:tabU,tabela:tab,desc:desc,neg:neg,modo:modo,final:fin};
 }
+
+/* ===== Proposta por CPM (só admin): valor = impactos do período ÷ 1000 × CPM =====
+   CPM único da proposta (D.cpmProp.cpm) ou o CPM base de cada ponto (p.cpm, quando "base" ligado e o ponto tiver).
+   Impactos do período = impacto semanal × (dias ÷ 7). Circuitos entram uma vez, com o público do local. */
+function impSemanal(p){ var i=num(p.impacto); if(i>0) return i; var f=num(p.fluxo); if(!(f>0)) return 0; return CIRCUITOS.indexOf(p.secao)>=0?f/30*7:f*7; }
+function cpmOn(D){ return !!(D&&D.cpmProp&&D.cpmProp.on&&typeof ME!=='undefined'&&ME.admin); }
+function cpmCalc(D){ if(!cpmOn(D)) return null; var c=D.cpmProp, dias=Math.max(1,num(c.dias)||30), sem=dias/7, cg=num(c.cpm), fm=D.modoGeral==='liquido'?(1-num(D.comissao)/100)*(1-num(D.bv)/100):1;
+  var vistos={}, itens=[];
+  D.pontos.filter(function(p){ return p.sel; }).forEach(function(p){ var circ=CIRCUITOS.indexOf(p.secao)>=0; if(circ){ if(vistos[p.secao]) return; vistos[p.secao]=1; }
+    var cp=(c.base&&num(p.cpm)>0)?num(p.cpm):cg, imp=impSemanal(p)*sem;
+    itens.push({p:p,nome:circ?'Circuito '+SEC[p.secao].nome:grupoDe(p).nome,end:circ?SEC[p.secao].nome:(p.endereco||'')+(p.bairro?' · '+p.bairro:''),imp:imp,cpm:cp,valor:imp/1000*cp*fm,semImp:!(imp>0),semCpm:!(cp>0)}); });
+  var G={}, rows=[]; itens.forEach(function(x){ var o=G[x.nome]; if(!o){ o=G[x.nome]={nome:x.nome,pontos:0,periodo:dias+' dias',imp:0,final:0}; rows.push(o); } o.pontos+=x.p&&CIRCUITOS.indexOf(x.p.secao)>=0?TELAS_CIRC[x.p.secao]:1; o.imp+=x.imp; o.final+=x.valor; });
+  rows.forEach(function(r){ r.cpm=r.imp>0?r.final/fm/r.imp*1000:0; r.tabela=r.final; r.neg=r.final; r.desc=0; r.insercoes='—'; r.insN=0; });
+  var tot=rows.reduce(function(a,r){ return a+r.final; },0), impT=rows.reduce(function(a,r){ return a+r.imp; },0);
+  return {dias:dias,itens:itens,rows:rows,total:tot,imp:impT,cpmMedio:impT>0?tot/fm/impT*1000:0,falta:itens.filter(function(x){ return x.semImp||x.semCpm; })}; }
+function fmtMil(n){ n=Math.round(n||0); return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 
 /* ===== Estado, mapas, interface ===== */
 var $=function(s,r){return (r||document).querySelector(s)};
@@ -273,13 +291,14 @@ function mapaPreview(obj){
 /* ---------- preparação dos assets e geração ---------- */
 var BASE={};
 async function prepare(setStatus,mode){
-  var A={photos:{},maps:{},logoW:BASE.logoW,logoC:BASE.logoC,mercN:BASE.mercN,mercW:BASE.mercW};
+  var A={photos:{},maps:{},logoW:BASE.logoW,logoC:BASE.logoC,mercN:BASE.mercN,mercW:BASE.mercW,rjSil:BASE.rjSil};
   var keys=usedPhotoKeys(mode); for(var i=0;i<keys.length;i++){ setStatus&&setStatus('Preparando fotos '+(i+1)+'/'+keys.length+'…'); A.photos[keys[i]]=await loadPhoto(keys[i]); }
   mapFail=0; var withLL=D.pontos.filter(function(p){return ((mode!=='proposta'&&mode!=='kit')||p.sel)&&p.lat!=null&&p.lat!==''&&p.lng!=null&&!isNaN(p.lat)}); var done=0;
   for(var j=0;j<withLL.length;j+=6){ await Promise.all(withLL.slice(j,j+6).map(async function(p){ var et=endTxt(p); A.maps[p.id]=await renderMap([{lat:+p.lat,lng:+p.lng,t1:et[0],t2:et[1]}],1040,720,zoomMapa(p.zoom)); done++; setStatus&&setStatus('Gerando mapas '+done+'/'+withLL.length+'…'); })); }
-  var all=withLL.filter(function(p){return p.secao!=='df_painel'}).map(function(p){return {lat:+p.lat,lng:+p.lng}}); all.push({lat:+D.mercado.lat,lng:+D.mercado.lng}); all.push({lat:+D.guanabara.lat,lng:+D.guanabara.lng});
+  var all=withLL.filter(function(p){return p.secao!=='df_painel'&&p.secao!=='rj'}).map(function(p){return {lat:+p.lat,lng:+p.lng}}); all.push({lat:+D.mercado.lat,lng:+D.mercado.lng}); all.push({lat:+D.guanabara.lat,lng:+D.guanabara.lng});
   setStatus&&setStatus('Gerando mapa geral…'); A.mapGeral=await renderMap(all.filter(function(p){return !isNaN(p.lat)}),1460,890,0);
   var dfl=withLL.filter(function(p){return p.secao==='df_painel'}).map(function(p){return {lat:+p.lat,lng:+p.lng}}); if(dfl.length) A.mapDF=await renderMap(dfl,1500,890,0);
+  var rjl=withLL.filter(function(p){return p.secao==='rj'}).map(function(p){return {lat:+p.lat,lng:+p.lng}}); if(rjl.length){ setStatus&&setStatus('Gerando mapa do Rio de Janeiro…'); A.mapRJ=await renderMap(rjl,1500,890,0); }
   if(+D.mercado.lat&&+D.mercado.lng) A.mapM=await renderMap([{lat:+D.mercado.lat,lng:+D.mercado.lng}],1000,1260,zoomMapa(16));
   A.mapG=await renderMap([{lat:+D.guanabara.lat,lng:+D.guanabara.lng}],1284,408,16); A.mapG2=await renderMap([{lat:+D.guanabara.lat,lng:+D.guanabara.lng}],1000,1150,16);
   D.pontos.forEach(function(p){ var mk=Array.isArray(p.mapa)?p.mapa[0]:p.mapa; if(mk&&A.photos[mk]) A.maps[p.id]=A.photos[mk]; }); A.mapFail=0; return A;

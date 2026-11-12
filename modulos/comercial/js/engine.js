@@ -328,9 +328,10 @@ var SEC = {
   mercado:{nome:'Mercado Central',praca:'',tipo:'Painel de LED',sep:5,tiles:[['FLUXO DE PESSOAS/MÊS','fluxo'],['VEICULAÇÕES/DIA','veic']]},
   guanabara:{nome:'Parque Guanabara',praca:'',tipo:'Circuito de LED',sep:6,tiles:[['VISITANTES POR MÊS','fluxo'],['VEICULAÇÕES/DIA','veic']]},
   metro:{nome:'Metrô-DF',praca:'',tipo:'Mídia no Metrô',sep:11,tiles:[['PASSAGEIROS/DIA','fluxo'],['PÚBLICO','publico']],nomap:true},
-  df_painel:{nome:'Painéis de LED · Brasília',praca:'',tipo:'Painel de LED',sep:12,tiles:[['INSERÇÕES POR DIA','veic'],['FORMATO (PX)','pixels']]}
+  df_painel:{nome:'Painéis de LED · Brasília',praca:'',tipo:'Painel de LED',sep:12,tiles:[['INSERÇÕES POR DIA','veic'],['FORMATO (PX)','pixels']]},
+  rj:{nome:'Painéis de LED · Rio de Janeiro',praca:'',tipo:'Painel de LED',sep:15,tiles:[['IMPACTO SEMANAL','impacto'],['INSERÇÕES POR DIA','veic']]}
 };
-var SEC_ORDER=['led_bh','led_rm','banca_led','empena','front','mensal','revista','mercado','guanabara','metro','df_painel'];
+var SEC_ORDER=['led_bh','led_rm','banca_led','empena','front','mensal','revista','mercado','guanabara','metro','rj','df_painel'];
 var CIRCUITOS=['mercado','guanabara'];
 var DONOS=[['padrao','Padrão'],['mega','MEGA'],['mega_r2','MEGA/R2'],['terceiros','Terceiros']];
 function donoDe(p){ return p&&p.dono||'padrao'; }
@@ -352,6 +353,7 @@ var GRUPOS=[
  {k:'outdoor',nome:'Painéis Outdoor',sec:['outdoor']},
  {k:'revista',nome:'Bancas Estáticas',sec:['revista']},
  {k:'metro',nome:'Metrô-DF',sec:['metro']},
+ {k:'rj',nome:'Painéis de LED · Rio de Janeiro',sec:['rj']},
  {k:'df_painel',nome:'Painéis de LED Brasília',sec:['df_painel']}
 ];
 var GRUPO_NOVOS={led_mega:1,banca_mega:1,led_r2:1,banca_r2:1};
@@ -416,7 +418,7 @@ function edge(S,A,x0,d,key,nomotif){
 }
 
 /* ordem de exibição das capas no kit (os números i são estáveis; a posição vem daqui) */
-var SEQ=[5,2,4,6,7,8,9,13,10,11,12];
+var SEQ=[5,2,4,6,7,8,9,13,10,11,12,14,15];
 function NP(i){ var n=SEQ.indexOf(i)+1; return (n<10?'0':'')+n; }
 var SEPS=[
  {i:1,off:true,title:'Belo\nHorizonte',kick:'Praça',sub:'Painéis, bancas, empenas e mais',hero:function(S){skyline(S,0.35,1.3,4.0,2.1,{dark:true});},secs:['led_bh','banca_led']},
@@ -431,6 +433,8 @@ var SEPS=[
  {i:10,title:'Bancas\nEstáticas',kick:'Formato',sub:'Mídia estática em bancas de revista',hero:function(S){bancaDraw(S,0.9,1.35,3.0,2.1,{dark:true,kind:'revista'});},secs:['revista']},
  {i:11,title:'Brasília',kick:'Praça',sub:'Metrô-DF e painéis de LED',hero:function(S){congresso(S,0.6,1.3,3.7,2.1,{dark:true});},secs:['metro','df_painel']},
  {i:12,title:'Painéis de LED\nBrasília',kick:'Formato',sub:'Distrito Federal',hero:function(S){ledPanel(S,1.2,1.1,2.6,2.4,{dark:true,ratio:0.67});pinIcon(S,3.4,1.1,0.45);},secs:['df_painel']},
+ {i:14,title:'Rio de\nJaneiro',kick:'Praça',sub:'Painéis e empenas de LED',hero:function(S,A){ if(A.rjSil) S.img(0.55,1.45,4.2,4.2*A.rjSil.h/A.rjSil.w,A.rjSil,{contain:true}); },secs:['rj']},
+ {i:15,title:'Painéis de LED\nRio de Janeiro',kick:'Formato',sub:'Capital, Baixada, Niterói e interior',hero:function(S){ledPanel(S,0.8,1.35,3.3,2.1,{dark:true,ratio:2.4});pinIcon(S,3.4,1.15,0.45);},secs:['rj']},
  {i:13,title:'Painéis\noutdoor',kick:'Formato',sub:'Outdoors em vias de grande circulação',hero:function(S){billboard(S,0.5,1.4,3.7,2.0,{dark:true,ratio:3.0});},secs:['outdoor']}
 ];
 var SEPINFO={
@@ -446,6 +450,8 @@ var SEPINFO={
  10:{texto:'Bancas estáticas tradicionais da cidade, com comunicação impressa próxima ao pedestre, em pontos de grande circulação.',stats:[['auto','bancas estáticas'],['Rua','mídia na altura do olhar'],['Mensal','período de exposição']],bullets:['Localização em regiões de grande fluxo','Presença local e contato próximo','Boa opção para ações de proximidade']},
  11:{texto:'Capital federal, Patrimônio Cultural da Humanidade pela UNESCO e sede dos poderes da República. Com mais de 2,8 milhões de habitantes e uma das maiores rendas do país, reúne um público qualificado, que se desloca pelas grandes vias e pelo Metrô-DF.',stats:[['auto','pontos em Brasília'],['2,8 mi','habitantes'],['160 mil','usuários por dia no Metrô-DF']],bullets:['Mídia no Metrô-DF: vagões e estações','Painéis de LED nas principais vias','Público A, B e C']},
  13:{texto:'Outdoors em vias de grande circulação: formato tradicional da mídia exterior, com exposição contínua durante a bi-semana e ótimo custo-benefício para construir presença de marca.',stats:[['auto','painéis outdoor'],['Bi-semana','período de exposição']],bullets:['Pontos de grande fluxo de pessoas e veículos','Visibilidade contínua, dia após dia','Ótimo custo-benefício']},
+ 14:{texto:'A segunda maior cidade do país e principal destino turístico do Brasil. A Mega leva a sua marca para a capital fluminense, a Baixada, Niterói e o interior do estado, com painéis e empenas de LED em vias de grande fluxo.',stats:[['auto','pontos no Rio de Janeiro'],['6,2 mi','habitantes na capital'],['12 mi','na região metropolitana']],bullets:['Linha Vermelha, Av. das Américas e grandes corredores','Baixada Fluminense, Niterói e Norte Fluminense','Empenas de LED em Copacabana e no Maracanã']},
+ 15:{texto:'Painéis de LED em pontos estratégicos do estado do Rio de Janeiro: vídeos de 10 segundos, em loop, com alta frequência de exibição e audiência semanal medida em cada ponto.',stats:[['auto','painéis de LED'],['480','inserções por dia / painel'],['10 s','duração do VT']],bullets:['Arquivo em MP4','Audiência semanal por ponto','Ideal para campanhas regionais e programáticas']},
  12:{texto:'Painéis de LED nos eixos e rodovias que ligam o Plano Piloto ao restante do Distrito Federal, falando com quem se desloca todos os dias de carro.',stats:[['auto','painéis de LED'],['420','inserções por dia'],['10 s','duração do VT']],bullets:['Eixos e rodovias de grande fluxo','Vídeos de 10 segundos em MP4','Alta frequência e repetição de marca']}
 };
 function sepInfo(D,i){ D.sepInfo=D.sepInfo||{}; if(!D.sepInfo[i]) D.sepInfo[i]=JSON.parse(JSON.stringify(SEPINFO[i])); return D.sepInfo[i]; }
@@ -472,7 +478,7 @@ function separator(D,A,sp){
     S.text(x+0.2,4.3,sw-0.35,0.7,val,{size:String(val).length>6?24:32,f:'M',color:C.WHITE,valign:'m'});
     S.text(x+0.2,4.98,sw-0.35,0.45,minLbl(st[0],st[1]),{size:9.5,f:'L',color:k===1?C.WHITE:'CCCCE0',ls:1.0}); });
   (info.bullets||[]).slice(0,3).forEach(function(b,k){ var y=5.8+k*0.36; S.oval(RX+0.02,y+0.09,0.12,0.12,{fill:C.PINK}); S.text(RX+0.3,y,RW-0.3,0.32,b,{size:11,f:'L',color:'E6E6F2'}); });
-  var xx=0.75; for(var i=0;i<SEQ.length;i++){ var cur=SEQ[i]===sp.i, w=cur?0.42:0.15; S.rect(xx,6.8,w,0.07,{fill:cur?C.PINK:'5A5A9A',r:0.035}); xx+=w+0.05; }
+  var SEQV=SEQ.filter(function(n){ return n<14||(ME&&ME.admin); }); var xx=0.75; for(var i=0;i<SEQV.length;i++){ var cur=SEQV[i]===sp.i, w=cur?0.42:0.15; S.rect(xx,6.8,w,0.07,{fill:cur?C.PINK:'5A5A9A',r:0.035}); xx+=w+0.05; }
   return S;
 }
 
@@ -678,22 +684,39 @@ function buildSlides(D0,A,mode){ migKit(D0);
   dfp.forEach(function(p){ push(ficha(D,A,p)); });
   }
 
+  // RIO DE JANEIRO (só o admin enxerga esses pontos)
+  var rjp=ptsOf(D,'rj'); CG=10;
+  if((full&&ME&&ME.admin)||rjp.length){
+  push(separator(D,A,SEPS.filter(function(x){return x.i===14;})[0]));
+  push(separator(D,A,SEPS.filter(function(x){return x.i===15;})[0]));
+  S=frame(null,A,NP(15)+' · Painéis de LED · Rio de Janeiro','Onde estão os painéis',rjp.length+(rjp.length===1?' ponto de LED':' pontos de LED')+' no estado do Rio de Janeiro');
+  card(S,0.6,1.95,7.9,4.85,0.2); if(A.mapRJ) S.img(0.8,2.15,7.5,4.45,A.mapRJ,{r:0.18}); else S.rect(0.8,2.15,7.5,4.45,{fill:'EEF0F8',r:0.18});
+  var cids=rjp.map(function(p){ return String(p.cidade||'').replace(/\s*-\s*RJ$/,''); }).filter(function(c,i,a){ return c&&a.indexOf(c)===i; });
+  var audT=rjp.reduce(function(a,p){ return a+num(p.impacto); },0);
+  [[String(rjp.length),'pontos de LED','navy'],[String(cids.length),cids.length===1?'cidade':'cidades','white'],[audT?(audT>=1e6?(Math.round(audT/1e5)/10).toString().replace('.',',')+' mi':Math.round(audT/1e3)+' mil'):'—','impactos por semana (soma)','pink']].forEach(function(t,i){ tile(S,8.7,1.95+i*1.65,4.03,1.5,t[0],t[1],t[2],26,10); });
+  push(S);
+  if(rjp.length) specPages(push,A,NP(15)+' · Painéis de LED · Rio de Janeiro','Rio de Janeiro',['Local','Tamanho','Formato (px)','Peso máx.','Arquivo','Duração','Ins./dia'],groupSpec(rjp,true,48,null,['peso','arquivo','dur']),[2.05,0.95,1.05,0.8,0.75,0.75,0.85],function(S,x,y,w,h){ledPanel(S,x,y,w,h,{dark:false,ratio:2.0,dims:['Largura','Altura']});},'Tamanho em metros · formato em pixels (resolução do arquivo).',[['MP4','Extensão do arquivo'],['10 s','Duração do VT'],['480','Inserções por dia (padrão)'],['25 MB','Tamanho máximo']],{size:9});
+  rjp.forEach(function(p){ push(ficha(D,A,p)); });
+  }
+
   // PREÇOS
   CG=99;
   var rows=D.precos.filter(function(r){ return full||!r.auto||r.auto.split(',').some(function(k){return has(k);}); }).reduce(function(acc,r){ var c=calcPreco(D,r); if(c.linhas&&c.linhas.length){ var fm=D.modoGeral==='liquido'?(1-num(D.comissao)/100)*(1-num(D.bv)/100):1; c.linhas.forEach(function(x){ if(x.isProd){ if(x.tp>0) acc.push({nome:'Produção · '+c.nome,pontos:1,periodo:'Produção',insPor:0,insercoes:'—',insN:0,tabela:x.tp,desc:0,neg:x.np,modo:D.modoGeral,final:x.np*fm}); return; } var nm=(x.p.endereco||'Endereço')+(x.p.bairro?' · '+x.p.bairro:''); acc.push({nome:nm,pontos:x.n||1,periodo:c.periodo,insPor:0,insercoes:'—',insN:0,tabela:x.tm,desc:x.dm,neg:x.nm,modo:D.modoGeral,final:x.nm*fm}); if(x.tp>0) acc.push({nome:'Produção · '+nm,pontos:x.n||1,periodo:'Produção',insPor:0,insercoes:'—',insN:0,tabela:x.tp,desc:x.dp,neg:x.np,modo:D.modoGeral,final:x.np*fm}); }); } else acc.push(c); return acc; },[]);
   /* linhas com o mesmo nome (ex.: Painéis MEGA + MEGA/R2) viram uma só na proposta: o dono é informação interna */
   if(!full){ var mg=[]; rows.forEach(function(r){ var o=mg.filter(function(x){return x.nome===r.nome})[0]; if(!o) mg.push(Object.assign({},r)); else { o.pontos+=r.pontos; o.insN+=r.insN; o.tabela+=r.tabela; o.neg+=r.neg; o.final+=r.final; o.desc=o.tabela?Math.round((1-o.neg/o.tabela)*10000)/100:0; o.insercoes=o.insN?String(o.insN).replace(/\B(?=(\d{3})+(?!\d))/g,'.'):'—'; } }); rows=mg; }
+  var CPM=(!full&&!noPrice)?cpmCalc(D0):null; if(CPM) rows=CPM.rows;
   window.LAST_ROWS=rows;
   if(!full&&!noPrice){
-  S=frame(null,A,'Investimento','Tabela de preços','Valor de tabela, desconto e valor negociado ('+(D.modoGeral==='liquido'?'líquido de comissão':'bruto')+')');
-  var tb=[['Formato','Pontos','Período','Mín. inserções/dia','Valor tabela','Desc.','Valor negociado'+(D.modoGeral==='liquido'?' (líq.)':' (bruto)')]], totT=0, totN=0;
-  rows.forEach(function(c){ totT+=c.tabela; totN+=c.final; tb.push([c.nome,String(c.pontos),c.periodo,c.insercoes||'—',brl(c.tabela),(c.desc||0)+'%',brl(c.final)]); });
+  S=frame(null,A,'Investimento','Tabela de preços',CPM?'Proposta por CPM (custo por mil impactos) · '+CPM.dias+' dias de veiculação ('+(D.modoGeral==='liquido'?'líquido de comissão':'bruto')+')':'Valor de tabela, desconto e valor negociado ('+(D.modoGeral==='liquido'?'líquido de comissão':'bruto')+')');
+  var tb=CPM?[['Formato','Pontos','Período','Impactos no período','CPM','Investimento'+(D.modoGeral==='liquido'?' (líq.)':' (bruto)')]]:[['Formato','Pontos','Período','Mín. inserções/dia','Valor tabela','Desc.','Valor negociado'+(D.modoGeral==='liquido'?' (líq.)':' (bruto)')]], totT=0, totN=0;
+  rows.forEach(function(c){ totT+=c.tabela; totN+=c.final; tb.push(CPM?[c.nome,String(c.pontos),c.periodo,fmtMil(c.imp),brl(c.cpm),brl(c.final)]:[c.nome,String(c.pontos),c.periodo,c.insercoes||'—',brl(c.tabela),(c.desc||0)+'%',brl(c.final)]); });
   var CI=circCalc(D,totN), ch=CI?3.7:4.85;
   if(CI) S.items.forEach(function(it){ if(it.t==='text'&&/^Valor de tabela, desconto/.test(it.str)) it.str='Valores individuais (fechando separado) e condição especial para o circuito completo'; });
   card(S,0.6,1.95,12.13,ch,0.2);
-  tb.push([CI?'Total fechando separado':'Total','','','',brl(totT),'',brl(totN)]);
+  tb.push(CPM?[CI?'Total fechando separado':'Total','',CPM.dias+' dias',fmtMil(CPM.imp),'CPM médio '+brl(CPM.cpmMedio),brl(totN)]:[CI?'Total fechando separado':'Total','','','',brl(totT),'',brl(totN)]);
   var hh=Math.min(0.41,(ch-0.3-0.4)/(tb.length-1));
-  table(S,0.85,2.1,11.63,tb,[3.9,0.9,1.2,1.3,1.6,0.8,2.3],{rowH:hh,headH:0.4,size:10,total:true,aligns:['l','c','l','c','r','c','r']});
+  if(CPM) table(S,0.85,2.1,11.63,tb,[3.9,0.9,1.2,1.9,1.6,2.13],{rowH:hh,headH:0.4,size:10,total:true,aligns:['l','c','l','r','r','r']});
+  else table(S,0.85,2.1,11.63,tb,[3.9,0.9,1.2,1.3,1.6,0.8,2.3],{rowH:hh,headH:0.4,size:10,total:true,aligns:['l','c','l','c','r','c','r']});
   if(CI){ S.rect(0.6,5.85,12.13,0.95,{fill:C.PINK,r:0.2}); S.rect(0.85,6.1,1.15,0.46,{fill:C.WHITE,r:0.23}); S.text(0.85,6.1,1.15,0.46,'−'+pctTxt(CI.pct),{size:14,f:'B',color:C.PINK,align:'c',valign:'m',bold:true});
     S.text(2.2,5.95,5.6,0.4,'PACOTE COMPLETO · CIRCUITO',{size:14,f:'B',color:C.WHITE,bold:true,spc:60}); S.text(2.2,6.35,5.8,0.35,'Fechando todos os pontos juntos · economia de '+brl(CI.desc),{size:10,f:'L',color:C.WHITE});
     S.text(7.9,5.95,2.0,0.35,'separado',{size:9,f:'L',color:C.WHITE,align:'r',a:80}); S.text(7.9,6.22,2.0,0.4,brl(CI.sep),{size:12,f:'L',color:C.WHITE,align:'r',valign:'m',a:85}); S.line(8.86,6.43,9.9,6.43,{c:C.WHITE,lw:1.4,a:90});
@@ -712,7 +735,8 @@ function buildSlides(D0,A,mode){ migKit(D0);
     S.rect(7.5,2.82,1.35,0.5,{fill:C.WHITE,r:0.25,shadow:true}); S.text(7.5,2.82,1.35,0.5,'−'+pctTxt(CI.pct),{size:15,f:'B',color:C.PINK,align:'c',valign:'m',bold:true});
     S.rect(0.85,5.35,1.3,0.07,{fill:C.PINK}); S.text(0.75,5.47,7.9,0.35,modoTxt+' · condição do circuito válida fechando todos os pontos',{size:10,f:'L',color:'CCCCE0'}); }
   else { S.text(0.75,3.2,8,1.5,brl(totN),{size:60,f:'M',color:C.WHITE}); S.rect(0.85,4.8,1.3,0.07,{fill:C.PINK});
-  S.text(0.75,5.0,7.5,0.35,modoTxt,{size:12,f:'L',color:'CCCCE0'}); }
+  S.text(0.75,5.0,7.5,0.35,modoTxt,{size:12,f:'L',color:'CCCCE0'});
+  if(CPM){ S.text(0.75,5.35,8,0.35,fmtMil(CPM.imp)+' impactos em '+CPM.dias+' dias · CPM médio '+brl(CPM.cpmMedio),{size:12,f:'M',color:'FF7EB3'}); } }
   S.rect(9.0,1.7,3.73,5.1,{fill:C.WHITE,r:0.2,a:8}); S.text(9.25,1.9,3.3,0.3,'COMPOSIÇÃO DO INVESTIMENTO',{size:8.5,f:'B',color:C.PINK,spc:160});
   var comp=rows.map(function(c){ return [c.nome,brl(c.final),0]; }); if(CI){ comp.push(['Desconto do circuito ('+pctTxt(CI.pct)+')','− '+brl(CI.desc),1]); comp.push(['Total do circuito',brl(CI.circ),2]); }
   var n=comp.length, rh=Math.min(0.52,4.2/n);

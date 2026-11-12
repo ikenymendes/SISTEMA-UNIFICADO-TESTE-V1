@@ -7,7 +7,7 @@ function viewSelecao(v,embed){
   var bar=h('div',{class:'bar'}), fsel=h('select',{},[h('option',{value:'',text:'Todas as seções'})].concat(fmtOpcoes().map(function(g){ var o=h('option',{value:g.k,text:g.nome}); if(filtro===g.k) o.selected=true; return o; })));
   var bs=h('input',{type:'search',placeholder:'🔍 Buscar endereço ou bairro',class:'busca'}); bs.value=busca;
   var fdn=filtroDonoSel(function(){ draw(); });
-  bar.appendChild(fsel); bar.appendChild(fdn); bar.appendChild(bs); bar.appendChild(h('button',{class:'btn',type:'button',text:'➕ Sugerir novo ponto',onclick:function(){ abrirFormSugestao('adicionar',null); }})); v.appendChild(bar);
+  bar.appendChild(fsel); bar.appendChild(fdn); var pf=progFiltro(function(){ draw(); pf.classList.toggle('on',filtroProg); }); if(pf) bar.appendChild(pf); bar.appendChild(bs); bar.appendChild(h('button',{class:'btn',type:'button',text:'➕ Sugerir novo ponto',onclick:function(){ abrirFormSugestao('adicionar',null); }})); v.appendChild(bar);
   v.appendChild(h('p',{class:'hint',text:'Você não altera endereços diretamente. Para incluir ou corrigir um ponto, use "Sugerir": o administrador recebe o aviso, confere e aplica.'}));
   var mk=h('input',{type:'checkbox'}), mtx=h('span',{}); v.appendChild(h('label',{class:'selall'},[mk,mtx]));
   var list=h('div',{class:'plist'}); v.appendChild(list);
@@ -18,7 +18,7 @@ function viewSelecao(v,embed){
   function contaSel(){ return D.pontos.filter(function(p){ return p.sel&&CIRCUITOS.indexOf(p.secao)<0; }).length+CIRCUITOS.filter(function(k){ return ptsOf(D,k).length&&circSel(k); }).length; }
   function desenhaCirc(){ var cs=circ(); cs.forEach(function(k){ var ck=h('input',{type:'checkbox'}); ck.checked=circSel(k); ck.addEventListener('change',function(){ ptsOf(D,k).forEach(function(p){ p.sel=ck.checked; }); dirty(); ref(); }); var fk=D[k]&&D[k].fotos&&D[k].fotos[0]; var kids=[ck]; if(fk&&libSrc(fk)) kids.push(h('img',{class:'sth',src:libSrc(fk)})); kids.push(h('span',{class:'t'},[h('b',{text:'Circuito '+SEC[k].nome}),document.createTextNode(' · '+((D[k]&&D[k].circuito)||'')+' · todas as telas juntas')])); kids.push(h('em',{text:secLabel(k)})); list.appendChild(h('label',{class:'srow circ'},kids)); }); return cs.length; }
   function ref(){ var Lst=vis(), nc=circ(), items=Lst.length+nc.length, n=Lst.filter(function(p){return p.sel}).length+nc.filter(circSel).length; mk.checked=items>0&&n===items; mk.indeterminate=n>0&&n<items; var tot=contaSel(); fab.textContent=tot?'Continuar com '+tot+' ponto'+(tot>1?'s':'')+' · Preços':'Marque os pontos da proposta'; fab.disabled=!tot; if(window.__onSel) window.__onSel(tot); mtx.textContent='Selecionar todos'+(filtro?' desta seção':'')+'  ·  '+n+' de '+items+' marcados  ('+tot+' no total)'; }
-  function draw(){ list.innerHTML=''; var n=0, ncirc=desenhaCirc(); vis().forEach(function(p){ n++; var ck=h('input',{type:'checkbox'}); ck.checked=!!p.sel; ck.addEventListener('change',function(){ p.sel=ck.checked; dirty(); ref(); }); var fk=Array.isArray(p.foto)?p.foto[0]:p.foto; var kids=[ck]; if(fk&&libSrc(fk)) kids.push(h('img',{class:'sth',src:libSrc(fk)})); kids.push(h('span',{class:'t',text:(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'')})); kids.push(qBadge(p)); kids.push(h('em',{text:secLabel(p.secao)})); if(donoDe(p)!=='padrao') kids.push(h('em',{class:'dono d-'+donoDe(p),text:donoNome(donoDe(p))})); kids.push(h('button',{class:'mini',type:'button',text:'✏️ sugerir alteração',title:'Pedir ao administrador para alterar este ponto',onclick:function(e){ e.preventDefault(); e.stopPropagation(); abrirFormSugestao('alterar',p); }})); list.appendChild(h('label',{class:'srow'},kids)); }); if(!n&&!ncirc) list.appendChild(h('p',{class:'hint',text:'Nenhum ponto encontrado.'})); ref(); }
+  function draw(){ list.innerHTML=''; var n=0, ncirc=desenhaCirc(); vis().forEach(function(p){ n++; var ck=h('input',{type:'checkbox'}); ck.checked=!!p.sel; ck.addEventListener('change',function(){ p.sel=ck.checked; dirty(); ref(); }); var fk=Array.isArray(p.foto)?p.foto[0]:p.foto; var kids=[ck]; if(fk&&libSrc(fk)) kids.push(h('img',{class:'sth',src:libSrc(fk)})); kids.push(h('span',{class:'t',text:(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'')})); kids.push(qBadge(p)); kids.push(h('em',{text:secLabel(p.secao)})); if(ME.admin&&p.prog) kids.push(progBadge(p)); if(donoDe(p)!=='padrao') kids.push(h('em',{class:'dono d-'+donoDe(p),text:donoNome(donoDe(p))})); kids.push(h('button',{class:'mini',type:'button',text:'✏️ sugerir alteração',title:'Pedir ao administrador para alterar este ponto',onclick:function(e){ e.preventDefault(); e.stopPropagation(); abrirFormSugestao('alterar',p); }})); list.appendChild(h('label',{class:'srow'},kids)); }); if(!n&&!ncirc) list.appendChild(h('p',{class:'hint',text:'Nenhum ponto encontrado.'})); ref(); }
   if(embed) iaSlot.appendChild(iaBox(function(){ draw(); }));
   fsel.addEventListener('change',function(){ filtro=fsel.value; draw(); });
   bs.addEventListener('input',function(){ busca=bs.value; draw(); });
@@ -146,7 +146,10 @@ var BRAS=[['tiles','pairs','6 indicadores do Metrô-DF: valor | rótulo',6],['ge
 function viewSchema(v,key,schema){ v.appendChild(h('h2',{text:key==='mercado'?'Mercado Central':(key==='guanabara'?'Parque Guanabara':'Brasília · Metrô-DF e painéis')})); v.appendChild(h('p',{class:'hint',text:'Já vem preenchido com os dados do mídia kit atual. Altere o que mudou.'})); var g=h('div',{class:'grid'}); schema.forEach(function(s){ g.appendChild(schemaField(D[key],s)); }); v.appendChild(g); }
 
 /* ---------- pontos ---------- */
-var filtro='', busca='', filtroDono='', filtroQ=false;
+var filtro='', busca='', filtroDono='', filtroQ=false, filtroProg=false;
+/* programática: marcação e filtro são só do admin */
+function progBadge(p){ return p&&p.prog?h('em',{class:'prog',text:'⚡ Programática',title:'Plugado na programática'}):null; }
+function progFiltro(onchg){ if(!ME.admin) return null; var c=h('input',{type:'checkbox'}); c.checked=filtroProg; c.addEventListener('change',function(){ filtroProg=c.checked; onchg(); }); return h('label',{class:'btn progf'+(filtroProg?' on':''),title:'Mostrar só os pontos plugados na programática'},[c,document.createTextNode(' ⚡ Só programáticos')]); }
 /* ===== validador de fotos: avisa quando a foto é pequena demais para o kit ===== */
 var FQ={}, FQ_MIN_W=1000, FQ_MIN_H=650;
 function fotoKey(p){ var k=Array.isArray(p.foto)?p.foto[0]:p.foto; return k||''; }
@@ -165,10 +168,10 @@ var TIPOS_KIT=['Outdoor','Mega Painel','Front','Frontlight','Empena','Painel de 
 /* Formato do ponto: uma única opção por formato (MEGA/R2/Terceiros é a "Propriedade do ponto") */
 var FMT_NOME={led_mega:'Painéis de LED',banca_mega:'Bancas de LED',guanabara:'Circuito Parque Guanabara'};
 function fmtK(k){ return k==='led_r2'?'led_mega':k==='banca_r2'?'banca_mega':k; }
-function fmtOpcoes(){ return GRUPOS.filter(function(g){ return g.k!=='led_r2'&&g.k!=='banca_r2'; }).map(function(g){ return {k:g.k,nome:FMT_NOME[g.k]||g.nome}; }); }
+function fmtOpcoes(){ return GRUPOS.filter(function(g){ return g.k!=='led_r2'&&g.k!=='banca_r2'&&(g.k!=='rj'||ME.admin); }).map(function(g){ return {k:g.k,nome:FMT_NOME[g.k]||g.nome}; }); }
 function tipoSelect(p,after){ var s=h('select',{},[h('option',{value:'',text:'Automático (pelo grupo)'})].concat(TIPOS_KIT.map(function(t){return h('option',{value:t,text:t});}))); if(p.tipoTxt&&TIPOS_KIT.indexOf(p.tipoTxt)<0) s.appendChild(h('option',{value:p.tipoTxt,text:p.tipoTxt})); s.value=p.tipoTxt||''; s.addEventListener('change',function(){ if(s.value) p.tipoTxt=s.value; else delete p.tipoTxt; if(after) after(); }); return s; }
 function grupoSelect(p,after){ var cur=fmtK(grupoDe(p).k); var s=h('select',{},fmtOpcoes().map(function(g){ var o=h('option',{value:g.k,text:g.nome}); if(g.k===cur) o.selected=true; return o; })); s.addEventListener('change',function(){ var k=s.value; if(donoDe(p)==='mega_r2'){ if(k==='led_mega') k='led_r2'; else if(k==='banca_mega') k='banca_r2'; } aplicaGrupo(p,k); if(after) after(); }); return s; }
-function matchP(p){ if(filtro&&fmtK(grupoDe(p).k)!==filtro) return false; if(filtroQ&&!fotoAtencao(p)) return false; if(filtroDono&&donoDe(p)!==filtroDono) return false; if(!busca) return true; var t=[p.endereco,p.bairro,p.cidade,secLabel(p.secao)].join(' ').toLowerCase(); return busca.toLowerCase().split(/\s+/).every(function(w){ return t.indexOf(w)>=0; }); }
+function matchP(p){ if(filtroProg&&ME.admin&&!p.prog) return false; if(filtro&&fmtK(grupoDe(p).k)!==filtro) return false; if(filtroQ&&!fotoAtencao(p)) return false; if(filtroDono&&donoDe(p)!==filtroDono) return false; if(!busca) return true; var t=[p.endereco,p.bairro,p.cidade,secLabel(p.secao)].join(' ').toLowerCase(); return busca.toLowerCase().split(/\s+/).every(function(w){ return t.indexOf(w)>=0; }); }
 function secLabel(k){ return SEC[k]?SEC[k].nome+(SEC[k].praca?' · '+SEC[k].praca:''):k; }
 function novoPontoPanel(){
   var np={secao:(grupoPorK(filtro||'')||GRUPOS[1]).sec[0],dono:(grupoPorK(filtro||'')||{}).r2?'mega_r2':'padrao',endereco:'',bairro:'',cidade:'Belo Horizonte',lat:null,lng:null,zoom:16,tamanho:'',pixels:'',veic:'',publico:'',fluxo:'',impacto:'',sentido:'',foto:null};
@@ -195,7 +198,7 @@ function viewPontos(v){
   v.appendChild(h('h2',{text:'Painel de pontos'})); v.appendChild(h('p',{class:'hint',text:'Cada ponto vira uma ficha no kit. Adicione pontos novos, troque a foto, escolha a seção/formato e cole o link do Maps para buscar latitude e longitude. Exclusões pedem um código de confirmação.'})); v.appendChild(novoPontoPanel());
   var bar=h('div',{class:'bar'}), fsel=h('select',{},[h('option',{value:'',text:'Todas as seções'})].concat(fmtOpcoes().map(function(g){ var o=h('option',{value:g.k,text:g.nome}); if(filtro===g.k) o.selected=true; return o; })));
   fsel.addEventListener('change',function(){ filtro=fsel.value; showTab('pontos'); });
-  bar.appendChild(fsel); bar.appendChild(filtroDonoSel(function(){ showTab('pontos'); }));
+  bar.appendChild(fsel); bar.appendChild(filtroDonoSel(function(){ showTab('pontos'); })); var pf2=progFiltro(function(){ showTab('pontos'); }); if(pf2) bar.appendChild(pf2);
   fqScan(function(){ contFotos(); });
   var bs=h('input',{type:'search',placeholder:'🔍 Buscar endereço ou bairro',class:'busca'}); bs.value=busca; bs.addEventListener('input',function(){ busca=bs.value; if(window.drawList) window.drawList(); }); bar.appendChild(bs);
   function setSel(v){ D.pontos.forEach(function(p){ if(!filtro||fmtK(grupoDe(p).k)===filtro) p.sel=v; }); dirty(); showTab('pontos'); }
@@ -204,7 +207,9 @@ function viewPontos(v){
   bar.appendChild(h('button',{class:'btn pri',text:'+ Novo ponto',onclick:function(){ var f=$('#novoponto'); f.open=true; f.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ var i=f.querySelector('input[type=text]'); if(i) i.focus(); },300); }}));
   bar.appendChild(h('button',{class:'btn',text:'Importar planilha (colar)',onclick:function(){ $('#imp').classList.toggle('show'); }}));
   var fl=h('input',{type:'file',accept:'image/*',multiple:'multiple'}); fl.addEventListener('change',async function(){ var n=0; try{ for(var f of fl.files){ var kk=await addPhoto(f); D.libMap=D.libMap||{}; D.libMap[f.name]=kk; n++; } }catch(e){ toast(e.message||String(e),true); } dirty(); $('#fotomsg').textContent=n+' foto(s) adicionadas à biblioteca. Use o nome do arquivo na planilha ou escolha em cada ponto.'; showTab('pontos'); });
-  bar.appendChild(h('label',{class:'btn'},['Fotos em lote',fl])); v.appendChild(bar); v.appendChild(h('p',{id:'fotomsg',class:'hint'}));
+  bar.appendChild(h('label',{class:'btn'},['Fotos em lote',fl]));
+  if(ME.admin&&typeof RJ_PONTOS!=='undefined'&&!ptsOf(D,'rj').length) bar.appendChild(h('button',{class:'btn pri',type:'button',text:'📍 Importar os '+RJ_PONTOS.length+' pontos do Rio de Janeiro',onclick:function(){ importarRJ(this); }}));
+  v.appendChild(bar); v.appendChild(h('p',{id:'fotomsg',class:'hint'}));
   var cnt=fmtOpcoes().map(function(g){ var n=ptsOf(D,g.k).length+(g.k==='led_mega'?ptsOf(D,'led_r2').length:g.k==='banca_mega'?ptsOf(D,'banca_r2').length:0); return n?g.nome+': '+n:null; }).filter(Boolean).join('  ·  ')||'Nenhum ponto cadastrado ainda.'; v.appendChild(h('p',{class:'hint',text:'Total: '+D.pontos.length+' pontos · '+D.pontos.filter(function(p){return p.sel}).length+' marcados para a proposta   —   '+cnt}));
   var vis=function(){ return D.pontos.filter(matchP); };
   var mk=h('input',{type:'checkbox'}), mtx=h('span',{});
@@ -227,7 +232,7 @@ function importText(t){ var n=0; t.split(/\r?\n/).forEach(function(line){ if(!li
   D.pontos.push({id:newId(),sel:true,secao:normSec(c[0]),endereco:c[1]||'',bairro:c[2]||'',cidade:c[3]||'',lat:ll?ll.lat:null,lng:ll?ll.lng:null,zoom:16,tamanho:c[5]||'',pixels:c[6]||'',veic:c[7]||'',publico:c[8]||'',fluxo:c[9]||'',impacto:c[10]||'',sentido:c[11]||'',foto:(c[12]&&libSrc(c[12]))?(D.libMap&&D.libMap[c[12]]||c[12]):null}); n++; }); return n; }
 function pointCard(p,ix){
   var d=h('details',{class:'pt'}), sm=h('summary'), title=h('span',{class:'t'}), badge=h('em',{text:SEC[p.secao]?SEC[p.secao].nome:''});
-  function upd(){ title.textContent=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''); badge.textContent=grupoDe(p).nome+(donoDe(p)!=='padrao'?' · '+donoNome(donoDe(p)):''); st.textContent=(p.lat!=null&&!isNaN(p.lat))?'📍 mapa ok':'sem coordenadas'; st.className='st '+((p.lat!=null&&!isNaN(p.lat))?'ok':'no'); }
+  function upd(){ title.textContent=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''); badge.textContent=grupoDe(p).nome+(donoDe(p)!=='padrao'?' · '+donoNome(donoDe(p)):'')+(ME.admin&&p.prog?' · ⚡ programática':''); st.textContent=(p.lat!=null&&!isNaN(p.lat))?'📍 mapa ok':'sem coordenadas'; st.className='st '+((p.lat!=null&&!isNaN(p.lat))?'ok':'no'); }
   var st=h('span',{class:'st'}); var ck=h('input',{type:'checkbox',title:'Incluir na proposta'}); ck.checked=!!p.sel; ck.addEventListener('click',function(e){ e.stopPropagation(); }); ck.addEventListener('change',function(){ if(CIRCUITOS.indexOf(p.secao)>=0){ setCircuito(D,p.secao,ck.checked); dirty(); var y=window.scrollY; showTab('pontos'); window.scrollTo(0,y); return; } p.sel=ck.checked; dirty(); if(window.refMaster) window.refMaster(); }); var cl=h('label',{class:'ck',title:'Incluir na proposta'},[ck,h('span',{text:'proposta'})]); cl.addEventListener('click',function(e){ e.stopPropagation(); }); sm.appendChild(cl); sm.appendChild(badge); sm.appendChild(title); sm.appendChild(st);
   sm.appendChild(h('button',{class:'mini',text:'duplicar',onclick:function(e){ e.preventDefault(); var c=JSON.parse(JSON.stringify(p)); c.id=newId(); D.pontos.splice(ix+1,0,c); dirty(); showTab('pontos'); }}));
   sm.appendChild(qBadge(p)); sm.appendChild(h('button',{class:'mini del',text:'excluir',onclick:function(e){ e.preventDefault(); askPin('Excluir ponto',(p.endereco||'(sem endereço)')+' · '+secLabel(p.secao)).then(function(ok){ if(!ok) return; var k=D.pontos.indexOf(p); if(k>=0) D.pontos.splice(k,1); dirty(); showTab('pontos'); }); }}));
@@ -235,6 +240,9 @@ function pointCard(p,ix){
   d.appendChild(sm);
   var g=h('div',{class:'grid'});
   var sel=grupoSelect(p,function(){ upd(); dirty(); }); g.appendChild(field('Formato do ponto',sel)); g.appendChild(donoField(p,function(){ sel.value=fmtK(grupoDe(p).k); upd(); }));
+  if(ME.admin){ var pg=h('input',{type:'checkbox'}); pg.checked=!!p.prog; pg.addEventListener('change',function(){ p.prog=pg.checked; upd(); dirty(); });
+    g.appendChild(field('Programática',h('label',{class:'chk progchk'},[pg,h('span',{text:' ⚡ Plugado na programática'})]),'Só o admin vê. Serve para filtrar os pontos nas propostas programáticas (CPM).'));
+    g.appendChild(field('CPM base (R$)',inp(p,'cpm',{num:true,onchange:upd}),'Opcional. Usado na proposta por CPM quando você escolhe "CPM de cada ponto".')); }
   function I(path,label,o){ o=o||{}; o.onchange=upd; return field(label,inp(p,path,o),o.hint); }
   g.appendChild(I('endereco','Endereço (título da ficha)')); g.appendChild(I('bairro','Bairro')); g.appendChild(I('cidade','Cidade'));
   var lk=h('input',{type:'text',placeholder:'Cole o link completo do Google Maps ou "lat, long"'}); var lat=inp(p,'lat',{num:true,onchange:upd}), lng=inp(p,'lng',{num:true,onchange:upd});
@@ -270,7 +278,7 @@ function rowsEst(r,i){
     var lista=(!embed&&EDITA)?ptsOf(D,r.auto):selEstaticos(D,r.auto), vz=embed&&!lista.length;
     var hd=h('tr',{class:'gh'+(vz?' vazio':'')}), nt=h('td',{colspan:'5'});
     hd.style.cssText='background:rgba(0,0,102,.06);font-weight:600;';
-    nt.appendChild(h('b',{text:r.nome})); nt.appendChild(h('small',{text:'   ·   preço por '+per+', por endereço · produção em valor único no fim'})); nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); hd.appendChild(nt);
+    nt.appendChild(h('b',{text:r.nome})); nt.appendChild(h('small',{text:'   ·   preço por '+per+', por endereço'+(r.auto==='rj'?'':' · produção em valor único no fim')})); nt.appendChild(h('div',{class:'minwarn',hidden:'hidden'})); hd.appendChild(nt);
     hd.appendChild(h('td',{class:'calc tabcalc'})); hd.appendChild(h('td',{class:'calc dsc'})); hd.appendChild(h('td',{class:'calc val'}));
     if(ME.admin){ hd.appendChild(h('td',{},[h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})])); hd.appendChild(h('td',{},[h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})])); } else { hd.appendChild(h('td')); hd.appendChild(h('td')); }
     var out=[hd];
@@ -284,7 +292,7 @@ function rowsEst(r,i){
       var nome=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:'');
       out.push(linhaEst(r,p,nome,'t','d',function(){ var l=pLiq(p); return l>0?l/fatorLiq(D):vlr(p.preco); },'1',porBi?'Bi-semana':'Mensal',false));
     });
-    if(lista.length) out.push(linhaProd(r,{id:'#prod'},'↳ Produção (valor único) — digite o líquido',function(){ var t=0; selEstaticos(D,r.auto).forEach(function(p){ t+=pProd(p); }); return t; },'',null));
+    if(lista.length&&r.auto!=='rj') out.push(linhaProd(r,{id:'#prod'},'↳ Produção (valor único) — digite o líquido',function(){ var t=0; selEstaticos(D,r.auto).forEach(function(p){ t+=pProd(p); }); return t; },'',null));
     return out; }
   function linhaProd(r,p,rot,base,qtd,mult){ mult=mult||function(){return 1;};
     var tr=h('tr',{class:'endl sub'}), c0=h('td'), sp=h('span',{text:rot}); sp.style.cssText='padding-left:18px;opacity:.85;'; c0.appendChild(sp); tr.appendChild(c0);
@@ -319,7 +327,7 @@ function rowsEst(r,i){
     var cs=h('td',{class:'calc val'}), vi=h('input',{type:'text',class:'negin',title:'Digite o valor negociado e o desconto é calculado sozinho'}); vi.inputMode='decimal'; vi.style.cssText='width:100%;min-width:118px;font-weight:600;'; cs.appendChild(vi); tr.appendChild(cs); vi.addEventListener('change',function(){ var c=calcPreco(D,r), alvo=num(String(vi.value).replace(/[^\d,.\-]/g,'')); if(!(c.tabela>0)){ recalc(); return; } var fm=D.modoGeral==='liquido'?(1-num(D.comissao)/100)*(1-num(D.bv)/100):1; if(!(fm>0)) fm=1; var d=(1-(alvo/fm)/c.tabela)*100; d=Math.max(0,Math.min(100,Math.round(d*10000)/10000)); r.desc=String(d).replace('.',','); di.value=r.desc; dirty(); recalc(); });
     if(!ME.admin){ td(h('span')); td(h('span')); return tr; }
     td(h('button',{class:'mini',text:'↑',onclick:function(){ if(i>0){ D.precos.splice(i-1,0,D.precos.splice(i,1)[0]); dirty(); showTab(curTab); } }})); td(h('button',{class:'mini del',text:'×',onclick:function(){ askPin('Excluir linha de preço',r.nome).then(function(ok){ if(!ok) return; var k=D.precos.indexOf(r); if(k>=0) D.precos.splice(k,1); dirty(); showTab(curTab); }); }})); return tr; }
-  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Ins./tela/dia','Total ins./dia','Tabela unit. (R$)','Desc. (%)','Negociado (R$)']; D.precos.forEach(function(r,i){ if(ehEstatico(r)){ var gr=rowsEst(r,i); trs.push(gr[0]); gr.forEach(function(t){ body.appendChild(t); }); return; } var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); trs.push(tr); body.appendChild(tr); }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
+  window.__recalcPrecos=recalc; var ROT=['Formato','Pontos','Período','Ins./tela/dia','Total ins./dia','Tabela unit. (R$)','Desc. (%)','Negociado (R$)']; D.precos.forEach(function(r,i){ if(r.auto==='rj'&&!ME.admin){ trs.push(null); return; } if(ehEstatico(r)){ var gr=rowsEst(r,i); trs.push(gr[0]); gr.forEach(function(t){ body.appendChild(t); }); return; } var tr=row(r,i); ROT.forEach(function(l,k){ if(tr.children[k]) tr.children[k].setAttribute('data-l',l); }); trs.push(tr); body.appendChild(tr); }); v.appendChild(h('div',{class:'tw'},[tb])); recalc();
   if(!EDITA) v.appendChild(h('button',{class:'btn',text:'Restaurar valores da tabela base',onclick:function(){ restorePrecos(); showTab(curTab); }}));
   if(ME.admin) v.appendChild(h('button',{class:'btn',text:'+ Adicionar linha',onclick:function(){ D.precos.push({nome:'Nova linha',auto:'',pontos:'',periodo:'Mensal',insercoes:'',insPor:'',v2:1,v3:1,tabela:'',desc:'',modo:'geral'}); dirty(); showTab(curTab); }}));
 }
@@ -435,7 +443,7 @@ function perfilBox(panel,tipo,comValores){ var PF=[['direto','Líquido (cliente 
       if(!cur&&D.perfilEsc) box.appendChild(h('div',{class:'hint',text:'Percentuais personalizados em uso (comissão '+num(D.comissao)+'% · BV '+num(D.bv)+'%). Escolha um perfil acima para voltar ao padrão.'}));
       panel.appendChild(box); }
 /* circuito com desconto (passo Preços da proposta): separado = valores individuais; circuito = total com desconto */
-function propTotal(){ var t=0; D.precos.forEach(function(r){ if(!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) t+=calcPreco(D,r).final; }); return t; }
+function propTotal(){ var cc=cpmCalc(D); if(cc) return cc.total; var t=0; D.precos.forEach(function(r){ if(!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) t+=calcPreco(D,r).final; }); return t; }
 function circBox(panel){
   var c=D.circ=D.circ||{on:false,tipo:'pct',v:''}, box=h('div',{class:'circbox'+(c.on?' on':'')}), res=h('div',{class:'circres'});
   function upd(){ box.classList.toggle('on',!!c.on); corpo.hidden=!c.on; var t=propTotal(), cc=circCalc(D,t);
@@ -477,6 +485,8 @@ function viewFluxo(v,tipo){
     viewSelecao(panel,true);
   } else if(id==='precos'){
     var avp=h('p',{class:'qinfo bad'}); avp.hidden=true;
+    if(ME.admin){ var cpmMode=modoBox(panel,tipo); if(cpmMode){ panel.appendChild(avp); cpmBox(panel,avp,next); circBox(panel); setTimeout(function(){ if(window.__onPreco) window.__onPreco(); },0); } }
+    if(!(ME.admin&&cpmOn(D))){
     window.__onPreco=function(){ var f=[]; D.precos.forEach(function(r){ if(r.auto&&!r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) return; if(!(calcPreco(D,r).tabela>0)) f.push(r.nome); }); avp.hidden=!f.length; avp.textContent=f.length?'⚠ Falta o valor de tabela em: '+f.join(', ')+'.':''; next.disabled=!!f.length; next.textContent=f.length?'Preencha os valores para continuar':'Continuar'; };
     panel.appendChild(avp);
     panel.appendChild(h('h3',{text:'Valores da proposta'}));
@@ -484,11 +494,12 @@ function viewFluxo(v,tipo){
     perfilBox(panel,tipo,true);
     var bs=h('select',{},[['','Base padrão'],['sp','Base SP (valores maiores)']].map(function(o){ return h('option',{value:o[0],text:o[1]}); })); bs.value=D.baseSP?'sp':''; bs.addEventListener('change',function(){ D.baseSP=bs.value==='sp'; try{ persistLocal(); }catch(e){} showTab(tipo); }); panel.appendChild(field('Base de preços',bs,'Escolha SP para usar os valores mínimos da base SP nesta proposta.'));
     viewPrecos(panel,true); circBox(panel); setTimeout(function(){ if(window.__onPreco) window.__onPreco(); },0);
+    }
   } else {
     var comp=!prop&&window.__completo, n=nSel(), tot=0;
-    if(prop) D.precos.forEach(function(r){ if(!r.auto||r.auto.split(',').some(function(k){ return ptsOf(D,k).some(function(p){return p.sel;}); })) tot+=calcPreco(D,r).final; });
+    if(prop) tot=propTotal();
     var sm=h('div',{class:'resumo'},[h('div',{},[h('b',{text:D.kit.cliente||'(sem cliente)'}),h('span',{text:'cliente / campanha'})]),h('div',{},[h('b',{text:String(comp?D.pontos.length:n)}),h('span',{text:comp?'pontos (todos)':'pontos escolhidos'})])]);
-    if(prop) sm.appendChild(h('div',{},[h('b',{text:brl(tot)}),h('span',{text:'investimento ('+(D.modoGeral==='liquido'?'líquido':'bruto')+')'+(circCalc(D,tot)?' · separado':'')})]));
+    if(prop) sm.appendChild(h('div',{},[h('b',{text:brl(tot)}),h('span',{text:'investimento ('+(D.modoGeral==='liquido'?'líquido':'bruto')+')'+(cpmOn(D)?' · por CPM':'')+(circCalc(D,tot)?' · separado':'')})]));
     if(prop&&circCalc(D,tot)){ var cc=circCalc(D,tot); sm.appendChild(h('div',{class:'rcirc'},[h('b',{text:brl(cc.circ)}),h('span',{text:'circuito completo · −'+pctTxt(cc.pct)})])); }
     panel.appendChild(h('h3',{text:'Tudo pronto'})); panel.appendChild(sm);
     var qa=h('p',{class:'qinfo bad'}); qa.hidden=true; panel.appendChild(qa); (function(){ var escolhidos=comp?D.pontos:D.pontos.filter(function(p){return p.sel}); function qu(){ var n=fqConta(escolhidos); qa.hidden=!n; qa.textContent='⚠ '+n+' ponto'+(n>1?'s':'')+' com foto em baixa qualidade ou sem foto. Peça ao administrador para substituir antes de enviar ao cliente.'; } fqScan(qu); qu(); })();
@@ -523,3 +534,48 @@ function viewFotos(v){
       list.appendChild(h('div',{class:'fcard'},[th,h('div',{class:'fbody'},[h('b',{text:p.endereco||'(sem endereço)'}),h('span',{class:'hint',text:[p.bairro,grupoDe(p).nome].filter(Boolean).join(' · ')}),st,h('div',{class:'bar'},[h('label',{class:'btn pri'},['📷 Substituir foto',fi]),abrir]),msg])])); }); }
   gsel.addEventListener('change',draw); draw(); fqScan(function(){ contFotos(); if(curTab==='fotos') draw(); });
 }
+
+/* ===== Rio de Janeiro: importação única dos pontos do mídia kit (só admin) =====
+   Envia as fotos para a biblioteca, busca a posição aproximada de cada endereço (OpenStreetMap,
+   1 por segundo) e cria os pontos na seção "Painéis de LED · Rio de Janeiro". */
+async function importarRJ(btn){
+  if(!ME.admin||typeof RJ_PONTOS==='undefined') return; if(ptsOf(D,'rj').length){ toast('Os pontos do Rio de Janeiro já foram importados.',true); return; }
+  if(!confirm('Importar os '+RJ_PONTOS.length+' pontos do Rio de Janeiro (fotos, formatos, audiência e valores)? Leva cerca de 1 minuto.')) return;
+  var msg=$('#fotomsg'), ok=0, semLL=0; btn.disabled=true;
+  var espera=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+  for(var i=0;i<RJ_PONTOS.length;i++){ var x=RJ_PONTOS[i];
+    msg.textContent='Importando '+(i+1)+' de '+RJ_PONTOS.length+': '+x.endereco+'…';
+    var key=null; try{ var b=await (await fetch('assets/rj/'+x.f)).blob(); key=await addPhoto(new File([b],x.f,{type:'image/jpeg'})); }catch(e){ console.warn('foto RJ',x.f,e); }
+    var lat=null,lng=null; try{ var q=String(x.endereco).split(' · ')[0]+', '+String(x.cidade).replace(/\s*-\s*RJ$/,'')+', Rio de Janeiro, Brasil';
+      var j=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q))).json(); if(j&&j[0]){ lat=+(+j[0].lat).toFixed(7); lng=+(+j[0].lon).toFixed(7); } }catch(e){}
+    if(lat==null) semLL++;
+    var p={id:newId(),secao:'rj',dono:'padrao',sel:false,zoom:16,endereco:x.endereco,bairro:x.bairro,cidade:x.cidade,sentido:x.sentido,tamanho:x.tamanho,pixels:x.pixels,veic:x.veic,publico:x.publico,fluxo:x.fluxo,impacto:x.impacto,preco:x.preco,foto:key,lat:lat,lng:lng,prog:false};
+    if(x.tipoTxt) p.tipoTxt=x.tipoTxt; D.pontos.push(p); ok++; await espera(1100); }
+  ordenaPts(D); dirty(); filtro='rj'; showTab('pontos');
+  var m=$('#fotomsg'); if(m) m.textContent='✓ '+ok+' pontos do Rio de Janeiro importados.'+(semLL?' '+semLL+' ficaram sem coordenada: cole o link do Maps em cada um.':' Confira a posição de cada um no mapa do ponto (é aproximada).');
+}
+
+/* ===== Proposta por valor ou por CPM (só admin) ===== */
+function modoBox(panel,tipo){
+  var c=D.cpmProp=D.cpmProp||{on:false,cpm:'',dias:30,base:false}, box=h('div',{class:'modobox'});
+  box.appendChild(h('b',{text:'Proposta por'}));
+  var sg=h('div',{class:'seg'}); [[false,'💰 Valor (tabela)'],[true,'📊 CPM (programática)']].forEach(function(o){ sg.appendChild(h('button',{type:'button',class:'segb'+(!!c.on===o[0]?' on':''),text:o[1],onclick:function(){ c.on=o[0]; try{ persistLocal(); }catch(e){} showTab(tipo); }})); });
+  box.appendChild(sg); box.appendChild(h('small',{text:c.on?'Valor = impactos do período ÷ 1.000 × CPM. Só você (admin) vê esta opção.':'Valores de tabela, desconto e negociado, como sempre.'}));
+  panel.appendChild(box); return !!c.on; }
+function cpmBox(panel,avp,next){
+  var c=D.cpmProp, box=h('div',{class:'cpmbox'}), tb=h('div',{class:'cpmtab'}), res=h('div',{class:'cpmres'});
+  var iC=h('input',{type:'text',inputmode:'decimal',placeholder:'Ex.: 15,00'}); iC.value=c.cpm||'';
+  var iD=h('input',{type:'number',min:'1',max:'365'}); iD.value=c.dias||30;
+  var iB=h('input',{type:'checkbox'}); iB.checked=!!c.base;
+  var sv=function(){ c.cpm=iC.value; c.dias=Math.max(1,num(iD.value)||30); c.base=iB.checked; try{ persistLocal(); }catch(e){} pinta(); };
+  [iC,iD].forEach(function(x){ x.addEventListener('input',sv); }); iB.addEventListener('change',sv);
+  box.appendChild(h('div',{class:'cpmlin'},[field('CPM da proposta (R$ por mil impactos)',iC),field('Período (dias)',iD),h('label',{class:'chk cpmchk'},[iB,h('span',{text:' Usar o CPM base de cada ponto (quando cadastrado)'})])]));
+  box.appendChild(res); box.appendChild(tb); panel.appendChild(box);
+  function pinta(){ var cc=cpmCalc(D); tb.innerHTML=''; res.innerHTML=''; if(!cc) return;
+    var t=h('table',{class:'cpmt'}); t.appendChild(h('thead',{},[h('tr',{},['Ponto','Impacto semanal','Impactos no período','CPM (R$)','Valor'].map(function(x){ return h('th',{text:x}); }))]));
+    var b=h('tbody'); cc.itens.forEach(function(x){ var tr=h('tr',{class:x.semImp||x.semCpm?'abaixo':''}); tr.appendChild(h('td',{},[h('b',{text:x.end}),h('small',{text:' · '+x.nome})])); tr.appendChild(h('td',{text:x.semImp?'sem impacto cadastrado':fmtMil(impSemanal(x.p))})); tr.appendChild(h('td',{text:fmtMil(x.imp)})); tr.appendChild(h('td',{text:x.cpm>0?brl(x.cpm)+(c.base&&num(x.p.cpm)>0?' (base)':''):'—'})); tr.appendChild(h('td',{text:brl(x.valor)})); b.appendChild(tr); }); t.appendChild(b); tb.appendChild(h('div',{class:'tw'},[t]));
+    res.appendChild(h('span',{text:fmtMil(cc.imp)+' impactos em '+cc.dias+' dias · CPM médio '+brl(cc.cpmMedio)+' · '})); res.appendChild(h('b',{text:'Investimento '+brl(cc.total)}));
+    var f=cc.falta; avp.hidden=!f.length&&cc.total>0; avp.textContent=!cc.itens.length?'⚠ Escolha os pontos da proposta.':f.length?'⚠ '+f.length+(f.length===1?' ponto':' pontos')+' sem impacto semanal ou sem CPM: '+f.slice(0,4).map(function(x){ return x.end; }).join('; ')+(f.length>4?'…':''):(cc.total>0?'':'⚠ Informe o CPM.');
+    next.disabled=!(cc.total>0); next.textContent=cc.total>0?'Continuar':'Informe o CPM para continuar';
+    if(window.__onPrecoCirc) window.__onPrecoCirc(); }
+  window.__onPreco=pinta; pinta(); }

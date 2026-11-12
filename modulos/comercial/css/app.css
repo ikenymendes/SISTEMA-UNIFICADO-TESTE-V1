@@ -524,3 +524,19 @@ tr.abaixo td{background:#fff8ec}
 .circun{color:#ff0066}
 .circres{margin-top:10px;font-size:14px;color:var(--navy)}.circres .pk{color:#ff0066;font-size:16px}
 .resumo .rcirc b{color:#ff0066}
+
+/* ===== programática e CPM (admin) ===== */
+em.prog{font-style:normal;background:#fff0f6;color:#c2185b;border:1px solid #ffc2d8;border-radius:99px;padding:2px 8px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.progf{display:inline-flex;align-items:center;gap:6px;cursor:pointer}.progf.on{background:#ff0066;color:#fff;border-color:#ff0066}.progf input{accent-color:#fff}
+.progchk{display:flex;align-items:center;gap:8px}.progchk input{width:18px;height:18px;accent-color:#ff0066}
+.modobox{margin:6px 0 14px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid #e4e2ef;display:flex;flex-direction:column;gap:8px}
+.modobox small{color:var(--mid);font-size:12.5px}
+.cpmbox{margin-top:8px;padding:14px 16px;border-radius:16px;background:#fff5f9;border:1.5px solid #ff0066}
+.cpmlin{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}.cpmlin .f{flex:1 1 180px}
+.cpmchk{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--navy);padding-bottom:10px}.cpmchk input{width:18px;height:18px;accent-color:#ff0066}
+.cpmres{margin:10px 0;font-size:14px;color:var(--navy)}.cpmres b{color:#ff0066;font-size:16px}
+.cpmt{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13px}
+.cpmt th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;font-weight:600;color:var(--mid);text-align:right;padding:9px 10px;border-bottom:1px solid #eceaf5;white-space:nowrap}
+.cpmt td{padding:8px 10px;border-bottom:1px solid #f3f2f8;text-align:right;white-space:nowrap}
+.cpmt th:first-child,.cpmt td:first-child{text-align:left;white-space:normal}.cpmt td:first-child small{color:var(--mid)}
+.cpmt td:last-child{font-weight:700;color:var(--navy)}.cpmt tr.abaixo td{background:#fff0f3}
