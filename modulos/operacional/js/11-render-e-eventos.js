@@ -104,6 +104,9 @@ function render() {
     document.body.classList.remove("rm");
     if (view === "pm") view = "g"; /* "Perto de mim" é só a tela do motoboy */
   }
+  try {
+    if (!eMan() && !eMoto()) sessionStorage.setItem("op_view", view);
+  } catch (_) {}
   const nfx = fxStat(dia().slice(0, 7));
   {
     const T1 = [

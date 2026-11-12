@@ -13,7 +13,7 @@ var TABS=TABS_ADMIN, uSub=[], unsubs=[], pendentes=0, ignorarRt=0, pollTimer=nul
 
 function showTab(t){
   if(t==='precos'&&curTab!=='precos'&&ME.gerente) baseDoServidor();
-  curTab=t; document.body.classList.remove('nav-open'); uSub.forEach(function(f){ try{f();}catch(e){} }); uSub=[];
+  curTab=t; try{ sessionStorage.setItem('com_tab',t); }catch(e){} document.body.classList.remove('nav-open'); uSub.forEach(function(f){ try{f();}catch(e){} }); uSub=[];
   document.querySelectorAll('.tab,.bt').forEach(function(b){ if(b.dataset.t) b.classList.toggle('on',b.dataset.t===t); });
   var v=$('#view'); v.innerHTML='';
   var fn=({dash:viewDashboard,kit:viewKit,pontos:viewPontos,sel:viewSelecao,sug:viewSugestoes,minhas:viewMinhasSugestoes,hist:viewHistorico,usuarios:viewUsuarios,
@@ -89,7 +89,8 @@ async function enterApp(){
   await boasVindas();
   iniciarTempoReal(); atualizarPendentes(); if(ME.admin) fqScan(contFotos);
   setSaved(ME.admin?'conectado':'seleção guardada neste navegador');
-  showTab('prop');
+  var tSalvo=''; try{ tSalvo=sessionStorage.getItem('com_tab')||''; }catch(e){}
+  showTab(tSalvo&&TABS.some(function(x){return x[0]===tSalvo})?tSalvo:'prop');
 }
 
 /* ---- janelas auxiliares ---- */

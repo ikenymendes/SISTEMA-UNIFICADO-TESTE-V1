@@ -50,7 +50,14 @@ const save = () => {
   bkSched();
   if (CLD) cloudSched();
 };
-let view = "d",
+let view = (() => {
+    try {
+      const v = sessionStorage.getItem("op_view");
+      return v && "d o g fp fv r m k c t pl x i e ev a".split(" ").includes(v) ? v : "d";
+    } catch (_) {
+      return "d";
+    }
+  })(),
   moto = MOTOS[0],
   draft = novoDraft(),
   mf = { pid: "", def: "", resp: "moto", moto: MOTOS[0], prio: "", pz: "" },

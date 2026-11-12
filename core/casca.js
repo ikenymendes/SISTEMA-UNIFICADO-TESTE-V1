@@ -105,7 +105,7 @@ var MEGA = (function () {
     aviso('Saindo…');
     /* não deixa o "Sair" travar se o servidor demorar: espera no máximo 1,5 s e limpa o login deste navegador */
     try { await Promise.race([client.auth.signOut({ scope: 'local' }), new Promise(function (r) { setTimeout(r, 1500); })]); } catch (e) {}
-    try { sessionStorage.removeItem('mega_bv'); } catch (e) {}
+    try { sessionStorage.removeItem('mega_bv'); sessionStorage.removeItem('mega_aba'); } catch (e) {}
     try { Object.keys(localStorage).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); }); } catch (e) {}
     try { sessionStorage.removeItem('mk_bv'); } catch (e) {}
     try { sessionStorage.setItem('mega_msg', mensagem || ''); } catch (e) {}
@@ -544,7 +544,7 @@ var MEGA = (function () {
         h('button', { text: 'Trocar de perfil', onclick: function () { sair(); } })
       ]));
     }
-    abrir(perm.inicial);
+    abrirInicial(perm);
   }
 
   function montarInterface(perm) {
@@ -598,20 +598,47 @@ var MEGA = (function () {
       ]));
     }
 
-    abrir(perm.inicial);
+    abrirInicial(perm);
+  }
+
+  function pode(id) {
+    var perm = PERMISSOES[perfil.papel];
+    var ehModulo = !!MODULOS[id], ehArea = !!AREAS[id];
+    return !((ehModulo && perm.modulos.indexOf(id) < 0) || (ehArea && perm.areas.indexOf(id) < 0) || (!ehModulo && !ehArea));
+  }
+
+  /* Volta para a aba em que a pessoa estava (F5 não leva mais para a Visão geral) e,
+     depois, deixa os outros módulos carregando em segundo plano para a troca ser instantânea. */
+  function abrirInicial(perm) {
+    var salvo = ''; try { salvo = sessionStorage.getItem('mega_aba') || ''; } catch (e) {}
+    abrir(salvo && pode(salvo) ? salvo : perm.inicial);
+    var fila = perm.modulos.filter(function (m) { return !painéis[m]; }), passo = 0;
+    function proximo() {
+      var m = fila.shift(); if (!m) return;
+      if (!painéis[m]) criarPainel(m, null, true);
+      setTimeout(function () { (window.requestIdleCallback || function (f) { setTimeout(f, 1); })(proximo); }, 1800);
+    }
+    /* no celular não pré-carrega (economiza dados e memória); lá cada módulo continua aberto depois da 1ª visita */
+    if (window.matchMedia && matchMedia('(min-width: 900px)').matches) setTimeout(proximo, 2500);
   }
 
   /* Abre (e mantém vivo) um módulo ou área. Módulos sem permissão nunca são baixados. */
   function abrir(id, aoPronto) {
-    var perm = PERMISSOES[perfil.papel];
-    var ehModulo = !!MODULOS[id], ehArea = !!AREAS[id];
-    if ((ehModulo && perm.modulos.indexOf(id) < 0) || (ehArea && perm.areas.indexOf(id) < 0) || (!ehModulo && !ehArea)) return;
-
+    if (!pode(id)) return;
     moduloAtual = id;
     marcar(id);
-    Object.keys(painéis).forEach(function (k) { painéis[k].hidden = (k !== id); });
+    try { sessionStorage.setItem('mega_aba', id); } catch (e) {}
+    if (!painéis[id]) criarPainel(id, aoPronto, false);
+    else if (aoPronto) { var fr = painéis[id].querySelector('iframe'); if (fr) aoPronto(fr); }
+    Object.keys(painéis).forEach(function (k) { painéis[k].classList.toggle('fora', k !== id); });
+    if (id === 'backup') BACKUP.atualizar && BACKUP.atualizar();
+    if (id === 'usuarios') USUARIOS.atualizar();
+    if (id === 'avisos' && typeof AVISOS !== 'undefined') AVISOS.atualizar();
+  }
 
-    if (!painéis[id]) {
+  function criarPainel(id, aoPronto, fundo) {
+    var ehModulo = !!MODULOS[id];
+    {
       var painel = h('div', { class: 'painel' });
       if (ehModulo) {
         painel.appendChild(h('div', { class: 'carregando', text: 'Carregando ' + MODULOS[id].rotulo + '…' }));
@@ -635,14 +662,10 @@ var MEGA = (function () {
         painel.classList.add('area', 'pronto');
         painel.appendChild(AVISOS.tela(client, perfil));
       }
+      if (fundo) painel.classList.add('fora');
       painéis[id] = painel;
       $('#palco').appendChild(painel);
-    } else if (aoPronto) {
-      var fr = painéis[id].querySelector('iframe'); if (fr) aoPronto(fr);
     }
-    if (id === 'backup') BACKUP.atualizar && BACKUP.atualizar();
-    if (id === 'usuarios') USUARIOS.atualizar();
-    if (id === 'avisos' && typeof AVISOS !== 'undefined') AVISOS.atualizar();
   }
 
   /* ---------- início ---------- */
