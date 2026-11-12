@@ -60,9 +60,9 @@
 .adm .trilho .sair-t:hover { color: #fff; background: var(--acento); border-color: transparent; }
 
 /* ---------- área onde abrem os módulos ---------- */
-.adm .palco { position: absolute; left: 102px; top: 12px; right: 12px; bottom: 12px; border-radius: 26px; overflow: hidden; background: transparent; }
+.adm .palco { position: absolute; left: 102px; top: 12px; right: 12px; bottom: 12px; border-radius: 26px; overflow: hidden; background: transparent; clip-path: inset(0 round 26px); isolation: isolate; }
 .adm .painel { background: transparent; }
-.adm .painel iframe { background: #f3f3f9; border-radius: 26px; }
+.adm .painel iframe { background: transparent; border-radius: 0; }
 .adm .painel.area { overflow: auto; padding: 8px 10px 24px 10px; }
 .adm .painel .carregando { color: var(--tx2); }
 
@@ -173,7 +173,7 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
   .adm.tema-vidro .topo-m img { width: 66px; } .adm.tema-branco .topo-m img { content: url('assets/logoC.png'); width: 66px; }
   .adm .menu-m { display: flex; align-items: center; gap: 8px; background: var(--acento); color: #fff; border: 0; border-radius: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
   .adm .menu-m .chev { font-size: 10px; transition: transform .15s; } .adm .menu-m[aria-expanded=true] .chev { transform: rotate(180deg); }
-  .adm .palco { left: 0; right: 0; bottom: 0; top: 66px; border-radius: 0; }
+  .adm .palco { left: 0; right: 0; bottom: 0; top: 66px; border-radius: 0; clip-path: none; }
   .adm .painel iframe { border-radius: 0; }
   .adm .painel.area { padding: 4px 12px 24px; }
   .adm-pg { padding: 6px 0 0; }

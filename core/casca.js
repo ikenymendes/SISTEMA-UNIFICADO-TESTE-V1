@@ -637,7 +637,7 @@ var MEGA = (function () {
   }
 
   function criarPainel(id, aoPronto, fundo) {
-    var ehModulo = !!MODULOS[id];
+    var perm = PERMISSOES[perfil.papel], ehModulo = !!MODULOS[id];
     {
       var painel = h('div', { class: 'painel' });
       if (ehModulo) {

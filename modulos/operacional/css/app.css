@@ -1862,7 +1862,7 @@ body{font-size:14px;line-height:1.55}
 .side #tabs button{color:#ffffffc8;font-weight:500;font-size:13.5px;border-radius:10px}
 .side #tabs button:hover{background:#ffffff12;color:#fff}
 .side #tabs button.on{background:#ffffff1c;color:#fff;box-shadow:none}
-.side #tabs button.on::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:5px;border-radius:0 4px 4px 0;background:#ff0066;transform:skewX(-8deg)}
+.side #tabs button.on::before{content:'';position:absolute;left:-8px;top:12px;bottom:12px;width:4px;border-radius:4px;background:#ff0066}
 .side #tabs button.on i{background:#ff0066;color:#fff}
 .side #tabs button.on i.d::before{background:#ff0066}
 
