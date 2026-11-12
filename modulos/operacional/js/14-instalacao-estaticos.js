@@ -47,6 +47,7 @@ function inPopup() {
   const L = inAvisos(),
     k = "in_aviso_" + dia() + "_" + L.length;
   if (!L.length || document.getElementById("inpop")) return;
+  if (matchMedia("(max-width: 700px)").matches) return; /* no celular não abre a janela; os avisos ficam no Início */
   try {
     if (localStorage.getItem(k)) return;
     localStorage.setItem(k, "1");

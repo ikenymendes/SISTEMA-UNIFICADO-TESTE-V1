@@ -231,7 +231,8 @@ function fpProbAviso() {
   const novo = P.filter((t) => (t.f.probTs || 0) > fpPVisto);
   if (!novo.length) return false;
   const t0 = novo[0];
-  if ((t0.f.probTs || 0) > fpPNotif) {
+  if (matchMedia("(max-width: 700px)").matches) return false; /* celular: só chegada do motoboy e fotos feitas */
+  if (false && (t0.f.probTs || 0) > fpPNotif) {
     fpPNotif = t0.f.probTs;
     try {
       if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)

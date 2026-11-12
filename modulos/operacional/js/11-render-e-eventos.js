@@ -1158,6 +1158,9 @@ document.addEventListener("click", async (ev) => {
       el.textContent = "Não foi possível copiar";
     }
     return;
+  } else if (a === "vxls") {
+    vtExcelPontos(v);
+    return;
   } else if (a === "cknovo") {
     ckTroca(v);
   } else if (a === "ckpend") {

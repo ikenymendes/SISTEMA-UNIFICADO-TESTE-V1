@@ -38,3 +38,35 @@ function padraoPonto(p) {
   });
   return best && bs >= 1 ? { tp: best.tp, fm: best.fm } : null;
 }
+
+/* ===== Excel dos pontos de uma campanha: endereço, latitude e longitude ===== */
+function vtExcelPontos(id) {
+  const v = S.vts.find((q) => q.id === id);
+  if (!v) return;
+  const L = vIds(v).map((i) => PMf(i)).filter((p) => p && (p.nome || p.end));
+  const rows = L.map((p, k) => {
+    const pad = padraoPonto(p) || {},
+      ll = p.ll || null;
+    return [k + 1, p.nome || "", p.end || "", p.tp || pad.tp || "", p.fm || pad.fm || "", ll ? +(+ll[0]).toFixed(6) : "", ll ? +(+ll[1]).toFixed(6) : "", ll ? "https://www.google.com/maps/search/?api=1&query=" + ll[0] + "," + ll[1] : ""];
+  });
+  const b = xlsxBlob([
+    {
+      name: "PONTOS",
+      head: ["Nº", "Ponto", "Endereço", "Tipo", "Formato", "Latitude", "Longitude", "Google Maps"],
+      rows,
+      w: [5, 30, 52, 18, 12, 13, 13, 48],
+    },
+  ]);
+  const a = document.createElement("a"),
+    nome = String(v.tipo === "evento" && v.ev && v.ev.nome ? v.ev.nome : v.cliente || "CAMPANHA").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\-]+/g, "_").slice(0, 40);
+  a.href = URL.createObjectURL(b);
+  a.download = "PONTOS_" + nome + (v.pi ? "_PI_" + String(v.pi).replace(/[^\w\-]+/g, "-") : "") + ".xlsx";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1500);
+  const sem = L.length - rows.filter((r) => r[5] !== "").length;
+  if (sem) $("warn").innerHTML = '<div class="warn">Planilha gerada. ' + sem + (sem === 1 ? " ponto está" : " pontos estão") + " sem coordenada (lat/long em branco).</div>";
+}

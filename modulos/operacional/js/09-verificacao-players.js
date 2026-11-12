@@ -190,8 +190,7 @@ function plAlert() {
     localStorage.setItem("mvt_pl_al", JSON.stringify(PLAL));
   } catch (_) {}
   if (!novos.length) return;
-  /* sem janela na tela: a verificação é rotineira e manual. Vai só um aviso (sininho) para o próprio admin. */
-  plAvisar(novos);
+  /* sem janela e sem aviso: a verificação dos players é rotineira e manual (tela Players) */
 }
 async function plAvisar(novos) {
   const uid = SES && SES.uid;
