@@ -275,6 +275,7 @@ function fpNotifica() {
     return;
   }
   if (!novo.length) return;
+  if (ROLE === "admin" && matchMedia("(max-width: 900px), (pointer: coarse)").matches) return; /* admin no celular: sem avisos */
   /* notificação do navegador (uma vez por foto nova), se a pessoa ativou os avisos */
   const g0 = novo[0];
   if (g0.ts > fpNotif) {

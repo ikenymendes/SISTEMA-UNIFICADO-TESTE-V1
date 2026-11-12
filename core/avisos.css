@@ -46,3 +46,13 @@
 .avs-ac .ok{background:#ff0066;color:#fff;border-radius:11px;padding:7px 12px;font-weight:700;font-size:12.5px}
 .avs-ac .x{background:transparent;color:#ffffffa0;font-size:20px;line-height:1;padding:0 4px}
 .avs-conv{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99998;max-width:520px;margin:0 auto;align-items:center}
+
+.avs-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.avs-limpar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.avs-lb{border:1px solid var(--borda,#ffffff3d);background:#ffffff14;color:inherit;border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.avs-lb:hover{background:#ffffff26}
+.avs-lb.perigo{background:#ff0066;border-color:#ff0066;color:#fff}
+.avs-h{align-items:flex-start}
+.avs-del{flex:none;width:24px;height:24px;border-radius:50%;border:0;background:transparent;color:var(--tx2,#ffffffb8);font-size:16px;line-height:1;cursor:pointer;opacity:.45}
+.avs-h:hover .avs-del,.avs-del:focus{opacity:1;background:#ffffff1f}
+@media (pointer:coarse){.avs-del{opacity:.8}}

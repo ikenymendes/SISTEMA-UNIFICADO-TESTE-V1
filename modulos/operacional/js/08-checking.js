@@ -128,7 +128,7 @@ function ckOpen(id, troca) {
       f.dataset.ready = "1";
       f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
     };
-    f.src = "gerador-checking.html?v=20261112b";
+    f.src = "gerador-checking.html?v=20261112c";
     h.appendChild(f);
   } else f.contentWindow.postMessage({ vt: ckPayload(x) }, "*");
   render();

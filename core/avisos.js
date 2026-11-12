@@ -54,6 +54,10 @@ var AVISOS = (function () {
     if (vistos.length > 200) vistos = vistos.slice(-200);
     try { localStorage.setItem('avisos_ids_' + euId, JSON.stringify(vistos)); } catch (e) {}
   }
+  /* admin no celular (web mobile): não mostra cartão nem notificação — fica tudo na área Avisos */
+  function silencioso(eu) {
+    return eu && eu.papel === 'admin' && !!window.matchMedia && matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+  }
   function pra(a, eu) { return a.destino === 'todos' || a.destino === eu.papel || (a.destino === 'usuario' && a.destino_id === eu.id); }
 
   function podeNotificar() { return 'Notification' in window && Notification.permission === 'granted'; }
@@ -111,6 +115,7 @@ var AVISOS = (function () {
         guardaVisto(a.id);
         if (!pra(a, eu)) return;
         if (a.criado_por === eu.id && a.destino !== 'usuario') return; /* não avisa quem enviou (só no teste "para mim") */
+        if (silencioso(eu)) return;
         cartao(a);
         notificar('Mega · ' + a.titulo, a.texto, 'aviso-' + a.id, a.abrir);
         cli.from('avisos_lidos').insert({ aviso_id: a.id }).then(function () {}, function () {});
@@ -124,6 +129,7 @@ var AVISOS = (function () {
   function convite() {
     if (!('Notification' in window) || Notification.permission !== 'default') return;
     if (typeof MEGA === 'undefined' || !MEGA.perfil || !MEGA.perfil()) return;
+    if (silencioso(MEGA.perfil())) return;
     try { if (Date.now() < (+localStorage.getItem('avisos_convite_ate') || 0)) return; } catch (e) {}
     if (document.querySelector('.avs-conv')) return;
     var c = h('div', { class: 'avs-conv' });
@@ -237,7 +243,7 @@ var AVISOS = (function () {
           ])]),
           st, perm
         ]),
-        h('section', { class: 'avs-box' }, [h('small', { class: 'avs-k', text: 'Histórico' }), h('h2', { text: 'Últimos avisos' }), histEl])
+        h('section', { class: 'avs-box' }, [h('div', { class: 'avs-hd' }, [h('div', {}, [h('small', { class: 'avs-k', text: 'Histórico' }), h('h2', { text: 'Últimos avisos' })]), limparEl()]), histEl])
       ])
     ]);
     pintaChips();
@@ -249,6 +255,36 @@ var AVISOS = (function () {
     });
     historico();
     return raiz;
+  }
+  /* limpar avisos (apaga de vez no banco; só o admin pode) */
+  function limparEl() {
+    var box = h('div', { class: 'avs-limpar' });
+    function fechado() {
+      box.innerHTML = '';
+      box.appendChild(h('button', { type: 'button', class: 'avs-lb', text: '🧹 Limpar avisos', onclick: aberto }));
+    }
+    function aberto() {
+      box.innerHTML = '';
+      box.appendChild(h('button', { type: 'button', class: 'avs-lb', text: 'Mais antigos que 7 dias', onclick: function () { apagar('antigos'); } }));
+      box.appendChild(h('button', { type: 'button', class: 'avs-lb perigo', text: 'Todos', onclick: function () { apagar('todos'); } }));
+      box.appendChild(h('button', { type: 'button', class: 'avs-lb', text: 'Cancelar', onclick: fechado }));
+    }
+    async function apagar(qual) {
+      var txt = qual === 'todos' ? 'Apagar TODOS os avisos do histórico? Isso não pode ser desfeito.' : 'Apagar os avisos com mais de 7 dias? Isso não pode ser desfeito.';
+      if (!confirm(txt)) return;
+      try {
+        var q = cliA.from('avisos').delete();
+        q = qual === 'todos' ? q.gte('criado_em', '1970-01-01T00:00:00Z') : q.lt('criado_em', new Date(Date.now() - 7 * 864e5).toISOString());
+        var r = await q; if (r.error) throw r.error;
+        fechado(); historico();
+      } catch (e) { alert('Não consegui limpar: ' + msg(e)); }
+    }
+    fechado();
+    return box;
+  }
+  async function apagarUm(id) {
+    if (!confirm('Apagar este aviso do histórico?')) return;
+    try { var r = await cliA.from('avisos').delete().eq('id', id); if (r.error) throw r.error; historico(); } catch (e) { alert('Não consegui apagar: ' + msg(e)); }
   }
   async function carregarUsuarios() {
     try { var r = await cliA.from('profiles').select('id,nome,email,papel,ativo'); if (!r.error) usuarios = r.data || []; } catch (e) {}
@@ -266,8 +302,9 @@ var AVISOS = (function () {
       var nomeDe = function (id) { var u = usuarios.filter(function (x) { return x.id === id; })[0]; return u ? (u.nome || u.email) : 'uma pessoa'; };
       histEl.innerHTML = L.length ? L.map(function (a) {
         var para = a.destino === 'usuario' ? nomeDe(a.destino_id) : (ROT_DEST[a.destino] || a.destino);
-        return '<div class="avs-h"><div><b>' + esc(a.titulo) + '</b>' + (a.texto ? '<small>' + esc(a.texto) + '</small>' : '') + '</div><span>' + esc(para) + ' · ' + quando(a.criado_em) + '<br><em>' + (lidos[a.id] || 0) + ' receberam</em></span></div>';
-      }).join('') : '<div class="avs-mu">Nenhum aviso enviado ainda.</div>';
+        return '<div class="avs-h"><div><b>' + esc(a.titulo) + '</b>' + (a.texto ? '<small>' + esc(a.texto) + '</small>' : '') + '</div><span>' + esc(para) + ' · ' + quando(a.criado_em) + '<br><em>' + (lidos[a.id] || 0) + ' receberam</em></span><button type="button" class="avs-del" data-del="' + esc(a.id) + '" title="Apagar este aviso" aria-label="Apagar este aviso">×</button></div>';
+      }).join('') : '<div class="avs-mu">Nenhum aviso no histórico.</div>';
+      histEl.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { apagarUm(b.getAttribute('data-del')); }; });
     } catch (e) {
       histEl.innerHTML = '<div class="avs-mu">' + (/avisos|does not exist/i.test(msg(e)) ? 'Falta rodar o arquivo supabase/09-avisos.sql no Supabase.' : 'Não consegui carregar o histórico.') + '</div>';
     }
