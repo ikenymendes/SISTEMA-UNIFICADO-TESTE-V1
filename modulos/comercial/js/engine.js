@@ -684,6 +684,9 @@ function buildSlides(D0,A,mode){ migKit(D0);
   dfp.forEach(function(p){ push(ficha(D,A,p)); });
   }
 
+  // PROGRAMÁTICA (só admin: proposta por CPM ou kit marcado como programático)
+  if(progAtivo(D0,mode)){ CG=11; push(progSlide(D,A)); }
+
   // RIO DE JANEIRO (só o admin enxerga esses pontos)
   var rjp=ptsOf(D,'rj'); CG=10;
   if((full&&ME&&ME.admin)||rjp.length){
@@ -754,4 +757,27 @@ function buildSlides(D0,A,mode){ migKit(D0);
   out=out.map(function(s,i){return [s,i]}).sort(function(a,b){ return ((a[0].__g||0)-(b[0].__g||0))||(a[1]-b[1]); }).map(function(x){return x[0]});
   out.forEach(function(s,i){ if(s.pn) s.pn.str=(i+1<10?'0':'')+(i+1); });
   return out;
+}
+
+/* ===== Página "Mídia programática": plataformas conectadas e abertura para negociar CPM ===== */
+var PROG_PLAT=[['Admooh','plataforma de DOOH'],['Hivestack','plataforma de DOOH'],['Outcon','plataforma de OOH'],['DV360','Google Display & Video 360']];
+function progAtivo(D,mode){ if(typeof ME==='undefined'||!ME.admin) return false; if(mode==='proposta'&&cpmOn(D)) return D.progPag!==false; return !!D.progPag; }
+function progSlide(D,A){
+  var S=new Slide({g:[C.NAVY_D,C.NAVY]}); slantMotif(S,9.4,-0.5,6.2,10);
+  logoAt(S,A.logoW,0.75,0.55,0.7);
+  S.text(0.75,1.6,7,0.3,'MÍDIA PROGRAMÁTICA',{size:10,f:'B',color:C.PINK,spc:240});
+  S.text(0.75,1.95,8.2,1.2,'Conectados às principais\nplataformas de compra',{size:30,f:'M',color:C.WHITE,ls:0.95});
+  S.text(0.75,3.25,7.6,0.75,'Nossos painéis estão plugados na programática: a sua campanha pode ser comprada por CPM, direto nas plataformas que a sua agência já usa.',{size:12,f:'L',color:'CCCCE0',ls:1.15});
+  PROG_PLAT.forEach(function(p,i){ var x=0.75+i*2.02; S.rect(x,4.25,1.88,1.25,{fill:C.WHITE,r:0.18,a:10}); S.rect(x,4.25,1.88,0.07,{fill:C.PINK});
+    S.text(x+0.15,4.45,1.6,0.45,p[0],{size:17,f:'M',color:C.WHITE,valign:'m'}); S.text(x+0.15,4.92,1.65,0.45,p[1],{size:8.5,f:'L',color:'CCCCE0',ls:1.0}); });
+  S.rect(0.75,5.8,7.95,1.0,{fill:C.PINK,r:0.2,shadow:true});
+  S.text(1.0,5.85,7.5,0.45,'Abertura para negociar',{size:15,f:'M',color:C.WHITE,valign:'m'});
+  S.text(1.0,6.25,7.5,0.5,'Valores, CPMs e condições de compra sob medida para a sua campanha.',{size:10.5,f:'L',color:C.WHITE});
+  var np=D.pontos.filter(function(p){ return p.prog; }).length;
+  S.rect(9.2,1.6,3.53,5.2,{fill:C.WHITE,r:0.2,a:8});
+  S.text(9.45,1.85,3.1,0.3,'COMO COMPRAR',{size:8.5,f:'B',color:C.PINK,spc:160});
+  [['01','Escolha a plataforma','Admooh, Hivestack, Outcon ou DV360'],['02','Defina o CPM','Valores e CPMs negociáveis'],['03','Ative a campanha','Entrega acompanhada ponto a ponto']].forEach(function(t,i){ var y=2.3+i*1.15;
+    S.text(9.45,y,0.6,0.5,t[0],{size:18,f:'M',color:C.PINK}); S.text(10.05,y,2.55,0.32,t[1],{size:11.5,f:'M',color:C.WHITE}); S.text(10.05,y+0.33,2.55,0.6,t[2],{size:9,f:'L',color:'CCCCE0',ls:1.0}); });
+  if(np){ S.rect(9.45,5.85,3.03,0.75,{fill:C.NAVY_L,r:0.16}); S.text(9.6,5.85,0.9,0.75,String(np),{size:22,f:'M',color:C.WHITE,valign:'m'}); S.text(10.45,5.85,2.0,0.75,np===1?'ponto plugado na programática':'pontos plugados na programática',{size:9,f:'L',color:'CCCCE0',valign:'m',ls:1.0}); }
+  return S;
 }

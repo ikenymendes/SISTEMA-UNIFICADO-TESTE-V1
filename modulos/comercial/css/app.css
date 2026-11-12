@@ -540,3 +540,5 @@ em.prog{font-style:normal;background:#fff0f6;color:#c2185b;border:1px solid #ffc
 .cpmt td{padding:8px 10px;border-bottom:1px solid #f3f2f8;text-align:right;white-space:nowrap}
 .cpmt th:first-child,.cpmt td:first-child{text-align:left;white-space:normal}.cpmt td:first-child small{color:var(--mid)}
 .cpmt td:last-child{font-weight:700;color:var(--navy)}.cpmt tr.abaixo td{background:#fff0f3}
+
+.progpag{display:flex;gap:10px;align-items:flex-start;margin:10px 0 14px;padding:12px 14px;border:1.5px solid #ffc2d8;border-radius:14px;background:#fff5f9}.progpag input{width:18px;height:18px;accent-color:#ff0066;margin-top:2px}.progpag small{display:block;color:var(--mid);font-size:12.5px}
