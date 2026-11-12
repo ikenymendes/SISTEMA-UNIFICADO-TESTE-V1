@@ -208,7 +208,9 @@ function viewPontos(v){
   bar.appendChild(h('button',{class:'btn',text:'Importar planilha (colar)',onclick:function(){ $('#imp').classList.toggle('show'); }}));
   var fl=h('input',{type:'file',accept:'image/*',multiple:'multiple'}); fl.addEventListener('change',async function(){ var n=0; try{ for(var f of fl.files){ var kk=await addPhoto(f); D.libMap=D.libMap||{}; D.libMap[f.name]=kk; n++; } }catch(e){ toast(e.message||String(e),true); } dirty(); $('#fotomsg').textContent=n+' foto(s) adicionadas à biblioteca. Use o nome do arquivo na planilha ou escolha em cada ponto.'; showTab('pontos'); });
   bar.appendChild(h('label',{class:'btn'},['Fotos em lote',fl]));
-  if(ME.admin&&typeof RJ_PONTOS!=='undefined'&&!ptsOf(D,'rj').length) bar.appendChild(h('button',{class:'btn pri',type:'button',text:'📍 Importar os '+RJ_PONTOS.length+' pontos do Rio de Janeiro',onclick:function(){ importarRJ(this); }}));
+  if(ME.admin&&typeof RJ_PONTOS!=='undefined'&&(filtro==='rj'||curTab==='rio'||!ptsOf(D,'rj').length)){ var nf=rjFaltam().length, nl=rjSemLL().length;
+    if(nf) bar.appendChild(h('button',{class:'btn pri',type:'button',text:'📍 Importar '+(nf===RJ_PONTOS.length?'os '+nf+' pontos':nf+(nf===1?' ponto que falta':' pontos que faltam'))+' do Rio de Janeiro',onclick:function(){ importarRJ(this); }}));
+    if(nl) bar.appendChild(h('button',{class:'btn pri',type:'button',text:'🧭 Buscar coordenadas que faltam ('+nl+')',onclick:function(){ coordRJ(this); }})); }
   v.appendChild(bar); v.appendChild(h('p',{id:'fotomsg',class:'hint'}));
   var cnt=fmtOpcoes().map(function(g){ var n=ptsOf(D,g.k).length+(g.k==='led_mega'?ptsOf(D,'led_r2').length:g.k==='banca_mega'?ptsOf(D,'banca_r2').length:0); return n?g.nome+': '+n:null; }).filter(Boolean).join('  ·  ')||'Nenhum ponto cadastrado ainda.'; v.appendChild(h('p',{class:'hint',text:'Total: '+D.pontos.length+' pontos · '+D.pontos.filter(function(p){return p.sel}).length+' marcados para a proposta   —   '+cnt}));
   var vis=function(){ return D.pontos.filter(matchP); };
@@ -232,7 +234,7 @@ function importText(t){ var n=0; t.split(/\r?\n/).forEach(function(line){ if(!li
   D.pontos.push({id:newId(),sel:true,secao:normSec(c[0]),endereco:c[1]||'',bairro:c[2]||'',cidade:c[3]||'',lat:ll?ll.lat:null,lng:ll?ll.lng:null,zoom:16,tamanho:c[5]||'',pixels:c[6]||'',veic:c[7]||'',publico:c[8]||'',fluxo:c[9]||'',impacto:c[10]||'',sentido:c[11]||'',foto:(c[12]&&libSrc(c[12]))?(D.libMap&&D.libMap[c[12]]||c[12]):null}); n++; }); return n; }
 function pointCard(p,ix){
   var d=h('details',{class:'pt'}), sm=h('summary'), title=h('span',{class:'t'}), badge=h('em',{text:SEC[p.secao]?SEC[p.secao].nome:''});
-  function upd(){ title.textContent=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''); badge.textContent=grupoDe(p).nome+(donoDe(p)!=='padrao'?' · '+donoNome(donoDe(p)):'')+(ME.admin&&p.prog?' · ⚡ programática':''); st.textContent=(p.lat!=null&&!isNaN(p.lat))?'📍 mapa ok':'sem coordenadas'; st.className='st '+((p.lat!=null&&!isNaN(p.lat))?'ok':'no'); }
+  function upd(){ title.textContent=(p.endereco||'(sem endereço)')+(p.bairro?' · '+p.bairro:''); badge.textContent=grupoDe(p).nome+(donoDe(p)!=='padrao'?' · '+donoNome(donoDe(p)):'')+(ME.admin&&p.prog?' · ⚡ programática':''); st.textContent=(p.lat!=null&&p.lat!==''&&!isNaN(p.lat))?(p.llAprox?'📍 posição aproximada':'📍 mapa ok'):'sem coordenadas'; st.className='st '+((p.lat!=null&&!isNaN(p.lat))?'ok':'no'); }
   var st=h('span',{class:'st'}); var ck=h('input',{type:'checkbox',title:'Incluir na proposta'}); ck.checked=!!p.sel; ck.addEventListener('click',function(e){ e.stopPropagation(); }); ck.addEventListener('change',function(){ if(CIRCUITOS.indexOf(p.secao)>=0){ setCircuito(D,p.secao,ck.checked); dirty(); var y=window.scrollY; showTab('pontos'); window.scrollTo(0,y); return; } p.sel=ck.checked; dirty(); if(window.refMaster) window.refMaster(); }); var cl=h('label',{class:'ck',title:'Incluir na proposta'},[ck,h('span',{text:'proposta'})]); cl.addEventListener('click',function(e){ e.stopPropagation(); }); sm.appendChild(cl); sm.appendChild(badge); sm.appendChild(title); sm.appendChild(st);
   sm.appendChild(h('button',{class:'mini',text:'duplicar',onclick:function(e){ e.preventDefault(); var c=JSON.parse(JSON.stringify(p)); c.id=newId(); D.pontos.splice(ix+1,0,c); dirty(); showTab('pontos'); }}));
   sm.appendChild(qBadge(p)); sm.appendChild(h('button',{class:'mini del',text:'excluir',onclick:function(e){ e.preventDefault(); askPin('Excluir ponto',(p.endereco||'(sem endereço)')+' · '+secLabel(p.secao)).then(function(ok){ if(!ok) return; var k=D.pontos.indexOf(p); if(k>=0) D.pontos.splice(k,1); dirty(); showTab('pontos'); }); }}));
@@ -246,7 +248,7 @@ function pointCard(p,ix){
   function I(path,label,o){ o=o||{}; o.onchange=upd; return field(label,inp(p,path,o),o.hint); }
   g.appendChild(I('endereco','Endereço (título da ficha)')); g.appendChild(I('bairro','Bairro')); g.appendChild(I('cidade','Cidade'));
   var lk=h('input',{type:'text',placeholder:'Cole o link completo do Google Maps ou "lat, long"'}); var lat=inp(p,'lat',{num:true,onchange:upd}), lng=inp(p,'lng',{num:true,onchange:upd});
-  lk.addEventListener('input',function(){ var r=parseMapsText(lk.value); if(r){ p.lat=r.lat; p.lng=r.lng; lat.value=r.lat; lng.value=r.lng; upd(); dirty(); pm.update(); lk.style.borderColor='#2a9d6f'; } else lk.style.borderColor=''; });
+  lk.addEventListener('input',function(){ var r=parseMapsText(lk.value); if(r){ delete p.llAprox; p.lat=r.lat; p.lng=r.lng; lat.value=r.lat; lng.value=r.lng; upd(); dirty(); pm.update(); lk.style.borderColor='#2a9d6f'; } else lk.style.borderColor=''; });
   g.appendChild(field('Link do Google Maps (preenche lat/long)',lk,'Link curto (maps.app.goo.gl) não funciona: abra e copie o endereço completo da barra.','wide'));
   g.appendChild(field('Latitude',lat)); g.appendChild(field('Longitude',lng)); g.appendChild(I('zoom','Zoom do mapa (13–19)',{num:true})); var pm=mapaPreview(p); g.appendChild(pm.el); g.addEventListener('input',pm.update);
   g.appendChild(I('tamanho','Tamanho (ex.: 9,00 x 3,00 m)')); g.appendChild(I('pixels','Formato em pixels (ex.: 2308 x 577)'));
@@ -535,26 +537,36 @@ function viewFotos(v){
   gsel.addEventListener('change',draw); draw(); fqScan(function(){ contFotos(); if(curTab==='fotos') draw(); });
 }
 
-/* ===== Rio de Janeiro: importação única dos pontos do mídia kit (só admin) =====
-   Envia as fotos para a biblioteca, busca a posição aproximada de cada endereço (OpenStreetMap,
-   1 por segundo) e cria os pontos na seção "Painéis de LED · Rio de Janeiro". */
+/* ===== Rio de Janeiro: importação dos pontos do mídia kit (só admin) =====
+   Envia as fotos para a biblioteca, busca a posição de cada endereço (OpenStreetMap, 1 por segundo,
+   várias formas de escrever o endereço, só dentro do estado do RJ) e cria os pontos que ainda não existem. */
+var RJ_BOX='-44.95,-20.75,-40.90,-23.40';
+function rjFaltam(){ if(typeof RJ_PONTOS==='undefined') return []; var N=function(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9]/g,''); }, tem=ptsOf(D,'rj').map(function(p){ return N(p.endereco); }); return RJ_PONTOS.filter(function(x){ return tem.indexOf(N(x.endereco))<0; }); }
+function rjSemLL(){ return ptsOf(D,'rj').filter(function(p){ return p.lat==null||p.lat===''||isNaN(p.lat)||p.lng==null||p.lng===''; }); }
+async function geoRJ(qs){ var espera=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+  for(var i=0;i<qs.length;i++){ try{ var j=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&bounded=1&viewbox='+RJ_BOX+'&q='+encodeURIComponent(qs[i]))).json(); await espera(1100);
+    if(j&&j[0]) return {lat:+(+j[0].lat).toFixed(7),lng:+(+j[0].lon).toFixed(7),exato:i===0}; }catch(e){ await espera(1100); } } return null; }
+function rjBuscas(p){ var x=(typeof RJ_PONTOS!=='undefined'?RJ_PONTOS:[]).filter(function(r){ return r.endereco===p.endereco; })[0], cid=String(p.cidade||'').replace(/\s*-\s*RJ$/,'');
+  return ((x&&x.q)||[]).concat([String(p.endereco||'').split(' · ')[0]+', '+cid+', Rio de Janeiro',(p.bairro?p.bairro+', ':'')+cid+', Rio de Janeiro']); }
 async function importarRJ(btn){
-  if(!ME.admin||typeof RJ_PONTOS==='undefined') return; if(ptsOf(D,'rj').length){ toast('Os pontos do Rio de Janeiro já foram importados.',true); return; }
-  if(!confirm('Importar os '+RJ_PONTOS.length+' pontos do Rio de Janeiro (fotos, formatos, audiência e valores)? Leva cerca de 1 minuto.')) return;
-  var msg=$('#fotomsg'), ok=0, semLL=0; btn.disabled=true;
-  var espera=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
-  for(var i=0;i<RJ_PONTOS.length;i++){ var x=RJ_PONTOS[i];
-    msg.textContent='Importando '+(i+1)+' de '+RJ_PONTOS.length+': '+x.endereco+'…';
+  if(!ME.admin||typeof RJ_PONTOS==='undefined') return; var L=rjFaltam(); if(!L.length){ toast('Todos os pontos do Rio de Janeiro já estão cadastrados.',true); return; }
+  if(!confirm('Importar '+L.length+' ponto(s) do Rio de Janeiro (fotos, formatos, audiência, valores e coordenadas)? Leva cerca de '+Math.max(1,Math.round(L.length*3/60))+' minuto(s).')) return;
+  var msg=$('#fotomsg'), ok=0, semLL=[]; btn.disabled=true;
+  for(var i=0;i<L.length;i++){ var x=L[i];
+    msg.textContent='Importando '+(i+1)+' de '+L.length+': '+x.endereco+'…';
     var key=null; try{ var b=await (await fetch('assets/rj/'+x.f)).blob(); key=await addPhoto(new File([b],x.f,{type:'image/jpeg'})); }catch(e){ console.warn('foto RJ',x.f,e); }
-    var lat=null,lng=null; try{ var q=String(x.endereco).split(' · ')[0]+', '+String(x.cidade).replace(/\s*-\s*RJ$/,'')+', Rio de Janeiro, Brasil';
-      var j=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q))).json(); if(j&&j[0]){ lat=+(+j[0].lat).toFixed(7); lng=+(+j[0].lon).toFixed(7); } }catch(e){}
-    if(lat==null) semLL++;
-    var p={id:newId(),secao:'rj',dono:'padrao',sel:false,zoom:16,endereco:x.endereco,bairro:x.bairro,cidade:x.cidade,sentido:x.sentido,tamanho:x.tamanho,pixels:x.pixels,veic:x.veic,publico:x.publico,fluxo:x.fluxo,impacto:x.impacto,preco:x.preco,foto:key,lat:lat,lng:lng,prog:false};
-    if(x.tipoTxt) p.tipoTxt=x.tipoTxt; D.pontos.push(p); ok++; await espera(1100); }
-  ordenaPts(D); dirty(); filtro='rj'; showTab('pontos');
-  var m=$('#fotomsg'); if(m) m.textContent='✓ '+ok+' pontos do Rio de Janeiro importados.'+(semLL?' '+semLL+' ficaram sem coordenada: cole o link do Maps em cada um.':' Confira a posição de cada um no mapa do ponto (é aproximada).');
+    var p={id:newId(),secao:'rj',dono:'padrao',sel:false,zoom:16,endereco:x.endereco,bairro:x.bairro,cidade:x.cidade,sentido:x.sentido,tamanho:x.tamanho,pixels:x.pixels,veic:x.veic,publico:x.publico,fluxo:x.fluxo,impacto:x.impacto,preco:x.preco,foto:key,lat:null,lng:null,prog:false};
+    var g=await geoRJ(rjBuscas(p)); if(g){ p.lat=g.lat; p.lng=g.lng; if(!g.exato) p.llAprox=true; } else semLL.push(x.endereco);
+    if(x.tipoTxt) p.tipoTxt=x.tipoTxt; D.pontos.push(p); ok++; dirty(); }
+  ordenaPts(D); dirty(); showTab(curTab==='rio'?'rio':'pontos');
+  var m=$('#fotomsg'); if(m) m.textContent='✓ '+ok+' ponto(s) do Rio de Janeiro importados.'+(semLL.length?' Sem coordenada: '+semLL.join('; ')+' — cole o link do Maps nesses.':' Confira no mapa de cada ponto os marcados como "aproximado".');
 }
-
+/* completa latitude/longitude dos pontos do RJ que estão sem */
+async function coordRJ(btn){ var L=rjSemLL(); if(!L.length){ toast('Todos os pontos do Rio de Janeiro já têm coordenadas.'); return; }
+  btn.disabled=true; var msg=$('#fotomsg'), ok=0, falha=[];
+  for(var i=0;i<L.length;i++){ var p=L[i]; msg.textContent='Buscando coordenadas '+(i+1)+' de '+L.length+': '+p.endereco+'…';
+    var g=await geoRJ(rjBuscas(p)); if(g){ p.lat=g.lat; p.lng=g.lng; if(!g.exato) p.llAprox=true; else delete p.llAprox; ok++; dirty(); } else falha.push(p.endereco); }
+  showTab(curTab); var m=$('#fotomsg'); if(m) m.textContent='✓ Coordenadas encontradas para '+ok+' de '+L.length+' ponto(s).'+(falha.length?' Não achei: '+falha.join('; ')+' — abra o ponto e cole o link do Google Maps.':''); }
 /* ===== Proposta por valor ou por CPM (só admin) ===== */
 function modoBox(panel,tipo){
   var c=D.cpmProp=D.cpmProp||{on:false,cpm:'',dias:30,base:false}, box=h('div',{class:'modobox'});
@@ -583,6 +595,6 @@ function cpmBox(panel,avp,next){
 /* aba "Rio de Janeiro" (só admin): os pontos da praça, com a importação quando ainda não existem */
 function viewRio(v){ if(!ME.admin) return; filtro='rj'; filtroDono=''; busca=''; filtroQ=false; filtroProg=false; viewPontos(v);
   var t=v.querySelector('h2'); if(t) t.textContent='Rio de Janeiro';
-  var n=ptsOf(D,'rj').length, hint=v.querySelector('p.hint');
-  if(hint) hint.textContent=n?n+' pontos de LED no Rio de Janeiro (só você vê esta praça). Marque "⚡ Plugado na programática" e o CPM base em cada ponto; para propostas, use Montar proposta e escolha estes pontos junto com os de BH se quiser.':'Ainda não há pontos do Rio de Janeiro. Clique em "📍 Importar os 28 pontos do Rio de Janeiro" logo abaixo (uma vez só).';
+  var n=ptsOf(D,'rj').length, nl=rjSemLL().length, nf=rjFaltam().length, hint=v.querySelector('p.hint');
+  if(hint) hint.textContent=n?n+' pontos de LED no Rio de Janeiro (só você vê esta praça)'+(nf?' · faltam '+nf+' do mídia kit':' · todos os pontos do mídia kit cadastrados')+(nl?' · '+nl+' sem coordenada':'')+'. Marque "⚡ Plugado na programática" e o CPM base em cada ponto; para propostas, use Montar proposta e escolha estes pontos junto com os de BH se quiser.':'Ainda não há pontos do Rio de Janeiro. Clique em "📍 Importar os 28 pontos do Rio de Janeiro" logo abaixo (uma vez só).';
   var nv=v.querySelector('#novoponto'); if(nv) nv.open=false; }
