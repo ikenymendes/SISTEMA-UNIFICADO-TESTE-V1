@@ -1,0 +1,26 @@
+/* Protocolo de entrega — funciona no painel do admin (vidro) e na tela clara dos outros perfis */
+.prt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:6px 0 30px;align-items:start;font-family:Poppins,system-ui,sans-serif}
+.prt-card{border-radius:26px;padding:22px;background:var(--vidro,#fff);border:1px solid var(--borda,#e3e6f2);box-shadow:var(--sombra,0 6px 24px rgba(27,31,122,.07));-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);color:var(--tx,#000066);min-width:0}
+.prt-k{display:block;font-size:13px;color:var(--tx2,#6b7090)}
+.prt-card h2{margin:2px 0 4px;font-size:26px;font-weight:700}.prt-card h2 span{background:linear-gradient(90deg,#ff4d8d,#ff7eb3 55%,#d9a5ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.prt-sub{margin:0 0 16px;font-size:13px;color:var(--tx2,#6b7090)}
+.prt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prt-f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--tx2,#6b7090);min-width:0}.prt-f.larga{grid-column:1/-1}
+.prt-f input,.prt-f textarea{width:100%;box-sizing:border-box;background:var(--campo,#f5f6fb);border:1px solid var(--borda,#e3e6f2);border-radius:14px;padding:10px 13px;color:var(--tx,#000066);font:500 14px Poppins,system-ui,sans-serif;outline:none}
+.adm .prt-f input,.adm .prt-f textarea{background:#ffffff1a}
+.adm .prt-f input::placeholder,.adm .prt-f textarea::placeholder{color:#ffffff80}
+.adm .prt-f input[type=date]{color-scheme:dark}
+.prt-f textarea{resize:vertical;min-height:60px}
+.prt-f input:focus,.prt-f textarea:focus{border-color:#ff0066;box-shadow:0 0 0 3px #ff006633}
+.prt-rem{margin-top:14px;font-size:13px}.prt-rem summary{cursor:pointer;color:var(--tx2,#6b7090);margin-bottom:10px}
+.prt-acoes{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:18px}
+.prt-b{border:1px solid var(--borda,#e3e6f2);background:var(--vidro2,#eef0f8);color:var(--tx,#000066);border-radius:99px;padding:10px 18px;font:600 14px Poppins,system-ui,sans-serif;cursor:pointer}
+.prt-b.nv{background:#000066;border-color:#000066;color:#fff}.adm .prt-b.nv{background:#ffffff26;border-color:#ffffff4d}
+.prt-b.pri{background:#ff0066;border-color:#ff0066;color:#fff;box-shadow:0 8px 20px -8px #ff0066}
+.prt-b:disabled{opacity:.6;cursor:wait}
+.prt-msg{min-height:20px;margin-top:10px;font-size:13px;text-align:right}.prt-msg.ok{color:#2fbf71}.adm .prt-msg.ok{color:#5ee6a8}.prt-msg.erro{color:#ff4d8d}
+.prt-vis{position:sticky;top:0}
+.prt-prev{margin-top:10px;width:100%;overflow:hidden;border-radius:10px;box-shadow:0 10px 30px #00003333;background:#fff}
+.prt-esc{width:794px;transform-origin:0 0}
+@media (max-width:1000px){.prt{grid-template-columns:1fr}.prt-vis{position:static}}
+@media (max-width:560px){.prt-grid{grid-template-columns:1fr}.prt-card{padding:16px;border-radius:20px}.prt-acoes .prt-b{flex:1 1 100%}}

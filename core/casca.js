@@ -658,7 +658,10 @@ var MEGA = (function () {
         painel.appendChild(BACKUP.tela(client));
       } else if (id === 'usuarios') {
         painel.classList.add('area', 'pronto');
-        painel.appendChild(USUARIOS.tela(client, perfil.id));      } else if (id === 'avisos' && typeof AVISOS !== 'undefined') {
+        painel.appendChild(USUARIOS.tela(client, perfil.id));      } else if (id === 'protocolo' && typeof PROTOCOLO !== 'undefined') {
+        painel.classList.add('area', 'pronto');
+        painel.appendChild(PROTOCOLO.tela());
+      } else if (id === 'avisos' && typeof AVISOS !== 'undefined') {
         painel.classList.add('area', 'pronto');
         painel.appendChild(AVISOS.tela(client, perfil));
       }

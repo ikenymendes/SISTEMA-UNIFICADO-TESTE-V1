@@ -35,7 +35,8 @@ var AREAS = {
   inicio:   { rotulo: 'Início',   descricao: 'Tela inicial com atalhos' },
   usuarios: { rotulo: 'Usuários', descricao: 'Criar usuários e definir o perfil de cada um' },
   avisos:   { rotulo: 'Avisos',   descricao: 'Enviar aviso (notificação do navegador) para a equipe' },
-  backup:   { rotulo: 'Backup',   descricao: 'Backup completo dos dois sistemas' }
+  backup:   { rotulo: 'Backup',   descricao: 'Backup completo dos dois sistemas' },
+  protocolo: { rotulo: 'Protocolo', descricao: 'Gerar protocolo de entrega (Word e PDF)' }
 };
 
 /* Visual da tela de Início (igual para todos os perfis): 'claro' ou 'escuro' */
@@ -49,7 +50,7 @@ var PERMISSOES = {
   admin: {
     rotulo: 'Administrador',
     modulos: ['comercial', 'operacional', 'financeiro'],
-    areas: ['inicio', 'avisos', 'usuarios', 'backup'],
+    areas: ['inicio', 'avisos', 'protocolo', 'usuarios', 'backup'],
     inicial: 'inicio'
   },
   comercial: {
@@ -61,7 +62,7 @@ var PERMISSOES = {
   gerente_comercial: {
     rotulo: 'Gerente comercial',
     modulos: ['comercial'],
-    areas: ['inicio'],
+    areas: ['inicio', 'protocolo'],
     inicial: 'inicio'
   },
   operacional: {
