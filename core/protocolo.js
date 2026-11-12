@@ -196,7 +196,8 @@ var PROTOCOLO = (function () {
   }
 
   /* ---------------- tela ---------------- */
-  function tela() {
+  function tela(client, perfil) {
+    var cli = client || null, souAdmin = perfil && perfil.papel === 'admin';
     if (!document.getElementById('prt-css')) {
       var st = document.createElement('style'); st.id = 'prt-css'; st.textContent = fontesCSS() + CSS_PAGINA; document.head.appendChild(st);
     }
@@ -237,6 +238,53 @@ var PROTOCOLO = (function () {
         gravar(K_DEST, destinos); pintaLista();
       }
       var r = {}; Object.keys(REM_PADRAO).forEach(function (k) { if (d.rem[k] !== REM_PADRAO[k]) r[k] = d.rem[k]; }); gravar(K_REM, r);
+      salvarNuvem();
+    }
+    /* histórico de 30 dias no Supabase (SQL 13) */
+    var ultimoSalvo = '';
+    async function salvarNuvem() {
+      if (!cli) return;
+      var copia = JSON.parse(JSON.stringify(d)), ass = JSON.stringify(copia);
+      if (ass === ultimoSalvo) return; /* mesmo protocolo baixado em Word e PDF: guarda uma vez só */
+      try { var r = await cli.from('protocolos').insert({ numero: d.num, dados: copia }); if (r.error) throw r.error; ultimoSalvo = ass; carregarHist(); }
+      catch (e) { histMsg.textContent = /protocolos|does not exist|schema cache/i.test((e && e.message) || '') ? 'Para guardar o histórico, rode o arquivo supabase/13-protocolos.sql no Supabase.' : 'Não consegui guardar no histórico agora.'; }
+    }
+    var histLista = h('div', { class: 'prt-hist' }), histMsg = h('p', { class: 'prt-sub' });
+    function quando(iso) { var x = new Date(iso); return x.toLocaleDateString('pt-BR') + ' ' + ('0' + x.getHours()).slice(-2) + ':' + ('0' + x.getMinutes()).slice(-2); }
+    function carregaNoForm(q) {
+      Object.keys(q).forEach(function (k) { d[k] = k === 'rem' ? Object.assign({}, REM_PADRAO, q.rem || {}) : q[k]; });
+      Object.keys(campos).forEach(function (k) { campos[k].value = k.indexOf('rem.') === 0 ? (d.rem[k.slice(4)] || '') : (d[k] || ''); });
+      ultimoSalvo = JSON.stringify(d); pinta(); form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    async function carregarHist() {
+      if (!cli) { histMsg.textContent = ''; return; }
+      try {
+        var r = await cli.from('protocolos').select('id,numero,dados,criado_em').gte('criado_em', new Date(Date.now() - 30 * 864e5).toISOString()).order('criado_em', { ascending: false }).limit(200);
+        if (r.error) throw r.error;
+        var L = r.data || [];
+        var maior = L.reduce(function (m, x) { var n = parseInt(x.numero, 10); return n > m ? n : m; }, 0);
+        if (maior > ler(K_NUM, 0)) { gravar(K_NUM, maior); if (!d.dest && !d.ref) { d.num = String(maior + 1).padStart(3, '0'); campos.num.value = d.num; pinta(); } }
+        histMsg.textContent = L.length ? 'Protocolos dos últimos 30 dias. Depois disso eles são apagados sozinhos.' : 'Nenhum protocolo nos últimos 30 dias.';
+        histLista.innerHTML = '';
+        L.forEach(function (x) {
+          var q = x.dados || {};
+          var linha = h('div', { class: 'prt-hl' }, [
+            h('div', { class: 'prt-hi' }, [h('b', { text: 'Nº ' + (x.numero || '—') + ' · ' + (q.dest || '—') }), h('small', { text: (q.ref || '') + (q.cli ? ' · ' + q.cli : '') + ' · ' + quando(x.criado_em) })]),
+            h('div', { class: 'prt-ha' }, [
+              h('button', { type: 'button', class: 'prt-b sm', text: 'Abrir', onclick: function () { carregaNoForm(q); } }),
+              h('button', { type: 'button', class: 'prt-b sm', text: 'PDF', onclick: function () { salvarPDF(q); } }),
+              h('button', { type: 'button', class: 'prt-b sm', text: 'Word', onclick: function () { salvarWord(q).catch(function (e) { aviso('Não consegui gerar o Word: ' + (e && e.message || e), true); }); } }),
+              souAdmin ? h('button', { type: 'button', class: 'prt-b sm x', title: 'Apagar do histórico', text: '×', onclick: async function () {
+                if (!confirm('Apagar o protocolo Nº ' + (x.numero || '') + ' do histórico? Isso não pode ser desfeito.')) return;
+                var r2 = await cli.from('protocolos').delete().eq('id', x.id); if (r2.error) aviso('Não consegui apagar: ' + r2.error.message, true); else carregarHist();
+              } }) : null
+            ])
+          ]);
+          histLista.appendChild(linha);
+        });
+      } catch (e) {
+        histMsg.textContent = /protocolos|does not exist|schema cache/i.test((e && e.message) || '') ? 'Para guardar o histórico por 30 dias, rode o arquivo supabase/13-protocolos.sql no Supabase.' : 'Não consegui carregar o histórico agora.';
+      }
     }
     var msg = h('div', { class: 'prt-msg' });
     function aviso(t, erro) { msg.textContent = t; msg.className = 'prt-msg' + (erro ? ' erro' : ' ok'); clearTimeout(aviso.t); aviso.t = setTimeout(function () { msg.textContent = ''; msg.className = 'prt-msg'; }, 5000); }
@@ -270,7 +318,10 @@ var PROTOCOLO = (function () {
       ]), dl, remBox,
       h('div', { class: 'prt-acoes' }, [bNovo, bPdf, bWord]), msg
     ]);
-    var raiz = h('div', { class: 'prt' }, [form, h('section', { class: 'prt-card prt-vis' }, [h('small', { class: 'prt-k', text: 'Pré-visualização' }), prev])]);
+    var hist = h('section', { class: 'prt-card prt-histc' }, [h('small', { class: 'prt-k', text: 'Histórico' }), h('h2', { text: 'Protocolos salvos' }), histMsg, histLista]);
+    var raiz = h('div', { class: 'prt' }, [h('div', { class: 'prt-col' }, [form, hist]), h('section', { class: 'prt-card prt-vis' }, [h('small', { class: 'prt-k', text: 'Pré-visualização' }), prev])]);
+    carregarHist();
+    raiz.atualizar = carregarHist;
     pinta();
     window.addEventListener('resize', pinta);
     setTimeout(pinta, 60);

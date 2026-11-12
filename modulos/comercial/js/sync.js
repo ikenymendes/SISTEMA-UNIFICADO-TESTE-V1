@@ -24,7 +24,7 @@ function erroMsg(e){ return (e&&(e.message||e.error_description||e.code))||Strin
 
 /* ---- aplicar dados vindos do banco ---- */
 function applyCfg(data){ CFGSRV=JSON.parse(JSON.stringify(data)); CFG_KEYS.forEach(function(k){ if(data[k]!==undefined) D[k]=mergeDef(DEF0[k],data[k]); }); D.kit.cliente=L.cliente||''; if(!ME.admin&&!ME.gerente){ if(L.precos) D.precos=L.precos; if(L.comissao!=null) D.comissao=L.comissao; if(L.bv!=null) D.bv=L.bv; if(L.modoGeral) D.modoGeral=L.modoGeral; } D.baseSP=!!L.baseSP; D.perfilEsc=!!L.perfilEsc; D.circ=L.circ||null; D.cpmProp=L.cpmProp||null; D.progPag=L.progPag; if(!(D.kit&&D.kit.mapV>=3)){ if(!D.mapStyle||D.mapStyle==='esri_street'||D.mapStyle==='mega'||D.mapStyle==='neon') D.mapStyle='claro'; if(D.kit) D.kit.mapV=3; } if(D.mercado) D.mercado.nTelas=TELAS_CIRC.mercado; if(D.guanabara) D.guanabara.nTelas=TELAS_CIRC.guanabara; }
-function applyPontos(rows){ lastPt={}; if(!ME.admin) rows=rows.filter(function(r){ return r.secao!=='rj'; }); D.pontos=rows.map(function(r){ var p=Object.assign({},r); p.sel=!!L.sel[p.id]; lastPt[p.id]=ptJson(p); return p; }).sort(function(a,b){ return (a.ord==null?1e9:a.ord)-(b.ord==null?1e9:b.ord); }); ordenaPts(D); sincCircuitos(D); }
+function applyPontos(rows){ var tmpAnt=(D.pontos||[]).filter(function(p){return p.tmp;}); if(!tmpAnt.length&&typeof tmpLer==='function') tmpAnt=tmpLer(); lastPt={}; if(!ME.admin) rows=rows.filter(function(r){ return r.secao!=='rj'; }); D.pontos=rows.map(function(r){ var p=Object.assign({},r); p.sel=!!L.sel[p.id]; lastPt[p.id]=ptJson(p); return p; }).sort(function(a,b){ return (a.ord==null?1e9:a.ord)-(b.ord==null?1e9:b.ord); }).concat(tmpAnt); ordenaPts(D); sincCircuitos(D); }
 
 async function carregarDados(){
   DEF0=DEF();
@@ -58,7 +58,7 @@ async function syncOut(){
   try{
     var arr=D.pontos; for(var i=0;i<arr.length;i++){ if(arr[i].ord==null){ var prev=i>0?(arr[i-1].ord||0):0, nxt=null; for(var j=i+1;j<arr.length;j++) if(arr[j].ord!=null){ nxt=arr[j].ord; break; } arr[i].ord=nxt==null?prev+1:(prev+nxt)/2; } }
     var sets=[], ids={}, dels=[];
-    arr.forEach(function(p){ ids[p.id]=1; var js=ptJson(p); if(lastPt[p.id]!==js) sets.push([p,js]); });
+    arr.forEach(function(p){ if(p.tmp) return; /* pontos personalizados (terceiros) nunca vão para o banco */ ids[p.id]=1; var js=ptJson(p); if(lastPt[p.id]!==js) sets.push([p,js]); });
     Object.keys(lastPt).forEach(function(id){ if(!ids[id]) dels.push(id); });
     if(dels.length>25) throw new Error('Exclusão em massa bloqueada ('+dels.length+' pontos). Nada foi apagado.');
     if(sets.length){ await Store.gravarPontos(sets.map(function(x){ return stripPt(x[0]); })); sets.forEach(function(x){ lastPt[x[0].id]=x[1]; }); }
@@ -69,14 +69,14 @@ async function syncOut(){
   finally{ syncing=false; if(syncAgain){ syncAgain=false; syncOut(); } }
 }
 function persistLocal(){ L.sel={}; D.pontos.forEach(function(p){ if(p.sel) L.sel[p.id]=1; }); L.cliente=D.kit.cliente||''; L.baseSP=!!D.baseSP; L.perfilEsc=!!D.perfilEsc; L.circ=D.circ||null; L.cpmProp=D.cpmProp||null; L.progPag=D.progPag; if(!ME.admin&&!ME.gerente){ L.precos=D.precos; L.comissao=D.comissao; L.bv=D.bv; L.modoGeral=D.modoGeral; } lsPut(); }
-function dirty(){ persistLocal(); if(ME.admin&&READY){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOut,1200); } else if(ME.gerente&&READY&&(curTab==='precos'||curTab==='precosp')){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOutGer,1200); } }
+function dirty(){ if(typeof tmpGuardar==='function') tmpGuardar(); persistLocal(); if(ME.admin&&READY){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOut,1200); } else if(ME.gerente&&READY&&(curTab==='precos'||curTab==='precosp')){ setSaved('alterações não salvas…'); clearTimeout(saveT); saveT=setTimeout(syncOutGer,1200); } }
 /* Gerente comercial: na aba Preços base edita e salva os preços base; nas demais abas age como comercial (ajustes só na própria proposta). */
 function baseEditavel(){ return ME.admin||(ME.gerente&&(curTab==='precos'||curTab==='precosp')); }
 function baseDoServidor(){ if(!CFGSRV||!DEF0) return; D.precos=JSON.parse(JSON.stringify(CFGSRV.precos||DEF0.precos)); D.comissao=CFGSRV.comissao!=null?CFGSRV.comissao:DEF0.comissao; D.bv=CFGSRV.bv!=null?CFGSRV.bv:DEF0.bv; D.modoGeral=CFGSRV.modoGeral||DEF0.modoGeral; L.precos=null; L.comissao=null; L.bv=null; L.modoGeral=null; lsPut(); lastCfg=stable(cfgSnapshot()); }
 async function syncOutGer(){
   if(!ME.gerente||!READY) return; if(syncing){ syncAgain=true; return; } syncing=true; setSaved('salvando…');
   try{
-    var mud=[]; D.pontos.forEach(function(p){ var js=ptJson(p); if(lastPt[p.id]!==js) mud.push([p,js]); });
+    var mud=[]; D.pontos.forEach(function(p){ if(p.tmp) return; var js=ptJson(p); if(lastPt[p.id]!==js) mud.push([p,js]); });
     if(mud.length){ ignorarRt=Date.now()+3000; await Store.gravarValoresPontos(mud.map(function(x){ var o={id:x[0].id}; if(x[0].liq!==undefined) o.liq=x[0].liq; if(x[0].prod!==undefined) o.prod=x[0].prod; if(x[0].liqsp!==undefined) o.liqsp=x[0].liqsp; if(x[0].prodsp!==undefined) o.prodsp=x[0].prodsp; return o; })); mud.forEach(function(x){ lastPt[x[0].id]=x[1]; }); }
     var c=stable(cfgSnapshot()); if(c!==lastCfg){ await Store.gravarPrecosBase({precos:D.precos,comissao:D.comissao,bv:D.bv,modoGeral:D.modoGeral}); lastCfg=c; var cfg=await Store.lerConfig(); if(cfg){ CFGSRV=JSON.parse(JSON.stringify(cfg)); remoteSig=stable(cfg); } }
     setSaved('preços salvos às '+hora());

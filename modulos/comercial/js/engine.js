@@ -538,7 +538,7 @@ function migKit(D){ var K=D.kit; if(!K.v3){ K.v3=1; K.fotoCapa=null; K.fotoContr
 var ASS_CAMPOS=[['nome','Nome'],['cargo','Cargo'],['email','E-mail'],['tel1','Telefone / WhatsApp'],['tel2','Telefone fixo'],['site','Site']];
 function assinaturaDe(uid){ var K=D.kit, R=Object.assign({},K.resp), a=(K.assinaturas&&uid&&K.assinaturas[uid])||null; if(a) ASS_CAMPOS.forEach(function(c){ if(String(a[c[0]]||'').trim()!=='') R[c[0]]=a[c[0]]; }); return R; }
 function buildSlides(D0,A,mode){ migKit(D0);
-  var full=(mode!=='proposta'&&mode!=='kit'), noPrice=(mode==='kit'), D=Object.assign({},D0); if(!full) D.pontos=D0.pontos.filter(function(p){return p.sel;});
+  var full=(mode!=='proposta'&&mode!=='kit'), noPrice=(mode==='kit'), D=Object.assign({},D0); if(!full) D.pontos=D0.pontos.filter(function(p){return p.sel;}); else D.pontos=D0.pontos.filter(function(p){return !p.tmp;});
   function has(k){ return ptsOf(D,k).length>0; }
   A.D=D; var out=[], K=D.kit, R=assinaturaDe(ME&&ME.uid);
   var CG=0; function push(S){ S.__g=CG; out.push(S); return S; }
