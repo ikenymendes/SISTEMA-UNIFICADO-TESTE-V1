@@ -70,7 +70,7 @@ button.b.sm{padding:6px 12px;font-size:13px}
 #mwrap .slide{transform-origin:0 0;position:absolute}
 .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -6px 24px rgba(27,31,122,.08);padding:14px 28px;display:flex;gap:12px;align-items:center;z-index:20}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:var(--navy);color:#fff;padding:10px 20px;border-radius:999px;display:none;z-index:60}
-.opcs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
 .opc{display:block;border:2px solid #E3E5F5;border-radius:16px;padding:16px 18px;cursor:pointer;background:#fff}
 .opc input{display:none}.opc b{display:block;color:var(--navy);font-size:16px}.opc span{display:block;color:#6B7090;font-size:13px;margin-top:4px}
 .opc.sel{border-color:#F5457F;background:#FFF3F7}
@@ -214,7 +214,7 @@ const blank=()=>({
  emp:Object.assign({},EMP_PADRAO),
  opt:{perSlide:1,sep:true,indice:true},
  gj:{},
- ins:{on:false,pos:"cada",graf:true,rel:[],map:{}}
+ ins:{on:false,so:false,pos:"cada",graf:true,rel:[],map:{}}
 });
 let S=blank(), M=null, tab=0, curPainel=null;
 
@@ -263,7 +263,7 @@ function fmtData(s){if(!s)return"";const[a,m,d]=s.split("-");return`${d}/${m}/${
 function periodo(){const{ini,fim}=S.cli;if(!ini&&!fim)return"";if(ini&&fim){const[a1,m1,d1]=ini.split("-"),[a2]=fim.split("-");return a1===a2?`${d1}/${m1} a ${fmtData(fim)}`:`${fmtData(ini)} a ${fmtData(fim)}`}return fmtData(ini||fim)}
 function qtdPecas(){const n=S.paineis.length,c={};S.paineis.forEach(p=>{const t=(p.tipo||"").toUpperCase().trim()||"PAINEL";c[t]=(c[t]||0)+(+p.qtd||1)});const k=Object.keys(c);
  return k.map(t=>`${c[t]} ${nomeTipo(t==="PAINEL"?"":t,c[t])}`).join(" · ")}
-function nomeArquivo(){const c=(S.cli.cliente||"CLIENTE").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"");const pi=S.cli.pi?"_"+S.cli.pi.replace(/[^A-Za-z0-9.\-]+/g,""):"";return`CHECKING_${c}${pi}`}
+function nomeArquivo(){const c=(S.cli.cliente||"CLIENTE").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"");const pi=S.cli.pi?"_"+S.cli.pi.replace(/[^A-Za-z0-9.\-]+/g,""):"";return`${S.ins&&S.ins.so?"INSERCOES":"CHECKING"}_${c}${pi}`}
 
 /* ---------------- fundos desenhados (canvas) ---------------- */
 const bgCache={};
@@ -390,8 +390,9 @@ function autoMap(){
   S.ins.map[j.pid]=ex?ex.id:""});
 }
 // dados prontos por painel vinculado
+const _virt={};function insVirt(j){const k="v-"+j.pid;return _virt[k]||(_virt[k]={id:k,loc:j.nome||("Player "+j.pid),tela:"",tipo:"",fmt:"",grupo:"",fotos:[],virt:true})}
 function insJog(){
- const out=[];insPlayers().forEach(j=>{const pid=S.ins.map[j.pid];const p=S.paineis.find(x=>x.id===pid);if(!p)return;
+ const out=[];insPlayers().forEach(j=>{const pid=S.ins.map[j.pid];const p=S.paineis.find(x=>x.id===pid)||(S.ins.so&&!pid?insVirt(j):null);if(!p)return;
   const dias={},rels=[];
   S.ins.rel.forEach(r=>{let n=0,ach=false;r.dias.forEach(d=>d.pl.forEach(x=>{if(x.pid===j.pid){n+=x.n;ach=true;dias[d.d]=(dias[d.d]||0)+x.n}}));if(ach)rels.push({r,n})});
   const ds=Object.keys(dias).sort((a,b)=>dKey(a).localeCompare(dKey(b)));
@@ -403,14 +404,15 @@ function insJog(){
 
 /* ---------- inserções aleatórias (gradual, dentro do período de veiculação) ---------- */
 function limitesGer(){let a=parseInt(S.ins.gmin,10),b=parseInt(S.ins.gmax,10);if(!(a>=0))a=529;if(!(b>=0))b=630;if(a>b)[a,b]=[b,a];return[a,b]}
-function serieGradual(n,a,b){const o=[],c=(a+b)/2,st=Math.max(3,Math.round((b-a)*.09));let v=a+Math.random()*(b-a);
- for(let i=0;i<n;i++){o.push(Math.max(a,Math.min(b,Math.round(v))));v+=(Math.random()*2-1)*st+(c-v)*.04}return o}
+function serieGradual(n,a,b){const o=[],c=(a+b)/2,r=b-a,st=Math.max(1,r*.06),lim=Math.max(2,Math.round(r*.08));let v=c+(Math.random()*2-1)*r*.3,ant=null;
+ for(let i=0;i<n;i++){let x=Math.max(a,Math.min(b,Math.round(v)));if(ant!==null)x=Math.max(ant-lim,Math.min(ant+lim,x));o.push(x);ant=x;
+  v=x+(Math.random()*2-1)*st+(c-x)*.08;if(v<a+r*.08)v+=st*.6;if(v>b-r*.08)v-=st*.6}return o}
 function gerarAleatorias(rid){
  const[a,b]=limitesGer();let r=rid?S.ins.rel.find(x=>x.id===rid):null,ci=r?r.ini:isoBr(S.cli.ini),cf=r?r.fim:isoBr(S.cli.fim);
  const ds=datasEntre(ci,cf);if(!ds.length){toast("Preencha o início e o fim da veiculação na etapa Campanha");return}
  let alvo;if(r){const nm={};r.dias.forEach(d=>d.pl.forEach(x=>nm[x.pid]=x.nome));alvo=Object.keys(nm).map(pid=>({pid,nome:nm[pid]}))}
  else{const ps=S.paineis.filter(p=>p.fotos.length).length?S.paineis.filter(p=>p.fotos.length):S.paineis;alvo=ps.map(p=>({pid:"m-"+p.id,nome:(p.loc||"Painel")+(p.tela?" · "+p.tela:""),pid2:p.id}));
-  if(!alvo.length){toast("Cadastre os painéis primeiro");return}
+  if(!alvo.length){toast(S.ins.so?"Cadastre os pontos na etapa Painéis (pode colar os endereços, não precisa de foto)":"Cadastre os painéis primeiro");return}
   r={id:uid(),arq:"Inserções geradas ("+a+"–"+b+"/dia)",cont:"",nomeExib:"Conteúdo da campanha",cid:"manual",dur:"",ini:ci,fim:cf,total:0,dias:[],manual:true,gerado:true,ed:false};S.ins.rel.push(r)}
  S.ins.pos="fim";r.dias=ds.map(d=>({d,n:0,pl:[]}));
  alvo.forEach(t=>{const sr=serieGradual(ds.length,a,b);r.dias.forEach((dd,i)=>dd.pl.push({pid:t.pid,nome:t.nome,n:sr[i]}));if(t.pid2)S.ins.map[t.pid]=t.pid2});
@@ -498,8 +500,8 @@ function insResumo(jg){
  const out=[],per=6,pages=Math.ceil(jg.length/per),tot=jg.reduce((a,g)=>a+g.total,0);
  const todas=S.ins.rel.flatMap(r=>[r.ini,r.fim]).sort((a,b)=>dKey(a).localeCompare(dKey(b))),pi=todas[0]||"",pf=todas[todas.length-1]||"";
  const ds=new Set();jg.forEach(g=>g.ds.forEach(d=>ds.add(d)));
- const bg=bgURL("dark");
- out.push({bg,items:[logo(LOGO_BRANCA,0.9,0.8,3.0),
+const bg=bgURL("dark");
+ if(!S.ins.so)out.push({bg,items:[logo(LOGO_BRANCA,0.9,0.8,3.0),
   TX(0.9,2.7,9,.4,[[R("RELATÓRIO DE INSERÇÕES",13,PINK,1,3)]]),
   TX(0.9,3.15,10,1.2,[[R("Inserções",54,"FFFFFF",1)]],{valign:"middle"}),RC(0.9,4.5,.9,.07,PINK,{r:.03}),
   TX(0.9,4.8,10,.9,[[R((S.cli.cliente||"").toUpperCase(),20,"FFFFFF",1)],[R(pi&&pf?`${pi} a ${pf}`:periodo(),13,"C9CCF2",0)]])]});
@@ -508,7 +510,7 @@ function insResumo(jg){
   const tw=(W-1.4-.5)/3,tile=(x,l,v,pk)=>[RC(x,1.4,tw,1.25,pk?PINK:"FFFFFF",{r:.14,shadow:!pk}),TX(x+.3,1.52,tw-.5,.3,[[R(l,9,pk?"FFFFFF":PINK,1,2)]]),TX(x+.3,1.85,tw-.5,.7,[[R(v,v.length>12?18:30,pk?"FFFFFF":NAVY,1)]],{valign:"middle"})];
   it.push(...tile(.7,"TOTAL DE EXIBIÇÕES",nf(tot),true),...tile(.7+tw+.25,"PAINÉIS COM INSERÇÕES",String(jg.length)),...tile(.7+2*(tw+.25),"PERÍODO",pi&&pf?`${pi.slice(0,5)} a ${pf}`:"—"));
   it.push(TX(.82,2.95,.7,.25,[[R("Nº",8.5,MUTED,1,2)]]),TX(1.62,2.95,6,.25,[[R("PAINEL",8.5,MUTED,1,2)]]),TX(8.0,2.95,2.0,.25,[[R("MÉDIA / DIA",8.5,MUTED,1,2)]],{align:"right"}),TX(10.3,2.95,2.2,.25,[[R("EXIBIÇÕES",8.5,MUTED,1,2)]],{align:"right"}));
-  sl.forEach((g,i)=>{const y=3.27+i*.56,n=S.paineis.indexOf(g.p)+1;
+  sl.forEach((g,i)=>{const y=3.27+i*.56,n=S.ins.so?pg*per+i+1:S.paineis.indexOf(g.p)+1;
    it.push(RC(.7,y,W-1.4,.48,"FFFFFF",{r:.1,shadow:true}),RC(.82,y+.07,.6,.34,NAVY,{r:.08}),TX(.82,y+.07,.6,.34,[[R(String(n).padStart(2,"0"),12,"FFFFFF",1)]],{align:"center",valign:"middle"}),
     TX(1.62,y,6.3,.48,[[R((g.p.loc||"—")+(g.p.tela?"  —  "+g.p.tela:""),12,INK,0)]],{valign:"middle"}),
     TX(8.0,y,2.0,.48,[[R(nf(g.ds.length?Math.round(g.total/g.ds.length):0),12,MUTED,0)]],{align:"right",valign:"middle"}),
@@ -530,8 +532,8 @@ function buildSlides(){
  // capa
  out.push({bg:bgURL("capa"),items:[
   logo(LOGO_COR,0.8,0.7,3.4),
-  TX(0.8,2.35,8.6,.4,[[R(S.ins.on?"RELATÓRIO FOTOGRÁFICO E DE INSERÇÕES":"RELATÓRIO FOTOGRÁFICO",S.ins.on?13:14,PINK,1,3)]]),
-  TX(0.8,2.8,7.2,1.1,[[R("CHECKING",58,NAVY,1)]],{valign:"middle"}),
+  TX(0.8,2.35,8.6,.4,[[R(S.ins.so?"COMPROVAÇÃO DE EXIBIÇÕES":S.ins.on?"RELATÓRIO FOTOGRÁFICO E DE INSERÇÕES":"RELATÓRIO FOTOGRÁFICO",S.ins.on?13:14,PINK,1,3)]]),
+  TX(0.8,2.8,7.2,1.1,[[R(S.ins.so?"INSERÇÕES":"CHECKING",S.ins.so?52:58,NAVY,1)]],{valign:"middle"}),
   RC(0.8,4.0,.9,.07,PINK,{r:.03}),
   TX(0.8,4.3,7.2,1.0,[[R((c.cliente||"CLIENTE").toUpperCase(),28,NAVY,1)]]),
   TX(0.8,5.35,7.2,.9,[[R([periodo(),c.praca&&("Praça: "+c.praca)].filter(Boolean).join("   ·   "),15,MUTED,0)]]),
@@ -549,7 +551,7 @@ function buildSlides(){
  it.push(TX(.7,6.75,9.4,.5,[[R(empLine,8.5,MUTED,0)]],{valign:"middle"}),logo(LOGO_COR,10.83,6.8,1.8));
  out.push({bg:bgURL("soft"),items:it});
  // índice
- const ps=S.paineis.filter(p=>p.fotos.length);
+ const ps=S.ins.so?[]:S.paineis.filter(p=>p.fotos.length);
  if(S.opt.indice&&ps.length){const per=8,pages=Math.ceil(ps.length/per);
   for(let pg=0;pg<pages;pg++){const sl=ps.slice(pg*per,pg*per+per),it=[TX(0.7,0.55,9,.6,[[R("Painéis veiculados"+(pages>1?` (${pg+1}/${pages})`:""),28,NAVY,1)]]),RC(0.7,1.2,.8,.06,PINK,{r:.03})];
    sl.forEach((p,i)=>{const y=1.6+i*.6,n=pg*per+i+1;
@@ -592,7 +594,8 @@ function buildSlides(){
   })
  });
  // relatório de inserções
- if(S.ins.on){const jg=insJog();
+ if(S.ins.so){const jg=insJog();if(jg.length){out.push(...insResumo(jg));jg.forEach((g,k)=>{const s=insSlide(g.p,k+1,jg.length);if(s)out.push(s)})}}
+ else if(S.ins.on){const jg=insJog();
   if(jg.length){
    if(S.ins.pos!=="cada"||true)out.push(...insResumo(jg));
    if(S.ins.pos!=="cada")S.paineis.forEach((p,k)=>{const s=insSlide(p,k+1,S.paineis.length);if(s)out.push(s)});
@@ -720,9 +723,9 @@ function renderPaineis(focus){
 }
 function renderIns(){
  const I=S.ins,pl=insPlayers();
- const opc=(on,tt,sub)=>`<label class="opc ${I.on===on?"sel":""}"><input type="radio" name="insOn" value="${on?1:0}" ${I.on===on?"checked":""}><b>${tt}</b><span>${sub}</span></label>`;
+ const md=I.so?2:I.on?1:0,opc=(v,tt,sub)=>`<label class="opc ${md===v?"sel":""}"><input type="radio" name="insOn" value="${v}" ${md===v?"checked":""}><b>${tt}</b><span>${sub}</span></label>`;
  let h=`<div class="card"><h2>Relatório de inserções</h2><p class="hint">Alguns clientes pedem, além das fotos, a comprovação das exibições. Escolha o que entra neste relatório.</p>
-  <div class="opcs">${opc(false,"Somente relatório fotográfico","Fotos de cada painel, como sempre.")}${opc(true,"Fotográfico + inserções","Fotos e comprovação de exibições, com a identidade Mega.")}</div></div>`;
+  <div class="opcs">${opc(0,"Somente relatório fotográfico","Fotos de cada painel, como sempre.")}${opc(1,"Fotográfico + inserções","Fotos e comprovação de exibições, com a identidade Mega.")}${opc(2,"Somente relatório de inserções","Sem fotos: capa, dados da campanha e as exibições de cada painel.")}</div>${I.so?`<p class="hint" style="margin:10px 0 0">Preencha campanha, agência, PI e período na etapa <b>Campanha</b>. Depois anexe o relatório original abaixo <b>ou</b> gere as inserções por faixa (ex.: 521 a 589 por dia). Fotos não são necessárias.</p>`:""}</div>`;
  if(I.on){
   h+=`<div class="card"><h2>Anexar relatório do sistema (4yousee)</h2><p class="hint">Use o relatório <b>“Exibições de Conteúdos – Agrupado por Data e Player”</b> em PDF. Pode anexar vários (outras semanas, outros conteúdos). Os PDFs não são guardados.</p>
    <div class="dz" id="dzIns">📄 Arraste o(s) PDF(s) aqui ou clique para escolher</div>
@@ -730,8 +733,8 @@ function renderIns(){
      <div class="rn"><label class="f">Nome do conteúdo no relatório</label><input type="text" data-rn="${r.id}" value="${esc(r.nomeExib)}"></div><button class="b sm" data-re="${r.id}">${edRid===r.id?"Fechar":"Conferir / editar dias"}</button>${r.gerado?`<button class="b sm" data-rg="${r.id}">🎲 Gerar novamente</button>`:""}<button class="b sm" data-rx="${r.id}">Remover</button></div>${edRid===r.id?editorHtml(r):""}`).join("")}
    <div class="gerbox"><div><label class="f">Mínimo/dia</label><input type="number" min="0" data-gi="gmin" value="${limitesGer()[0]}"></div><div><label class="f">Máximo/dia</label><input type="number" min="0" data-gi="gmax" value="${limitesGer()[1]}"></div><button class="b" data-gerar="1">🎲 Gerar inserções aleatórias</button><p class="hint" style="flex:1 1 100%;margin:0">Gera, para cada painel, um valor por dia entre o mínimo e o máximo, variando de forma gradual (sem saltos bruscos) e só dentro do período de veiculação. Depois você ainda pode ajustar qualquer dia em “Conferir / editar dias”.</p></div></div>${avisosHtml()}`;
   if(pl.length)h+=`<div class="card" ${I.rel.every(r=>r.gerado)?'style="display:none"':""}><h2>Vincular players aos painéis</h2><p class="hint">O sistema já tentou casar pelo endereço. Confira e ajuste, se precisar. Players sem painel ficam de fora.</p>
-   ${pl.map(j=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><span style="flex:1;min-width:0"><b>Player ${esc(j.pid)}</b> · ${esc(j.nome)} <span class="hint">· ${nf(j.total)} exibições</span></span><div style="flex:0 0 340px"><select data-pm="${j.pid}"><option value="">— não incluir —</option>${S.paineis.map((p,i)=>`<option value="${p.id}" ${I.map[j.pid]===p.id?"selected":""}>${String(i+1).padStart(2,"0")} · ${esc((p.loc||"—")+(p.tela?" · "+p.tela:""))}</option>`).join("")}</select></div></div>`).join("")}</div>
-   <div class="card"><h2>Como apresentar</h2><div class="grid"><div ${I.rel.every(r=>r.gerado)?'style="display:none"':""}><label class="f">Onde colocar os slides de inserções</label><select data-io="pos"><option value="cada" ${I.pos==="cada"?"selected":""}>Logo após as fotos de cada painel</option><option value="fim" ${I.pos==="fim"?"selected":""}>Agrupados no final</option></select></div>
+   ${pl.map(j=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><span style="flex:1;min-width:0"><b>Player ${esc(j.pid)}</b> · ${esc(j.nome)} <span class="hint">· ${nf(j.total)} exibições</span></span><div style="flex:0 0 340px"><select data-pm="${j.pid}"><option value="">${I.so?"— usar o nome do player —":"— não incluir —"}</option>${S.paineis.map((p,i)=>`<option value="${p.id}" ${I.map[j.pid]===p.id?"selected":""}>${String(i+1).padStart(2,"0")} · ${esc((p.loc||"—")+(p.tela?" · "+p.tela:""))}</option>`).join("")}</select></div></div>`).join("")}</div>
+   <div class="card"><h2>Como apresentar</h2><div class="grid"><div ${I.so||I.rel.every(r=>r.gerado)?'style="display:none"':""}><label class="f">Onde colocar os slides de inserções</label><select data-io="pos"><option value="cada" ${I.pos==="cada"?"selected":""}>Logo após as fotos de cada painel</option><option value="fim" ${I.pos==="fim"?"selected":""}>Agrupados no final</option></select></div>
    <div><label class="f">Gráfico de exibições por dia</label><select data-io="graf"><option value="1" ${I.graf?"selected":""}>Sim</option><option value="0" ${I.graf?"":"selected"}>Não</option></select></div></div></div>`;
  }
  $("#t2").innerHTML=h;const bm=$("#bManual");if(bm)bm.onclick=novoManual;
@@ -752,8 +755,8 @@ function renderEmp(){
 function renderCk(){
  const sem=S.paineis.map((p,i)=>!p.fotos.length?String(i+1).padStart(2,"0"):null).filter(Boolean);
  $("#t4").innerHTML=`<div class="card"><div class="row"><div><h2 style="margin:0">Checking pronto</h2><p class="hint" style="margin:2px 0 0"><b id="cnt">0</b> slides · clique em um slide para ver em tamanho grande</p></div><span class="sp"></span><button class="b nv" id="bPDF">Salvar como PDF</button><button class="b pri" id="bPPTX">⬇ Baixar PowerPoint (editável)</button></div></div>
-  ${avisosHtml()}${!S.paineis.length?`<div class="warn">Nenhum painel cadastrado.</div>`:""}${S.paineis.some(p=>!p.tipo)?`<div class="warn">Há painéis sem tipo. Selecione abaixo antes de gerar.</div>`:""}
-  ${S.paineis.length?`<div class="card"><h2>Tipo de mídia de cada painel</h2><p class="hint">Confira antes de gerar. O tipo define o título do slide de separação, o desenho e o rodapé das fotos.</p>${S.paineis.map((p,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><span class="num" style="background:var(--navy);color:#fff;border-radius:10px;padding:4px 11px;font-weight:700">${String(i+1).padStart(2,"0")}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.loc||"—")}${p.tela?" · "+esc(p.tela):""}</span><div style="flex:0 0 270px">${tipoSel(p.tipo,`data-tp="${p.id}"`)}</div></div>`).join("")}</div>`:""}${sem.length?`<div class="warn">Painéis sem foto (não entram no checking): ${sem.join(", ")}</div>`:""}
+  ${avisosHtml()}${!S.paineis.length&&!S.ins.so?`<div class="warn">Nenhum painel cadastrado.</div>`:""}${S.ins.so&&!insJog().length?`<div class="warn">Nenhuma inserção ainda. Anexe o relatório ou gere as inserções na etapa Inserções.</div>`:""}${S.paineis.some(p=>!p.tipo)?`<div class="warn">Há painéis sem tipo. Selecione abaixo antes de gerar.</div>`:""}
+  ${S.paineis.length?`<div class="card"><h2>Tipo de mídia de cada painel</h2><p class="hint">Confira antes de gerar. O tipo define o título do slide de separação, o desenho e o rodapé das fotos.</p>${S.paineis.map((p,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:8px"><span class="num" style="background:var(--navy);color:#fff;border-radius:10px;padding:4px 11px;font-weight:700">${String(i+1).padStart(2,"0")}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.loc||"—")}${p.tela?" · "+esc(p.tela):""}</span><div style="flex:0 0 270px">${tipoSel(p.tipo,`data-tp="${p.id}"`)}</div></div>`).join("")}</div>`:""}${sem.length&&!S.ins.so?`<div class="warn">Painéis sem foto (não entram no checking): ${sem.join(", ")}</div>`:""}
   <div class="thumbs" id="thumbs"></div>`;
  $("#bPPTX").onclick=async()=>{try{toast("Gerando PowerPoint…");await gerarPPTX();toast("PowerPoint gerado ✔")}catch(e){console.error(e);toast("Erro ao gerar: "+e.message)}};
  $("#bPDF").onclick=gerarPDF;
@@ -778,7 +781,7 @@ document.addEventListener("change",e=>{const t=e.target;
  if(t.dataset.ri||t.dataset.rf){const r=S.ins.rel.find(x=>x.id===(t.dataset.ri||t.dataset.rf));if(r){r[t.dataset.ri?"ini":"fim"]=isoBr(t.value);save();renderIns()}return}
  if(t.dataset.rd){const r=S.ins.rel.find(x=>x.id===t.dataset.rd);if(r){r.dur=t.value;save()}return}
  if(t.dataset.rp){if(t.value)addPainelManual(t.dataset.rp,t.value);return}
- if(t.name==="insOn"){S.ins.on=t.value==="1";save();renderIns();return}
+ if(t.name==="insOn"){S.ins.on=t.value!=="0";S.ins.so=t.value==="2";if(S.ins.so)S.ins.pos="fim";save();renderIns();return}
  if(t.dataset.pm!==undefined){S.ins.map[t.dataset.pm]=t.value;save();return}
  if(t.dataset.gi){S.ins[t.dataset.gi]=parseInt(t.value,10);save();return}
  if(t.dataset.io){S.ins[t.dataset.io]=t.dataset.io==="graf"?t.value==="1":t.value;save();return}
