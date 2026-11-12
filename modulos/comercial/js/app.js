@@ -1,6 +1,6 @@
 /* Navegação por abas, entrada no sistema e avisos em tempo real. */
 /* [id, rótulo, grupo, ícone] */
-var TABS_ADMIN=[['prop','Montar proposta','Proposta','tag'],['kit','Kit','Cadastro','kit'],['pontos','Pontos','Cadastro','pin'],['fotos','Melhoria de fotos','Cadastro','cam'],['sug','Sugestões','Cadastro','chat'],['mercado','Mercado Central','Cadastro','bag'],['guanabara','Parque Guanabara','Cadastro','leaf'],['brasilia','Brasília','Cadastro','bldg'],['kitp','Mídia Kit personalizado','Gerar','kit'],['precos','Preços base','Propostas','tag'],['precosp','Preços base SP','Propostas','tag'],['hist','Propostas','Propostas','clock'],['usuarios',(function(){ try{ return window.parent!==window&&window.parent.MEGA?'Assinaturas':'Usuários'; }catch(e){ return 'Usuários'; } })(),'Administração','users']];
+var TABS_ADMIN=[['prop','Montar proposta','Proposta','tag'],['kit','Kit','Cadastro','kit'],['pontos','Pontos','Cadastro','pin'],['fotos','Melhoria de fotos','Cadastro','cam'],['sug','Sugestões','Cadastro','chat'],['mercado','Mercado Central','Cadastro','bag'],['guanabara','Parque Guanabara','Cadastro','leaf'],['brasilia','Brasília','Cadastro','bldg'],['rio','Rio de Janeiro','Cadastro','pin'],['kitp','Mídia Kit personalizado','Gerar','kit'],['precos','Preços base','Propostas','tag'],['precosp','Preços base SP','Propostas','tag'],['hist','Propostas','Propostas','clock'],['usuarios',(function(){ try{ return window.parent!==window&&window.parent.MEGA?'Assinaturas':'Usuários'; }catch(e){ return 'Usuários'; } })(),'Administração','users']];
 var TABS_COM=[['prop','Montar proposta','Proposta','tag'],['kitp','Mídia Kit personalizado','Gerar','kit'],['minhas','Minhas sugestões','Meu histórico','chat'],['hist','Minhas propostas','Meu histórico','clock']];
 var TABS_GER=TABS_COM.slice(0,2).concat([['precos','Preços base','Propostas','tag'],['precosp','Preços base SP','Propostas','tag']],TABS_COM.slice(2));
 var ICONES={cam:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.5"/>',dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -17,7 +17,7 @@ function showTab(t){
   document.querySelectorAll('.tab,.bt').forEach(function(b){ if(b.dataset.t) b.classList.toggle('on',b.dataset.t===t); });
   var v=$('#view'); v.innerHTML='';
   var fn=({dash:viewDashboard,kit:viewKit,pontos:viewPontos,sel:viewSelecao,sug:viewSugestoes,minhas:viewMinhasSugestoes,hist:viewHistorico,usuarios:viewUsuarios,
-    fotos:viewFotos,mercado:function(v){viewSchema(v,'mercado',MERC)},guanabara:function(v){viewSchema(v,'guanabara',GUAN)},brasilia:function(v){viewSchema(v,'brasilia',BRAS)},
+    fotos:viewFotos,mercado:function(v){viewSchema(v,'mercado',MERC)},guanabara:function(v){viewSchema(v,'guanabara',GUAN)},brasilia:function(v){viewSchema(v,'brasilia',BRAS)},rio:viewRio,
     precos:function(v){viewPrecosBase(v,false)},precosp:function(v){viewPrecosBase(v,true)},gerar:viewGerar,kitp:function(v){viewFluxo(v,'kitp')},prop:function(v){viewFluxo(v,'prop')}})[t];
   if(!fn) return; try{ fn(v); }catch(e){ console.error(e); v.appendChild(h('p',{class:'status err',text:'Erro ao abrir a aba: '+erroMsg(e)})); } window.scrollTo(0,0);
 }

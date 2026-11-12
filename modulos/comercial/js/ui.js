@@ -579,3 +579,10 @@ function cpmBox(panel,avp,next){
     next.disabled=!(cc.total>0); next.textContent=cc.total>0?'Continuar':'Informe o CPM para continuar';
     if(window.__onPrecoCirc) window.__onPrecoCirc(); }
   window.__onPreco=pinta; pinta(); }
+
+/* aba "Rio de Janeiro" (só admin): os pontos da praça, com a importação quando ainda não existem */
+function viewRio(v){ if(!ME.admin) return; filtro='rj'; filtroDono=''; busca=''; filtroQ=false; filtroProg=false; viewPontos(v);
+  var t=v.querySelector('h2'); if(t) t.textContent='Rio de Janeiro';
+  var n=ptsOf(D,'rj').length, hint=v.querySelector('p.hint');
+  if(hint) hint.textContent=n?n+' pontos de LED no Rio de Janeiro (só você vê esta praça). Marque "⚡ Plugado na programática" e o CPM base em cada ponto; para propostas, use Montar proposta e escolha estes pontos junto com os de BH se quiser.':'Ainda não há pontos do Rio de Janeiro. Clique em "📍 Importar os 28 pontos do Rio de Janeiro" logo abaixo (uma vez só).';
+  var nv=v.querySelector('#novoponto'); if(nv) nv.open=false; }
