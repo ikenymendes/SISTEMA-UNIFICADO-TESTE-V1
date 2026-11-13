@@ -312,7 +312,7 @@ var ADMIN = (function () {
         function circ(n) { var f = n === CIRC.mercado.nome ? CIRC.mercado.faces : CIRC.guanabara.faces; g.push('<div class="tl-g"><b>' + esc(n) + '</b><span class="tl-n">1 LED · circuito de ' + f + ' faces</span></div>'); }
         function bloco(rot, arr) {
           if (!arr.length) return;
-          g.push('<div class="tl-g"><b>' + rot + '</b><span class="tl-n">' + arr.length + '</span><ol>' + arr.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol></div>');
+          g.push('<div class="tl-g"><b>' + rot + '</b><span class="tl-n">' + arr.length + '</span><ol>' + arr.map(function (n, i) { return '<li style="--i:' + Math.min(i, 22) + '">' + esc(n) + '</li>'; }).join('') + '</ol></div>');
         }
         c.ci.forEach(circ); bloco('Painéis de LED', c.p); bloco('Bancas de LED', c.b); c.cf.forEach(circ);
         return g.join('') || '<div class="tl-g"><span class="tl-n">Nenhum LED cadastrado.</span></div>';

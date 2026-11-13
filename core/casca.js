@@ -606,12 +606,14 @@ var MEGA = (function () {
     var fum = h('canvas', { class: 'fumaca', 'aria-hidden': 'true' });
     var fundoEl = h('div', { class: 'fundo' }, [fum]);
     if (tema === 'vidro' && ehPC()) {
-      var cid = h('div', { class: 'cidade', 'aria-hidden': 'true' }); cid.innerHTML = cidadeSVG();
-      fundoEl.insertBefore(cid, fum); adm.classList.add('com-cidade'); mouseVars(adm);
-      if (entrouPC) { /* acabou de entrar: a cidade começa de perto e recua; menu e conteúdo chegam em seguida */
-        adm.classList.add('pre', 'chega');
+      /* fundo do painel: pontinhos de LED só nas bordas (o meio fica limpo para a leitura) */
+      fundoEl.appendChild(h('div', { class: 'pontos', 'aria-hidden': 'true' }));
+      if (entrouPC) { /* acabou de entrar: a cidade aparece de perto, recua e some; menu e conteúdo chegam em seguida */
+        var cid = h('div', { class: 'cidade', 'aria-hidden': 'true' }); cid.innerHTML = cidadeSVG();
+        fundoEl.insertBefore(cid, fum); adm.classList.add('com-cidade', 'pre', 'chega'); mouseVars(adm);
         setTimeout(function () { adm.classList.remove('pre'); }, 60);
-        setTimeout(function () { adm.classList.remove('chega'); }, 2200);
+        setTimeout(function () { adm.classList.remove('chega'); }, 2600);
+        setTimeout(function () { if (cid.parentNode) cid.parentNode.removeChild(cid); }, 3800);
       }
     }
     adm.appendChild(fundoEl);
