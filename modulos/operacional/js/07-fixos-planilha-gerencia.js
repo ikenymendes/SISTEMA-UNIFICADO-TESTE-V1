@@ -92,11 +92,11 @@ const adminTask = (t) => {
     .map((k) => `<option value="${k}" ${t.status === k ? "selected" : ""}>${ST[k]}</option>`)
     .join(
       "",
-    )}</select><select data-a="x_mo" data-v="${t.key}"><option value="">Sem motoboy</option>${MOTOS.map((m) => `<option ${t.moto === m ? "selected" : ""}>${e(m)}</option>`).join("")}</select>${fi ? `<select data-a="x_fi" data-v="${t.key}">${nOpts(fi.n, fi.i, "Início")}</select><select data-a="x_ff" data-v="${t.key}">${nOpts(fi.n, fi.f, "Fim")}</select>` : ""}<input data-a="x_nt" data-v="${t.key}" placeholder="Observação" value="${e(t.nota)}"></div></div></div>`;
+    )}</select>${fi ? `<select data-a="x_fi" data-v="${t.key}">${nOpts(fi.n, fi.i, "Início")}</select><select data-a="x_ff" data-v="${t.key}">${nOpts(fi.n, fi.f, "Fim")}</select>` : ""}<input data-a="x_nt" data-v="${t.key}" placeholder="Observação" value="${e(t.nota)}"></div></div></div>`;
 };
 function adminVT() {
   const all = tasks(true);
-  let h = `<div class="card mu">Ajuste qualquer situação, motoboy, contagem de fotos e observação de qualquer VT, inclusive os concluídos. Aqui não há as travas do fluxo normal (ex.: mínimo de fotos).</div>`;
+  let h = `<div class="card mu">Ajuste qualquer situação, contagem de fotos e observação de qualquer VT, inclusive os concluídos. Aqui não há as travas do fluxo normal (ex.: mínimo de fotos).</div>`;
   if (!S.vts.length) return h + `<div class="card mu">Nenhum VT cadastrado.</div>`;
   S.vts.forEach((v) => {
     const ts = all.filter((t) => t.vt.id === v.id),

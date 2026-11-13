@@ -267,9 +267,6 @@ function taskRow(t, mgr, mc) {
     ph = `<div class="chips">${sl("i", "Início", fi.i)}${sl("f", "Fim", fi.f)}</div><div class="mu">📷 Cliente exige fotos de início e fim · início ${fi.i}/${fi.n} · fim ${fi.f}/${fi.n}${fi.ok ? " ✓ completo" : " — só finaliza com todas"}</div>`;
   }
   if (mgr) {
-    acts.push(
-      `<select data-a="moto" data-v="${t.key}" style="width:auto"><option value="">Sem motoboy</option>${MOTOS.map((m) => `<option ${t.moto === m ? "selected" : ""}>${m}</option>`).join("")}</select>`,
-    );
     if (t.status === "feita")
       acts.push(
         `<button class="sm pri" data-a="ok" data-v="${t.key}">Validar</button><button class="sm" data-a="rf" data-v="${t.key}">Refazer</button>`,
