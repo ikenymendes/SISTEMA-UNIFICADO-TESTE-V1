@@ -349,6 +349,11 @@ var MEGA = (function () {
   /* marca o item ativo (barra do computador) e o nome da seção (menu do celular) */
   function marcar(id) {
     document.querySelectorAll('.barra .item, .folha .opcao, .trilho .it').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
+    /* luz do "circuito": corre pelo fio até o item escolhido */
+    document.querySelectorAll('.trilho.circ .c-grp').forEach(function (g) {
+      var on = g.querySelector('.it.on'); g.classList.toggle('tem', !!on);
+      if (on) g.querySelector('.c-pulso').style.top = (on.offsetTop + 6) + 'px';
+    });
     var t = document.querySelector('.menu-m .atual'); if (t && infoItem(id)) t.textContent = infoItem(id).rotulo;
   }
 
@@ -506,20 +511,37 @@ var MEGA = (function () {
     var tema = (typeof ADMIN_TEMA !== 'undefined' && ADMIN_TEMA === 'branco') ? 'branco' : 'vidro';
     var adm = h('div', { class: 'adm tema-' + tema });
     var ordem = ordemItens(perm);
-    var trilho = h('nav', { class: 'trilho', 'aria-label': 'Menu principal' });
-    trilho.appendChild(h('img', { class: 'marca', src: 'core/assets/marca.png', alt: 'Mega', title: 'Visão geral', onclick: function () { abrir('inicio'); } }));
+    var trilho = h('nav', { class: 'trilho circ', 'aria-label': 'Menu principal' });
+    var topoT = h('div', { class: 'c-marca', title: 'Visão geral', onclick: function () { abrir('inicio'); } }, [h('img', { src: 'core/assets/marca.png', alt: 'Mega' }), h('div', {}, [h('b', { text: 'Mega OOH' }), h('span', { text: 'Administração' })])]);
+    trilho.appendChild(topoT);
+    var lista = h('div', { class: 'c-lista' }); trilho.appendChild(lista);
     var folha = h('div', { class: 'folha', hidden: 'hidden' });
-    var viuSep = false;
-    ordem.forEach(function (id) {
-      var i = infoItem(id);
-      if (!viuSep && AREAS[id] && id !== 'inicio') { viuSep = true; trilho.appendChild(h('div', { class: 'sep-t' })); folha.appendChild(h('div', { class: 'linha' })); }
-      var b = h('button', { class: 'it', 'data-id': id, type: 'button', title: i.descricao, onclick: function () { abrir(id); } });
-      b.innerHTML = ADMIN.icone(id) + '<span>' + (id === 'inicio' ? 'Visão geral' : i.rotulo) + '</span>';
-      trilho.appendChild(b);
-      folha.appendChild(h('button', { class: 'opcao', 'data-id': id, type: 'button', onclick: function () { fecharFolha(); abrir(id); } }, [h('b', { text: id === 'inicio' ? 'Visão geral' : i.rotulo }), h('small', { text: i.descricao })]));
+    /* grupos do menu: cada um com a sua cor ("circuito") */
+    var GRUPOS = [
+      { n: 'Geral', c: '#ff4d8d', ids: ['inicio', 'avisos'] },
+      { n: 'Módulos', c: '#5cc8ff', ids: ['comercial', 'operacional', 'financeiro'] },
+      { n: 'Ferramentas', c: '#ffb547', ids: ['r2', 'pi', 'protocolo'] },
+      { n: 'Sistema', c: '#b98cff', ids: ['usuarios', 'backup'] }
+    ];
+    var usados = {};
+    GRUPOS.forEach(function (g) { g.ids = g.ids.filter(function (id) { return ordem.indexOf(id) >= 0; }); g.ids.forEach(function (id) { usados[id] = 1; }); });
+    var resto = ordem.filter(function (id) { return !usados[id]; });
+    if (resto.length) GRUPOS[1].ids = GRUPOS[1].ids.concat(resto);
+    GRUPOS.forEach(function (g) {
+      if (!g.ids.length) return;
+      var gr = h('div', { class: 'c-grp', style: '--c:' + g.c }, [h('i', { class: 'c-pulso' }), h('h5', {}, [h('i'), h('span', { text: g.n })])]);
+      folha.appendChild(h('div', { class: 'f-grp', style: '--c:' + g.c, text: g.n }));
+      g.ids.forEach(function (id) {
+        var i = infoItem(id), nome = id === 'inicio' ? 'Visão geral' : i.rotulo;
+        var b = h('button', { class: 'it', 'data-id': id, type: 'button', title: i.descricao, onclick: function () { abrir(id); } });
+        b.innerHTML = '<span class="ic">' + ADMIN.icone(id) + '</span><span class="tx">' + nome + '</span>';
+        gr.appendChild(b);
+        folha.appendChild(h('button', { class: 'opcao', 'data-id': id, type: 'button', style: '--c:' + g.c, onclick: function () { fecharFolha(); abrir(id); } }, [h('b', { text: nome }), h('small', { text: i.descricao })]));
+      });
+      lista.appendChild(gr);
     });
     var sairT = h('button', { class: 'sair-t', type: 'button', title: 'Sair', onclick: function () { sair(); } }); sairT.innerHTML = ADMIN.icone('sair');
-    trilho.appendChild(h('div', { class: 'fim' }, [h('div', { class: 'avatar', title: (perfil.nome || perfil.email) + ' · ' + perm.rotulo, text: (primeiroNome() || 'A').charAt(0) }), sairT]));
+    trilho.appendChild(h('div', { class: 'c-rod' }, [h('div', { class: 'avatar', text: (primeiroNome() || 'A').charAt(0) }), h('div', { class: 'quem-t' }, [h('b', { text: primeiroNome() || 'Admin' }), h('span', { text: perm.rotulo })]), sairT]));
 
     folha.appendChild(h('div', { class: 'linha' }));
     folha.appendChild(h('div', { class: 'quem', text: (perfil.nome || perfil.email) + ' · ' + perm.rotulo }));

@@ -385,3 +385,46 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 .adm .fundo { overflow: hidden; }
 .adm .fundo .fumaca { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: blur(30px); transform: scale(1.15); }
 .adm.tema-branco .fundo .fumaca { opacity: .45; }
+
+/* ===================== menu lateral "Circuito" ===================== */
+.adm .trilho.circ { width: 236px; padding: 16px 12px 12px; align-items: stretch; gap: 0; }
+@media (min-width: 801px) { .adm .palco { left: 260px; } }
+.adm .trilho.circ .c-marca { display: flex; align-items: center; gap: 11px; padding: 0 6px 14px; margin-bottom: 4px; border-bottom: 1px solid var(--linha, #ffffff1c); cursor: pointer; }
+.adm .trilho.circ .c-marca img { width: 36px; filter: drop-shadow(0 0 12px #ff006699); transition: transform .25s; }
+.adm .trilho.circ .c-marca:hover img { transform: scale(1.08) rotate(-4deg); }
+.adm .trilho.circ .c-marca b { display: block; font-size: 15px; color: var(--tx); }
+.adm .trilho.circ .c-marca span { font-size: 11.5px; color: var(--tx2); }
+.adm .trilho.circ .c-lista { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
+.adm .trilho.circ .c-lista::-webkit-scrollbar { display: none; }
+.adm .trilho.circ .c-grp { position: relative; padding: 8px 0 2px 16px; }
+.adm .trilho.circ .c-grp h5 { margin: 0 0 3px 8px; font-size: 11.5px; font-weight: 600; color: var(--tx2); display: flex; align-items: center; gap: 7px; }
+.adm .trilho.circ .c-grp h5 i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.adm .trilho.circ .c-grp::before { content: ''; position: absolute; left: 7px; top: 30px; bottom: 10px; width: 2px; border-radius: 2px; background: #ffffff1c; }
+.adm .trilho.circ .c-pulso { position: absolute; left: 7px; width: 2px; height: 32px; border-radius: 2px; background: linear-gradient(var(--c), transparent); box-shadow: 0 0 10px var(--c); opacity: 0; transition: top .45s cubic-bezier(.3,1.2,.4,1), opacity .2s; }
+.adm .trilho.circ .c-grp.tem .c-pulso { opacity: 1; }
+.adm .trilho.circ .it { position: relative; width: 100%; height: 42px; padding: 0 10px; flex-direction: row; justify-content: flex-start; gap: 12px; border-radius: 14px; font-size: 14px; font-weight: 500; color: var(--tx2); overflow: hidden; transform: none; box-shadow: none; background: transparent; }
+.adm .trilho.circ .it .ic { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: #ffffff12; flex: none; transition: background .25s, box-shadow .25s, color .25s; }
+.adm .trilho.circ .it .ic svg { width: 18px; height: 18px; }
+.adm .trilho.circ .it .tx { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm .trilho.circ .it::before { content: ''; position: absolute; inset: 0; border-radius: 14px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), transparent 80%); opacity: 0; transform: translateX(-30%); transition: opacity .3s, transform .3s; }
+.adm .trilho.circ .it > * { position: relative; }
+.adm .trilho.circ .it:hover { color: var(--tx); background: transparent; transform: none; }
+.adm .trilho.circ .it:hover::before { opacity: 1; transform: none; }
+.adm .trilho.circ .it:hover .ic { background: var(--c); color: #fff; box-shadow: 0 0 18px -2px var(--c); }
+.adm .trilho.circ .it.on { color: var(--tx); font-weight: 700; background: transparent; box-shadow: none; }
+.adm .trilho.circ .it.on .ic { background: var(--c); color: #fff; box-shadow: 0 0 22px var(--c), inset 0 0 0 1px #ffffff55; }
+.adm .trilho.circ .it.on::after { content: ''; position: absolute; right: 10px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+.adm .trilho.circ .it:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
+.adm .trilho.circ .c-rod { margin-top: 10px; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 16px; background: #00000026; }
+.adm .trilho.circ .c-rod .avatar { width: 36px; height: 36px; border-radius: 12px; flex: none; }
+.adm .trilho.circ .quem-t { min-width: 0; flex: 1; font-size: 13px; color: var(--tx); line-height: 1.25; }
+.adm .trilho.circ .quem-t b { display: block; }
+.adm .trilho.circ .quem-t span { font-size: 11px; color: var(--tx2); }
+.adm .trilho.circ .sair-t { width: 36px; height: 36px; border-radius: 11px; flex: none; }
+.adm.tema-branco .trilho.circ .it .ic { background: #00006612; }
+/* menu do celular agrupado com as mesmas cores */
+.adm .folha .f-grp { font-size: 11.5px; font-weight: 600; color: var(--c); padding: 10px 12px 2px; }
+.adm .folha .opcao.on { box-shadow: inset 3px 0 0 var(--c); }
+.adm .folha .opcao.on b { color: #fff; }
+@media (max-width: 1100px) and (min-width: 801px) { .adm .trilho.circ { width: 200px; } .adm .palco { left: 224px; } }
+@media (prefers-reduced-motion: reduce) { .adm .trilho.circ * { transition: none !important; } }
