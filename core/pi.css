@@ -1,0 +1,15 @@
+/* PI de repasse — complementa os estilos do Protocolo (prt-*) */
+.pi .pi-esc{width:1123px;transform-origin:0 0}
+.pi-h3{margin:18px 0 8px;font-size:14px;font-weight:700;color:var(--tx,#000066)}
+.pi-itens{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.pi-it{display:grid;grid-template-columns:28px minmax(0,1fr) 64px 120px 34px;gap:8px;align-items:start}
+.pi-it .pi-n{font-weight:700;color:#ff0066;font-size:13px;padding-top:10px}
+.pi-loc{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pi-it input{width:100%;box-sizing:border-box;background:var(--campo,#f5f6fb);border:1px solid var(--borda,#e3e6f2);border-radius:12px;padding:9px 11px;color:var(--tx,#000066);font:500 13px Poppins,system-ui,sans-serif;outline:none}
+.adm .pi-it input{background:#ffffff1a}.adm .pi-it input::placeholder{color:#ffffff80}
+.pi-it input:focus{border-color:#ff0066;box-shadow:0 0 0 3px #ff006633}
+.pi-res{margin-top:10px;font-size:13px;font-weight:600;color:var(--tx,#000066);background:var(--vidro2,#eef0f8);border-radius:12px;padding:9px 13px}
+.pi-fat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 12px;color:var(--tx,#000066);font-size:13px}
+.pi-fat label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.pi-fat input{accent-color:#ff0066;width:16px;height:16px}
+@media (max-width:700px){.pi-it{grid-template-columns:22px minmax(0,1fr) 34px}.pi-it .pi-q,.pi-it .pi-v{grid-column:2}.pi-fat{grid-template-columns:1fr 1fr}}

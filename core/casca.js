@@ -634,6 +634,7 @@ var MEGA = (function () {
     if (id === 'backup') BACKUP.atualizar && BACKUP.atualizar();
     if (id === 'usuarios') USUARIOS.atualizar();
     if (id === 'avisos' && typeof AVISOS !== 'undefined') AVISOS.atualizar();
+    if (id === 'pi' && painéis[id] && painéis[id].firstChild && painéis[id].firstChild.atualizar) painéis[id].firstChild.atualizar();
     if (id === 'protocolo' && painéis[id] && painéis[id].firstChild && painéis[id].firstChild.atualizar) painéis[id].firstChild.atualizar();
   }
 
@@ -659,7 +660,10 @@ var MEGA = (function () {
         painel.appendChild(BACKUP.tela(client));
       } else if (id === 'usuarios') {
         painel.classList.add('area', 'pronto');
-        painel.appendChild(USUARIOS.tela(client, perfil.id));      } else if (id === 'protocolo' && typeof PROTOCOLO !== 'undefined') {
+        painel.appendChild(USUARIOS.tela(client, perfil.id));      } else if (id === 'pi' && typeof PI !== 'undefined') {
+        painel.classList.add('area', 'pronto');
+        painel.appendChild(PI.tela(client, perfil));
+      } else if (id === 'protocolo' && typeof PROTOCOLO !== 'undefined') {
         painel.classList.add('area', 'pronto');
         painel.appendChild(PROTOCOLO.tela(client, perfil));
       } else if (id === 'avisos' && typeof AVISOS !== 'undefined') {
