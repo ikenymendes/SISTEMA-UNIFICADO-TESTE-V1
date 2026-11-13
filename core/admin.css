@@ -428,3 +428,28 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
 .adm .folha .opcao.on b { color: #fff; }
 @media (max-width: 1100px) and (min-width: 801px) { .adm .trilho.circ { width: 200px; } .adm .palco { left: 224px; } }
 @media (prefers-reduced-motion: reduce) { .adm .trilho.circ * { transition: none !important; } }
+
+/* ---------- recolher o menu quando um módulo está aberto ---------- */
+@media (min-width: 801px) {
+  .adm .trilho.circ { transition: width .38s cubic-bezier(.3,1,.4,1), box-shadow .3s, background .3s; }
+  .adm .palco { transition: left .38s cubic-bezier(.3,1,.4,1); }
+  .adm.recolhido .palco { left: 100px; }
+  .adm.recolhido .trilho.circ { width: 76px; }
+  .adm .trilho.circ .tx, .adm .trilho.circ .c-grp h5 span, .adm .trilho.circ .c-marca > div, .adm .trilho.circ .quem-t { transition: opacity .25s .12s; }
+  .adm.recolhido .trilho.circ:not(:hover) .tx,
+  .adm.recolhido .trilho.circ:not(:hover) .c-grp h5 span,
+  .adm.recolhido .trilho.circ:not(:hover) .c-marca > div,
+  .adm.recolhido .trilho.circ:not(:hover) .quem-t,
+  .adm.recolhido .trilho.circ:not(:hover) .it.on::after { opacity: 0; transition-delay: 0s; }
+  .adm.recolhido .trilho.circ:not(:hover) .c-grp { padding-left: 0; }
+  .adm.recolhido .trilho.circ:not(:hover) .c-grp::before, .adm.recolhido .trilho.circ:not(:hover) .c-pulso { opacity: 0; }
+  .adm.recolhido .trilho.circ:not(:hover) .c-grp h5 { margin-left: 22px; }
+  .adm.recolhido .trilho.circ:not(:hover) .it { padding: 0 11px; }
+  .adm.recolhido .trilho.circ:not(:hover) .c-marca { padding-left: 8px; }
+  .adm.recolhido .trilho.circ:not(:hover) .c-rod { padding: 8px 0; flex-direction: column; background: transparent; }
+  .adm .trilho.circ .c-grp { transition: padding .3s; }
+  .adm .trilho.circ .it { transition: padding .3s, color .2s; }
+  /* ao passar o mouse, abre por cima do conteúdo (o conteúdo não pula) */
+  .adm.recolhido .trilho.circ:hover { width: 236px; transition-delay: .12s; background: #0d0b55f0; box-shadow: 30px 0 60px -20px #000000aa, var(--sombra); }
+  .adm.tema-branco.recolhido .trilho.circ:hover { background: #fffffff2; }
+}

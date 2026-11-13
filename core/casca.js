@@ -649,6 +649,8 @@ var MEGA = (function () {
     if (!pode(id)) return;
     moduloAtual = id;
     marcar(id);
+    /* nos módulos (que têm menu próprio) o menu do admin se recolhe para dar espaço; volta ao passar o mouse */
+    var admEl = document.querySelector('.adm'); if (admEl) admEl.classList.toggle('recolhido', !!MODULOS[id]);
     try { sessionStorage.setItem('mega_aba', id); } catch (e) {}
     if (!painéis[id]) criarPainel(id, aoPronto, false);
     else if (aoPronto) { var fr = painéis[id].querySelector('iframe'); if (fr) aoPronto(fr); }
