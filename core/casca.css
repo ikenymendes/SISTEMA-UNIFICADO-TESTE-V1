@@ -389,3 +389,33 @@ body:has(.bv:not(.sai)) .app-convite, body:has(.lg-intro) .app-convite { opacity
 .login .cartao { border-color: #ffffff2e; box-shadow: 0 30px 60px -26px #00001fcc, inset 0 1px 0 #ffffff1f; }
 .login .campo { border-color: #ffffff2a; }
 .bv-dem { border-color: #ffffff2e; }
+
+
+/* ===== entrada no computador: faixas Mega no login + cortina de faixas ao entrar (celular não usa nada disto) ===== */
+.lg-fx { display: none; }
+.mg-cort { position: fixed; inset: 0 -22%; z-index: 99999; display: flex; pointer-events: none; }
+.mg-cort i { flex: 1; margin: 0 -40px; transform: skewX(-18deg) translateY(112%); will-change: transform; }
+.mg-cort i:nth-child(odd) { background: #ff0066; } .mg-cort i:nth-child(even) { background: #000066; } .mg-cort i:nth-child(3n) { background: #fff; }
+.mg-cort.sobe i { animation: cortSobe .5s cubic-bezier(.7,0,.3,1) both; }
+.mg-cort.sai i { animation: cortSai .6s cubic-bezier(.7,0,.3,1) both; }
+.mg-cort i:nth-child(2) { animation-delay: .05s; } .mg-cort i:nth-child(3) { animation-delay: .1s; } .mg-cort i:nth-child(4) { animation-delay: .15s; }
+.mg-cort i:nth-child(5) { animation-delay: .2s; } .mg-cort i:nth-child(6) { animation-delay: .25s; }
+@keyframes cortSobe { from { transform: skewX(-18deg) translateY(112%); } to { transform: skewX(-18deg) translateY(0); } }
+@keyframes cortSai { from { transform: skewX(-18deg) translateY(0); } to { transform: skewX(-18deg) translateY(-112%); } }
+@media (min-width: 801px) and (any-pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .login { background: radial-gradient(120% 90% at 30% 0%, #2a1bb0, #0d0d6e 45%, #05053d); }
+  .login .lg-bl, .login .lg-grade { display: none; }
+  .lg-fx { display: block; position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    background: radial-gradient(600px 420px at calc(50% + var(--mx, 0) * 260px) calc(50% + var(--my, 0) * 200px), #ff006640, transparent 70%); }
+  .lg-fx i { position: absolute; top: -30%; height: 160%; border-radius: 8px; transform: skewX(-18deg); animation: lgFaixa var(--t) ease-in-out infinite alternate; will-change: transform; }
+  .lg-fx i:nth-child(1) { left: 8%; width: 70px; background: #ffffff0f; --t: 11s; } .lg-fx i:nth-child(2) { left: 16%; width: 110px; background: #ff006659; --t: 14s; }
+  .lg-fx i:nth-child(3) { left: 27%; width: 46px; background: #5cc8ff33; --t: 9s; } .lg-fx i:nth-child(4) { right: 20%; width: 130px; background: #00003380; --t: 16s; }
+  .lg-fx i:nth-child(5) { right: 9%; width: 60px; background: #ff00663d; --t: 12s; } .lg-fx i:nth-child(6) { right: 3%; width: 90px; background: #ffffff0d; --t: 10s; }
+  @keyframes lgFaixa { to { transform: skewX(-18deg) translateX(70px); } }
+  .login.saindo .lg-fx { animation: lgSome .5s forwards; }
+  .login .lg-in { perspective: 1100px; }
+  .login .cartao { transform: rotateY(calc(var(--mx, 0) * 6deg)) rotateX(calc(var(--my, 0) * -6deg)); transition: transform .15s ease-out; box-shadow: 0 40px 80px -30px #000c, inset 0 1px 0 #ffffff40; }
+  .login .btn { position: relative; overflow: hidden; }
+  .login .btn::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, #ffffff73, transparent); transform: skewX(-20deg); animation: lgBrilho 3.2s 1s infinite; pointer-events: none; }
+  @keyframes lgBrilho { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+}

@@ -453,3 +453,25 @@ button.adm-card { text-align: left; color: inherit; font: inherit; cursor: point
   .adm.recolhido .trilho.circ:hover { width: 236px; transition-delay: .12s; background: #0d0b55f0; box-shadow: 30px 0 60px -20px #000000aa, var(--sombra); }
   .adm.tema-branco.recolhido .trilho.circ:hover { background: #fffffff2; }
 }
+
+
+/* ===== cidade à noite atrás do vidro: só no admin, só no computador (tema escuro) ===== */
+.adm .cidade { display: none; }
+@media (min-width: 801px) and (any-pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .adm.com-cidade .cidade { display: block; position: absolute; inset: 0; overflow: hidden; opacity: .5; background: linear-gradient(180deg, #0a0850 0%, #2a1690 55%, #b0126e 100%);
+    transform-origin: 50% 70%; transition: transform 1.3s cubic-bezier(.2,.8,.2,1), opacity .6s; }
+  .adm.com-cidade.pre .cidade { transform: scale(2.2) translate(6%, -8%); transition: none; }
+  .adm.com-cidade.recolhido .cidade { opacity: .2; }
+  .adm .cidade .lua { position: absolute; right: 16%; top: 12%; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #ffd9ec 60%, #ff9cc8); box-shadow: 0 0 80px 20px #ff7eb355; transform: translate(calc(var(--mx, 0) * -14px), calc(var(--my, 0) * -10px)); }
+  .adm .cidade .cam { position: absolute; left: -3%; bottom: 0; width: 106%; height: 74%; }
+  .adm .cidade .c1 { transform: translateX(calc(var(--mx, 0) * -10px)); } .adm .cidade .c2 { transform: translateX(calc(var(--mx, 0) * -24px)); } .adm .cidade .c3 { transform: translateX(calc(var(--mx, 0) * -46px)) translateY(4%); }
+  .adm .cidade .led > rect:first-child { fill: #ff0066; filter: drop-shadow(0 0 14px #ff0066); }
+  .adm .cidade .l2 > rect:first-child { fill: #5cc8ff; filter: drop-shadow(0 0 14px #5cc8ff); } .adm .cidade .l3 > rect:first-child { fill: #ffb547; filter: drop-shadow(0 0 12px #ffb547); }
+  .adm .cidade .l1 { animation: cidPisca 5s infinite; } .adm .cidade .l2 { animation: cidPisca 7s 1.2s infinite; } .adm .cidade .l3 { animation: cidPisca 6s 2.4s infinite; }
+  @keyframes cidPisca { 0%, 44%, 50%, 100% { opacity: 1; } 46% { opacity: .35; } 48% { opacity: .9; } 49% { opacity: .5; } }
+  .adm.com-cidade.recolhido .cidade .led { animation-play-state: paused; }
+  .adm.chega .trilho { animation: admLado .7s .35s cubic-bezier(.2,.9,.3,1.05) both; }
+  .adm.chega .palco { animation: admSobe .7s .5s cubic-bezier(.2,.9,.3,1.05) both; }
+  @keyframes admLado { from { opacity: 0; transform: translateX(-40px); } }
+  @keyframes admSobe { from { opacity: 0; transform: translateY(22px); } }
+}

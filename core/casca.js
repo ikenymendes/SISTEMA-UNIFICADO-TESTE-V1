@@ -191,8 +191,53 @@ var MEGA = (function () {
     return new Promise(function (ok) {
       if (!tela) return ok();
       tela.classList.add('saindo');
-      setTimeout(ok, 620);
+      if (!ehPC()) return setTimeout(ok, 620);
+      /* no computador: uma cortina com as faixas da marca cobre a tela enquanto o sistema é montado por trás */
+      cortina = h('div', { class: 'mg-cort sobe', 'aria-hidden': 'true' }, [h('i'), h('i'), h('i'), h('i'), h('i'), h('i')]);
+      document.body.appendChild(cortina); entrouPC = true;
+      setTimeout(ok, 780);
     });
+  }
+  var cortina = null, entrouPC = false;
+  /* "computador" = tela larga com mouse e sem pedido de reduzir animações */
+  function ehPC() {
+    return !!window.matchMedia && matchMedia('(min-width: 801px) and (any-pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function cortinaSai() {
+    var c = cortina; if (!c) return; cortina = null;
+    c.classList.remove('sobe'); c.classList.add('sai');
+    setTimeout(function () { if (c.parentNode) c.parentNode.removeChild(c); }, 900);
+  }
+  /* guarda a posição do mouse (de -1 a 1) em --mx/--my, no máximo uma vez por quadro */
+  function mouseVars(el) {
+    var x = 0, y = 0, pend = false;
+    el.addEventListener('pointermove', function (ev) {
+      x = ev.clientX / innerWidth * 2 - 1; y = ev.clientY / innerHeight * 2 - 1;
+      if (pend) return; pend = true;
+      requestAnimationFrame(function () { pend = false; el.style.setProperty('--mx', x.toFixed(3)); el.style.setProperty('--my', y.toFixed(3)); });
+    }, { passive: true });
+  }
+  /* cidade à noite (fundo do admin no computador): prédios em 3 camadas e 3 painéis de LED, desenhados uma vez em SVG */
+  function cidadeSVG() {
+    var sem = 7; function rnd() { sem = (sem * 16807) % 2147483647; return sem / 2147483647; }
+    function camada(hmin, hmax, cor, jan) {
+      var x = 0, o = '';
+      while (x < 1600) {
+        var w = 40 + Math.floor(rnd() * 70), a = hmin + Math.floor(rnd() * (hmax - hmin));
+        o += '<rect x="' + x + '" y="' + (600 - a) + '" width="' + w + '" height="' + a + '" fill="' + cor + '"/>';
+        if (jan) for (var yy = 600 - a + 12; yy < 590; yy += 18) for (var xx = x + 8; xx < x + w - 8; xx += 14)
+          if (rnd() < .26) o += '<rect x="' + xx + '" y="' + yy + '" width="5" height="7" fill="#ffd9a0" opacity="' + (rnd() < .5 ? .25 : .5) + '"/>';
+        x += w + Math.floor(rnd() * 14);
+      }
+      return o;
+    }
+    var sv = function (c, m) { return '<svg class="cam ' + c + '" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice">' + m + '</svg>'; };
+    return '<div class="lua"></div>' + sv('c1', camada(140, 300, '#15136e', 0)) +
+      sv('c2', camada(90, 230, '#0c0b52', 1) +
+        '<g class="led l1"><rect x="250" y="250" width="150" height="76" rx="5"/><rect x="318" y="326" width="12" height="140" fill="#07063a"/></g>' +
+        '<g class="led l2"><rect x="1130" y="210" width="96" height="150" rx="5"/><rect x="1172" y="360" width="12" height="120" fill="#07063a"/></g>' +
+        '<g class="led l3"><rect x="760" y="300" width="120" height="60" rx="5"/><rect x="814" y="360" width="10" height="110" fill="#07063a"/></g>') +
+      sv('c3', camada(40, 120, '#050433', 1));
   }
 
   function telaLogin(mensagem) {
@@ -274,7 +319,7 @@ var MEGA = (function () {
     var cartao = h('div', { class: 'cartao' }, [form].concat(extra));
     var luz = h('div', { class: 'lg-luz', 'aria-hidden': 'true' });
     var tela = h('div', { class: 'login' }, [
-      h('div', { class: 'lg-bl b1' }), h('div', { class: 'lg-bl b2' }), h('div', { class: 'lg-bl b3' }), luz, h('div', { class: 'lg-grade' }),
+      h('div', { class: 'lg-bl b1' }), h('div', { class: 'lg-bl b2' }), h('div', { class: 'lg-bl b3' }), h('div', { class: 'lg-fx', 'aria-hidden': 'true' }, [h('i'), h('i'), h('i'), h('i'), h('i'), h('i')]), luz, h('div', { class: 'lg-grade' }),
       h('div', { class: 'lg-in' }, [
         marcaMega('mg-logo'),
         cartao,
@@ -283,6 +328,7 @@ var MEGA = (function () {
     ]);
     app.appendChild(tela);
     seguirMouse(tela, luz);
+    if (ehPC()) mouseVars(tela);
     inEmail.value ? inSenha.focus() : inEmail.focus();
   }
 
@@ -295,6 +341,9 @@ var MEGA = (function () {
   }
 
   async function depoisDoLogin() {
+    try { await depoisDoLogin0(); } finally { cortinaSai(); }
+  }
+  async function depoisDoLogin0() {
     var p;
     try { p = await carregarPerfil(); }
     catch (e) {
@@ -398,6 +447,7 @@ var MEGA = (function () {
   /* Boas-vindas rápida (~2 s): saudação, data e hora, em vidro suave com as cores Mega. Uma vez por entrada. */
   function boasVindas() {
     try { if (sessionStorage.getItem('mega_bv')) return; sessionStorage.setItem('mega_bv', '1'); } catch (e) {}
+    if (entrouPC && document.querySelector('.adm.com-cidade')) { entrouPC = false; return; } /* admin no computador: a cortina já abre direto na cidade */
     var d = new Date(), pn = primeiroNome(), moto = perfil && perfil.papel === 'motoboy';
     var dem = h('div', { class: 'bv-dem' });
     var el = h('div', { class: 'bv' + (moto ? ' moto' : ''), role: 'status' }, [
@@ -554,7 +604,17 @@ var MEGA = (function () {
     var topoM = h('div', { class: 'topo-m' }, [h('img', { src: 'core/assets/logoW.png', alt: 'Mega', onclick: function () { abrir('inicio'); } }), menuM]);
 
     var fum = h('canvas', { class: 'fumaca', 'aria-hidden': 'true' });
-    adm.appendChild(h('div', { class: 'fundo' }, [fum]));
+    var fundoEl = h('div', { class: 'fundo' }, [fum]);
+    if (tema === 'vidro' && ehPC()) {
+      var cid = h('div', { class: 'cidade', 'aria-hidden': 'true' }); cid.innerHTML = cidadeSVG();
+      fundoEl.insertBefore(cid, fum); adm.classList.add('com-cidade'); mouseVars(adm);
+      if (entrouPC) { /* acabou de entrar: a cidade começa de perto e recua; menu e conteúdo chegam em seguida */
+        adm.classList.add('pre', 'chega');
+        setTimeout(function () { adm.classList.remove('pre'); }, 60);
+        setTimeout(function () { adm.classList.remove('chega'); }, 2200);
+      }
+    }
+    adm.appendChild(fundoEl);
     fumacaRosa(fum);
     adm.appendChild(trilho); adm.appendChild(topoM); adm.appendChild(folha);
     adm.appendChild(h('div', { class: 'palco', id: 'palco' }));
