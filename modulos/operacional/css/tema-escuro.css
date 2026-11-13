@@ -1,0 +1,144 @@
+/* GERADO por gera.py: tema escuro em vidro, só no computador. Não editar à mão: edite o cabeçalho ou o app.css e gere de novo. */
+@media (min-width:801px){
+:root{--bg:transparent;--card:#ffffff14;--tx:#fff;--mu:#ffffffb0;--bd:#ffffff2e;--ac:#c3ceff;--ac2:#ffffff1a;--ok:#6ee7b7;--ok2:#12b88630;--wa:#ffc46b;--wa2:#f59e0b30;--er:#ff8fa3;--er2:#ff4d6d30;--sh:0 18px 44px -18px #00001f99}
+html{background:linear-gradient(135deg,#0a0a55 0%,#10107a 40%,#1d46b8 80%,#3a2a9a 100%) fixed;scrollbar-color:#ffffff40 transparent}
+html.no-adm{background:transparent}
+body{background:transparent !important}
+input,select,textarea{color-scheme:dark}
+select option{background:#14146a;color:#fff}
+::placeholder{color:#ffffff80 !important}
+
+#tabs button:hover{background:#ffffff1a}
+#tabs button.on{background:#ffffff1a}
+button{background:#ffffff16}
+button:hover{background:#ffffff16}
+button.on{background:#4a5cf0}
+button.who{background:#ffffff1a}
+input,
+select,
+textarea{background:#4747eb38}
+input:focus,
+select:focus,
+textarea:focus{background:#ffffff1a}
+.quick{background:#ffffff16}
+.side #tabs button.on{background:#ffffff1a}
+.kpi{background:#ffffff1a}
+.kpi.gr b{color:#84f5b2}
+.kpi.am b{color:#ffb47a}
+.dv{background:#ffffff1a}
+.dch span{background:#ffffff16}
+.dch span.r{background:#ff337d38;color:#f782b0}
+.dcard{background:#ffffff1a}
+.dcard .mini{background:conic-gradient(#f5457f calc(var(--p) * 1%), #ffffff16 0)}
+.dcard .mini i{background:#ffffff1a}
+.pill.g{background:#ffffff16;color:#84f5b2}
+.pill.p{background:#ff337d38;color:#f782b0}
+.pill.a{background:#ffb23338;color:#ffb47a}
+.pill.b{background:#ffffff16;color:#ffffff}
+.dvz{background:#ffffff1a}
+.dsec h2{color:#ffffff}
+.dsec .n{background:#ff338338;color:#f782b0}
+.dv b,
+.dcard b{color:#ffffff}
+.dch span{background:#ffffff16;color:#ffffff}
+.dch span.r{background:#ff337b38;color:#f782b0}
+.mtk > div{background:#ffffff1a}
+.mtk b{color:var(--c, #ffffff)}
+.mtc{background:#ffffff1a}
+.mtv{background:#33ff8738;color:#8eecb3}
+.mtv.w{background:#ffc63338;color:#ffd47a}
+.mtv.n{background:#ffffff16}
+.mtv.p{background:#ff333338;color:#ef8a8a}
+.mtc .pz.r{color:#ec8e8e}
+.mtc .pz.o{color:#f2c787}
+.mtc .ac button,
+.mtc .ac a{background:#ffffff1a}
+.mtc .ac .go{border-color:#ffffff59}
+#mtw .bx{background:#ffffff1a}
+#mtw h2{color:#ffffff}
+#mtw p{color:#ffffff}
+#mtw .big div{background:#3e52f438}
+#mtw .big b{color:#ffffff}
+#mtw .big div.r b{color:#f58488}
+#mtw .big span{color:#ffffffb8}
+.plk > div{background:#ffffff1a}
+.plr{background:#ffffff1a}
+.plr .pt{background:#455fed38;color:#ffffff}
+.plmsg{background:#ffc63338;color:#ffd47a}
+.plmsg.e{background:#ff333338;color:#ef8a8a}
+.ck-alerta{color:#ff7ab0;background:#ff338338}
+.fpw .pm-sel option{color:#ffffff}
+.fpw .pm-modo button.on{border-color:#ffffff17}
+.pm-op i{border:2px solid #ffffff17}
+.fpw .pm-sb button.pri{color:#ffc07a}
+.fp-probs h3 em{color:#ffc07a}
+.card.cc{background:linear-gradient(180deg,#4a33ff38,#ffffff1a)}
+.cc-prog small{color:var(--mu,#ffffffb8)}
+.cc-prog i{background:linear-gradient(90deg,#ff0066 var(--p),#ffffff16 var(--p))}
+.cc-it{border:1px solid #ffffff2e;background:#ffffff1a}
+.cc-tx small{color:#ffffffb8}
+.cc-bt a.b{border:1px solid #ffffff2e;color:#ffffff;background:#ffffff1a}
+.fpw .fv-abas button.on{border-color:#ffffff17}
+.fv-abas i{color:#80f99c}
+.fpw .fp-go.r.on{background:#ffffff1a;color:#ff7aa5}
+.fpw .pm-ic{background:#ffffff18;border-color:#ffffff2e}
+.dvx-cab{border-top:1px solid #ffffff2e;color:#ffffffb8}
+.vf{background:#ffffff1a;border:1px solid #ffffff2e}
+.vf.sim{background:#ffffff16;border-color:#ffffff2e}
+.vf.nao{background:#ff335f38}
+.vf-st{background:#ffffff16;color:#ffffff}
+.vf.sim .vf-st{background:#4de58c38;color:#81f9b8}
+.vf.nao .vf-st{background:#ff336c38;color:#f782b0}
+.vf-pt span{background:#ffffff1a;border:1px solid #ffffff2e;color:#ffffff}
+.vt-q{background:#455fed38;color:#ffffff}
+.ckbar{background:#ffffff1a;border:1px solid #ffffff2e}
+.ckbar-t{color:#ffffff}
+.ckbar-t b{color:#ffffff}
+.ckbar-l{background:#ffffff16}
+.ckbar.ok{background:#ffffff16;border-color:#ffffff2e}
+.ckbar.ok b{color:#81f9b8}
+[style*="background: rgb(238, 240, 250)"]{background:#ffffff16 !important}
+[style*="background:#EEF0FA"]{background:#ffffff16 !important}
+[style*="background: rgb(245, 246, 251)"]{background:#ffffff1a !important}
+[style*="background:#F5F6FB"]{background:#ffffff1a !important}
+[style*="background: rgb(231, 248, 239)"]{background:#ffffff16 !important}
+[style*="background:#e7f8ef"]{background:#ffffff16 !important}
+[style*="background: rgb(255, 255, 255)"]{background:#ffffff1a !important}
+[style*="background:#fff"]{background:#ffffff1a !important}
+[style*="background: rgb(255, 240, 245)"]{background:#ff337738 !important}
+[style*="background:#fff0f5"]{background:#ff337738 !important}
+[style*="background:linear-gradient(90deg,#d9dcf5"]{background:linear-gradient(90deg,#ffffff16 !important}
+[style*="border:1.5px solid #d9dcef"]{border:1.5px solid #ffffff2e !important}
+[style*="border:10px solid #fff"]{border:10px solid #ffffff2e !important}
+[style*="border:2px solid #E3E5F5"]{border:2px solid #ffffff2e !important}
+[style*="border-bottom:1px solid #eee"]{border-bottom:1px solid #ffffff2e !important}
+[style*="border-color:#9fe0bd"]{border-color:#ffffff2e !important}
+[style*="; color: rgb(0, 0, 102)"],[style^="color: rgb(0, 0, 102)"]{color:#ffffff !important}
+[style*="color:#000066"]:not([style*="background:#f"]){color:#ffffff !important}
+[style*="; color: rgb(13, 90, 52)"],[style^="color: rgb(13, 90, 52)"]{color:#85f5bd !important}
+[style*="color:#0d5a34"]:not([style*="background:#f"]){color:#85f5bd !important}
+[style*="; color: rgb(27, 31, 122)"],[style^="color: rgb(27, 31, 122)"]{color:#ffffff !important}
+[style*="color:#1B1F7A"]:not([style*="background:#f"]){color:#ffffff !important}
+[style*="; color: rgb(30, 33, 64)"],[style^="color: rgb(30, 33, 64)"]{color:#ffffff !important}
+[style*="color:#1E2140"]:not([style*="background:#f"]){color:#ffffff !important}
+[style*="; color: rgb(47, 133, 90)"],[style^="color: rgb(47, 133, 90)"]{color:#96e3bd !important}
+[style*="color:#2F855A"]:not([style*="background:#f"]){color:#96e3bd !important}
+[style*="; color: rgb(102, 102, 102)"],[style^="color: rgb(102, 102, 102)"]{color:#ffffffb8 !important}
+[style*="color:#666"]:not([style*="background:#f"]){color:#ffffffb8 !important}
+[style*="; color: rgb(107, 112, 144)"],[style^="color: rgb(107, 112, 144)"]{color:#ffffffb8 !important}
+[style*="color:#6B7090"]:not([style*="background:#f"]){color:#ffffffb8 !important}
+[style*="; color: rgb(183, 121, 31)"],[style^="color: rgb(183, 121, 31)"]{color:#f2c787 !important}
+[style*="color:#B7791F"]:not([style*="background:#f"]){color:#f2c787 !important}
+[style*="; color: rgb(192, 25, 79)"],[style^="color: rgb(192, 25, 79)"]{color:#f683a8 !important}
+[style*="color:#C0194F"]:not([style*="background:#f"]){color:#f683a8 !important}
+[style*="; color: rgb(194, 24, 91)"],[style^="color: rgb(194, 24, 91)"]{color:#f782b0 !important}
+[style*="color:#C2185B"]:not([style*="background:#f"]){color:#f782b0 !important}
+[style*="; color: rgb(197, 48, 48)"],[style^="color: rgb(197, 48, 48)"]{color:#ec8e8e !important}
+[style*="color:#C53030"]:not([style*="background:#f"]){color:#ec8e8e !important}
+[style*="; color: rgb(180, 83, 9)"],[style^="color: rgb(180, 83, 9)"]{color:#ffb47a !important}
+[style*="color:#b45309"]:not([style*="background:#f"]){color:#ffb47a !important}
+[style*="; color: rgb(192, 24, 88)"],[style^="color: rgb(192, 24, 88)"]{color:#f783af !important}
+[style*="color:#c01858"]:not([style*="background:#f"]){color:#f783af !important}
+[style*="; color: rgb(194, 24, 91)"],[style^="color: rgb(194, 24, 91)"]{color:#f782b0 !important}
+[style*="color:#c2185b"]:not([style*="background:#f"]){color:#f782b0 !important}
+}

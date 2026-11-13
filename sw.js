@@ -5,7 +5,7 @@
    - Sem internet, mostra uma tela simples avisando.
    - Já preparado para receber notificações (push) na próxima etapa.
    ===================================================================== */
-const VERSAO = "mega-app-20261113j";
+const VERSAO = "mega-app-20261113k";
 const OFFLINE = "offline.html";
 
 self.addEventListener("install", (ev) => {

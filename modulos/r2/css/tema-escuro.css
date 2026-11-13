@@ -1,0 +1,30 @@
+/* GERADO por gera.py: tema escuro em vidro, só no computador. Não editar à mão: edite o cabeçalho ou o app.css e gere de novo. */
+@media (min-width:801px){
+:root{--red:#ff5a4a;--red2:#ff8a7a;--ink:#fff;--mut:#ffffffb0;--line:#ffffff2e;--card:#ffffff14}
+html,body{background:transparent !important}
+html{background:linear-gradient(135deg,#0a0a55 0%,#10107a 40%,#1d46b8 80%,#3a2a9a 100%) fixed !important;scrollbar-color:#ffffff40 transparent}
+html.no-adm{background:transparent !important}
+input,select,textarea{color-scheme:dark}
+select option{background:#14146a;color:#fff}
+::placeholder{color:#ffffff80 !important}
+
+html,body{background:#ffffff16;color:#dc9e9e}
+.cab:after{background:#ffffff1a}
+.tabs{background:#ffffff16}
+.tabs button.on{background:#ffffff1a}
+.f input,.f select,.f textarea{border:1px solid #ffffff2e;background:#ffffff1a}
+.filtros button,.b{border:1px solid #ffffff2e;background:#ffffff1a}
+.busca{border:1px solid #ffffff2e}
+.grp{background:#ffffff16}
+.pt:hover{background:#ffffff1a}
+.pt img,.pt .sf{background:#ffffff16}
+.pt .fotos label{border:1.5px dashed #ffffff2e}
+.prev canvas{background:#ffffff16}
+.aviso{background:#ffa93338;color:#ffc27a}
+[style*="; color: rgb(122, 102, 102)"],[style^="color: rgb(122, 102, 102)"]{color:#ffffffb8 !important}
+[style*="color:#7a6666"]:not([style*="background:#f"]){color:#ffffffb8 !important}
+}
+@media (min-width:801px){
+.busca{background:#ffffff14 !important;color:#fff;border-color:#ffffff2e !important}
+.tabs button.on{background:#ffffff26 !important;color:#fff !important}
+}

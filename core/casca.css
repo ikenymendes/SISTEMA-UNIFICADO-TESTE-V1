@@ -419,3 +419,18 @@ body:has(.bv:not(.sai)) .app-convite, body:has(.lg-intro) .app-convite { opacity
   .login .btn::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, #ffffff73, transparent); transform: skewX(-20deg); animation: lgBrilho 3.2s 1s infinite; pointer-events: none; }
   @keyframes lgBrilho { 0%, 60% { left: -60%; } 100% { left: 130%; } }
 }
+
+/* ===== computador, perfis que não são admin: mesmo fundo escuro do admin (os módulos já vêm no tema escuro) ===== */
+@media (min-width: 801px) {
+  body { background: linear-gradient(135deg, #0a0a55 0%, #10107a 40%, #1d46b8 80%, #3a2a9a 100%) fixed; }
+  #app:not(.com-admin) .painel.area:not(:has(.conteudo.inicio)) { background: var(--paper); }
+  .painel iframe { background: transparent; }
+  #app:not(.com-admin) .palco, #app:not(.com-admin) .painel, #app:not(.com-admin) .painel.area:has(.conteudo.inicio) { background: transparent; }
+  #app:not(.com-admin) .painel.area:not(:has(.conteudo.inicio)) { background: var(--paper); }
+  #app:not(.com-admin) .topo-inicio .sau, #app:not(.com-admin) .topo-inicio .data, #app:not(.com-admin) .ini-local { color: #ffffffb8; }
+  #app:not(.com-admin) .topo-inicio .relogio { color: #fff; }
+  #app:not(.com-admin) .atalho { background: #ffffff14; border-color: #ffffff2e; color: #fff; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: transform .25s cubic-bezier(.3,1.4,.5,1), background .2s, border-color .2s; }
+  #app:not(.com-admin) .atalho:hover { background: #ffffff24; border-color: var(--pink); box-shadow: 0 18px 40px -18px #000020cc; transform: translateY(-4px); }
+  #app:not(.com-admin) .atalho .bolinha { background: var(--pink); box-shadow: 0 10px 22px -8px var(--pink); }
+  #app:not(.com-admin) .atalho .txt small, #app:not(.com-admin) .atalho .seta { color: #ffffffb3; }
+}
