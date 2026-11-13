@@ -27,6 +27,11 @@ var MODULOS = {
     rotulo: 'Financeiro',
     descricao: 'Faturamento: nota fiscal dos checkings concluídos',
     url: 'modulos/financeiro/index.html?v=' + VMOD
+  },
+  r2: {
+    rotulo: 'R2',
+    descricao: 'Mídia kit e checking no modelo R2 Mídia OOH',
+    url: 'modulos/r2/index.html?v=' + VMOD
   }
 };
 
@@ -50,7 +55,7 @@ var ADMIN_TEMA = 'vidro';
 var PERMISSOES = {
   admin: {
     rotulo: 'Administrador',
-    modulos: ['comercial', 'operacional', 'financeiro'],
+    modulos: ['comercial', 'operacional', 'financeiro', 'r2'],
     areas: ['inicio', 'avisos', 'protocolo', 'pi', 'usuarios', 'backup'],
     inicial: 'inicio'
   },
@@ -68,7 +73,7 @@ var PERMISSOES = {
   },
   operacional: {
     rotulo: 'Operacional',
-    modulos: ['operacional'],
+    modulos: ['operacional', 'r2'],
     areas: ['inicio'],
     inicial: 'inicio'
   },
