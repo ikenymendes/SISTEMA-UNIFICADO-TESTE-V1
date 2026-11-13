@@ -104,7 +104,8 @@ button,input{font-family:var(--sans);font-size:inherit}
 .chip{border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;white-space:nowrap;background:#ffffff1f}
 .chip.bom{background:#6ee7b726;color:var(--bom)}.chip.aviso{background:#ffc46b26;color:var(--aviso)}.chip.ruim{background:#ff7a9c26;color:var(--ruim)}
 .meta{color:var(--tx3);font-size:12.5px;margin:8px 0 12px}
-.faz{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.faz{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+@media (max-width:1100px) and (min-width:641px){.faz{grid-template-columns:1fr 1fr 1fr}.faz .btn-rosa{grid-column:1/-1}}
 .faz label{display:grid;gap:4px;font-size:12px;color:var(--tx2);font-weight:500}
 .faz input{background:#ffffffee;border:1px solid #ffffff66;color:#16164a;border-radius:12px;padding:11px 12px;outline:0;width:100%;min-height:44px}
 .faz input:focus{border-color:var(--rosa);box-shadow:0 0 0 3px #ff006640}

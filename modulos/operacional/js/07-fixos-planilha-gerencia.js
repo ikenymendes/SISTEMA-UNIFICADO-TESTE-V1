@@ -133,7 +133,10 @@ function xchg(el, a) {
   else if (a === "x_fi") setF(v, { fi: +val });
   else if (a === "x_ff") setF(v, { ff: +val });
   else if (a === "x_nt") setF(v, { nota: val });
-  else if (a === "x_vd" || a === "x_vn") {
+  else if (a === "x_vca") {
+    const x = S.vts.find((q) => q.id === v);
+    if (x) { x.vca = val.trim(); save(); }
+  } else if (a === "x_vd" || a === "x_vn") {
     const x = S.vts.find((q) => q.id === v);
     if (x) {
       const f0 = fechado(x);
@@ -331,6 +334,7 @@ function planDados() {
       v.fat ? "Sim" : "Não",
       v.fat ? fmt(v.fdt) : "",
       v.nfn || "",
+      v.vca || "",
       v.id,
     ]);
     vIds(v).forEach((i) => {
@@ -379,10 +383,11 @@ function planBlob() {
         "Faturado",
         "Data do faturamento",
         "Nº NF",
+        "Nº venda CA",
         "ID (não alterar)",
       ],
       rows: d.camp,
-      w: [26, 8, 12, 22, 10, 11, 11, 11, 10, 60, 11, 10, 12, 14, 11, 14, 14, 16],
+      w: [26, 8, 12, 22, 10, 11, 11, 11, 10, 60, 11, 10, 12, 14, 11, 14, 14, 14, 16],
       wrap: [9],
     },
     {
@@ -474,7 +479,7 @@ function gerencia() {
       return `<div class="dv ${v.fat || v.nfat ? "ok" : noAr(v) ? "bl" : "am"}"><div class="dvh"><b>${e(v.cliente)}</b>${v.pi ? `<span class="mu">PI ${e(v.pi)}</span>` : ""}${v.ag ? `<span class="mu">· Ag. ${e(v.ag)}</span>` : ""}<span class="mu">${e(fmt(v.ini) || "—")} → ${e(fmt(v.fim) || "—")}</span><span class="pill ${noAr(v) ? "b" : "a"}">${noAr(v) ? "No ar" : "Encerrada"}</span><span class="sp"></span><span class="pill ${v.chk ? "g" : "b"}">${v.chk ? "✔ Checking" : "Checking pendente"}</span><span class="pill ${v.fat ? "g" : "p"}">${v.fat ? "✔ Faturado" : "A faturar"}</span></div>
    <div class="row" style="margin-top:8px;align-items:center"><span class="mu" style="font-size:13px">${ids.length} endereço(s) · fotos ${val}/${ids.length}</span><button class="sm" data-a="col" data-v="go|${v.id}">${open ? "▾ Ocultar endereços" : "▸ Ver endereços"}</button><span class="sp"></span>
     ${v.nfat ? `<span class="b s-validada">Não faturável</span>` : `<button class="sm ${v.fat ? "" : "pri"}" data-a="vfat" data-v="${v.id}">${v.fat ? "Desfazer faturamento" : "Marcar faturado"}</button>`}
-    <input type="date" data-a="x_vd" data-v="${v.id}" value="${e(v.fdt || "")}" title="Data do faturamento" style="flex:0 0 150px"><input data-a="x_vn" data-v="${v.id}" placeholder="Nº NF" value="${e(v.nfn || "")}" style="flex:0 0 110px"></div>
+    <input type="date" data-a="x_vd" data-v="${v.id}" value="${e(v.fdt || "")}" title="Data do faturamento" style="flex:0 0 150px"><input data-a="x_vn" data-v="${v.id}" placeholder="Nº NF" value="${e(v.nfn || "")}" style="flex:0 0 110px"><input data-a="x_vca" data-v="${v.id}" placeholder="Nº venda CA" title="Nº da venda no Conta Azul" value="${e(v.vca || "")}" style="flex:0 0 120px"></div>
    ${
      open
        ? `<ol class="ckadr">${ids

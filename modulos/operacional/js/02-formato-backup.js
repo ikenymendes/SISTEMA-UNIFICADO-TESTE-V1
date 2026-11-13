@@ -39,6 +39,7 @@ const MP_PONTO = {
     nfat: "nao_faturavel",
     fdt: "faturamento_data",
     nfn: "nota_fiscal",
+    vca: "venda_conta_azul",
     evc: "evento_concluido_em",
     u: "atualizado_em",
   },

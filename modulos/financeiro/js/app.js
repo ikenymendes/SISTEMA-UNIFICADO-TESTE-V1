@@ -3,7 +3,7 @@
    ---------------------------------------------------------------------
    Lê e grava pelas funções do banco fin_listar() e fin_registrar(): o
    financeiro só enxerga VTs com checking concluído e só consegue gravar
-   a data do faturamento e o Nº da nota fiscal. Esses campos (fat, fdt, nfn)
+   a data do faturamento, o Nº da nota fiscal e o Nº da venda no Conta Azul. Esses campos (fat, fdt, nfn, vca)
    são os mesmos que a Gestão Operacional usa, então os dois lados ficam
    sempre iguais. Atualiza sozinho a cada 30 segundos.
    ===================================================================== */
@@ -52,15 +52,19 @@
   }
   function digitando() { var a = document.activeElement; return !!a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && raiz.contains(a); }
 
-  async function gravar(chave, fdt, nfn, desfazer) {
+  var semVca = false; /* banco ainda sem o SQL 15: grava sem o Nº da venda */
+  async function gravar(chave, fdt, nfn, desfazer, vca) {
     E.busy[chave] = true; E.msg[chave] = ''; desenhar();
     try {
-      var r = await MEGA.client.rpc('fin_registrar', { p_chave: chave, p_fdt: fdt || '', p_nfn: nfn || '', p_desfazer: !!desfazer });
+      var par = { p_chave: chave, p_fdt: fdt || '', p_nfn: nfn || '', p_desfazer: !!desfazer };
+      if (!semVca) par.p_vca = vca || '';
+      var r = await MEGA.client.rpc('fin_registrar', par);
+      if (r.error && !semVca && /p_vca|function|schema cache|Could not find/i.test(r.error.message || '')) { semVca = true; delete par.p_vca; r = await MEGA.client.rpc('fin_registrar', par); if (!r.error && vca) toast('Faturamento salvo, mas o Nº da venda CA não: rode o SQL 15 no Supabase.', true); }
       if (r.error) throw r.error;
       var v = E.rows.filter(function (x) { return x.chave === chave; })[0];
-      if (v) { if (desfazer) { v.fat = false; v.fdt = ''; v.nfn = ''; } else { v.fat = true; v.fdt = fdt; v.nfn = String(nfn).trim(); } }
+      if (v) { if (desfazer) { v.fat = false; v.fdt = ''; v.nfn = ''; v.vca = ''; } else { v.fat = true; v.fdt = fdt; v.nfn = String(nfn).trim(); if (!semVca) v.vca = String(vca || '').trim(); } }
       delete E.edit[chave]; delete E.draft[chave];
-      toast(desfazer ? 'Faturamento desfeito. O VT voltou para "A faturar".' : 'Faturamento registrado ✓ O Operacional já enxerga a nota.');
+      if (!(semVca && vca && !desfazer)) toast(desfazer ? 'Faturamento desfeito. O VT voltou para "A faturar".' : 'Faturamento registrado ✓ O Operacional já enxerga a nota.');
     } catch (e) {
       E.msg[chave] = String((e && e.message) || e).replace(/^.*?:\s*/, '');
     }
@@ -92,17 +96,18 @@
 
   function itemPend(v) {
     var d = diasDesde(v.chkd), cl = d == null ? '' : d > 15 ? 'ruim' : d > 7 ? 'aviso' : 'bom';
-    var dr = E.draft[v.chave] || {}, fdt = dr.fdt != null ? dr.fdt : hoje(), nfn = dr.nfn != null ? dr.nfn : (v.nfn || '');
+    var dr = E.draft[v.chave] || {}, fdt = dr.fdt != null ? dr.fdt : hoje(), nfn = dr.nfn != null ? dr.nfn : (v.nfn || ''), vca = dr.vca != null ? dr.vca : (v.vca || '');
     var ev = v.tipo === 'evento';
     return '<article class="item anim" data-k="' + esc(v.chave) + '" style="--d:' + 0 + 'ms"><div class="topo"><div><h3>' + esc(v.cliente) + '</h3><div class="tags">' +
       (v.pi ? '<span class="tag">PI ' + esc(v.pi) + '</span>' : '') + (ev ? '<span class="tag ev">Evento' + (v.evento ? ': ' + esc(v.evento) : '') + '</span>' : '') +
       '<span class="tag">' + v.paineis + ' painel(is)</span></div></div>' + (d != null ? '<span class="chip ' + cl + '">Checking ' + txtDias(d) + '</span>' : '') + '</div>' +
-      '<div class="meta">No ar ' + esc(fmtCurto(v.ini)) + ' → ' + esc(fmt(v.fim)) + (v.chkd ? ' · checking concluído em ' + esc(fmt(v.chkd)) : '') + '</div>' + form(v, fdt, nfn, 'Registrar faturamento') + '</article>';
+      '<div class="meta">No ar ' + esc(fmtCurto(v.ini)) + ' → ' + esc(fmt(v.fim)) + (v.chkd ? ' · checking concluído em ' + esc(fmt(v.chkd)) : '') + '</div>' + form(v, fdt, nfn, 'Registrar faturamento', vca) + '</article>';
   }
-  function form(v, fdt, nfn, rotulo) {
+  function form(v, fdt, nfn, rotulo, vca) {
     var busy = !!E.busy[v.chave];
     return '<form class="faz" data-k="' + esc(v.chave) + '" novalidate><label>Data do faturamento<input type="date" name="fdt" value="' + esc(fdt) + '"></label>' +
       '<label>Nº da nota fiscal<input type="text" name="nfn" inputmode="numeric" autocomplete="off" placeholder="Ex.: 4521" value="' + esc(nfn) + '"></label>' +
+      '<label>Nº venda CA (Conta Azul)<input type="text" name="vca" inputmode="numeric" autocomplete="off" placeholder="Ex.: 1873" value="' + esc(vca || '') + '"></label>' +
       '<button class="btn-rosa" type="submit"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Salvando…' : rotulo) + '</button></form>' +
       (E.msg[v.chave] ? '<p class="erro">' + esc(E.msg[v.chave]) + '</p>' : '');
   }
@@ -110,11 +115,11 @@
     if (E.edit[v.chave]) {
       var dr = E.draft[v.chave] || {};
       return '<article class="item" data-k="' + esc(v.chave) + '"><div class="topo"><div><h3>' + esc(v.cliente) + '</h3><div class="tags">' + (v.pi ? '<span class="tag">PI ' + esc(v.pi) + '</span>' : '') + '</div></div><button class="btn-suave" data-a="cancelar" data-v="' + esc(v.chave) + '" type="button">Cancelar</button></div><div class="meta">Corrigir a data ou o número da nota</div>' +
-        form(v, dr.fdt != null ? dr.fdt : v.fdt, dr.nfn != null ? dr.nfn : v.nfn, 'Salvar alterações') + '</article>';
+        form(v, dr.fdt != null ? dr.fdt : v.fdt, dr.nfn != null ? dr.nfn : v.nfn, 'Salvar alterações', dr.vca != null ? dr.vca : v.vca) + '</article>';
     }
     return '<article class="item" data-k="' + esc(v.chave) + '"><div class="topo"><div><h3>' + esc(v.cliente) + '</h3><div class="tags">' + (v.pi ? '<span class="tag">PI ' + esc(v.pi) + '</span>' : '') +
       (v.tipo === 'evento' ? '<span class="tag ev">Evento</span>' : '') + '<span class="tag">' + v.paineis + ' painel(is)</span></div></div><span class="chip bom">Processo concluído</span></div>' +
-      '<div class="feito" style="margin-top:12px"><span class="ok">✓</span><div><div class="nf">NF ' + esc(v.nfn) + '</div><div class="dt">Faturado em ' + esc(fmt(v.fdt)) + '</div></div>' +
+      '<div class="feito" style="margin-top:12px"><span class="ok">✓</span><div><div class="nf">NF ' + esc(v.nfn) + (v.vca ? ' · Venda CA ' + esc(v.vca) : '') + '</div><div class="dt">Faturado em ' + esc(fmt(v.fdt)) + '</div></div>' +
       '<div class="acoes"><button class="btn-suave" data-a="editar" data-v="' + esc(v.chave) + '" type="button">Editar</button><button class="btn-suave perigo" data-a="desfazer" data-v="' + esc(v.chave) + '" type="button">Desfazer</button></div></div>' +
       (E.msg[v.chave] ? '<p class="erro">' + esc(E.msg[v.chave]) + '</p>' : '') + '</article>';
   }
@@ -128,7 +133,7 @@
     var mm = meses(), atual = mm[5].v, ant = mm[4].v;
     var pct = E.rows.length ? Math.round(F.length / E.rows.length * 100) : 0;
     var q = E.q.trim().toLowerCase();
-    var lista = (E.aba === 'pend' ? P : F).filter(function (v) { return !q || (v.cliente + ' ' + v.pi + ' ' + v.nfn + ' ' + v.evento).toLowerCase().indexOf(q) >= 0; });
+    var lista = (E.aba === 'pend' ? P : F).filter(function (v) { return !q || (v.cliente + ' ' + v.pi + ' ' + v.nfn + ' ' + (v.vca || '') + ' ' + v.evento).toLowerCase().indexOf(q) >= 0; });
     var itens = lista.map(E.aba === 'pend' ? itemPend : itemFeito).join('');
     if (!itens) itens = '<div class="vazio"><b>' + (q ? 'Nada encontrado' : E.aba === 'pend' ? 'Tudo faturado 🎉' : 'Nenhum faturamento ainda') + '</b>' + (q ? 'Tente outro nome, PI ou número da nota.' : E.aba === 'pend' ? 'Não há checkings concluídos esperando nota fiscal.' : 'Quando você registrar a primeira nota, ela aparece aqui.') + '</div>';
 
@@ -145,7 +150,7 @@
       '<section class="linha"><div class="glass card anim"><h2>Faturamentos por mês</h2><p class="leg-t">Notas registradas nos últimos 6 meses</p>' + barras(mm) + '</div>' +
       '<div class="glass card anim"><h2>Situação geral</h2><p class="leg-t">Todos os checkings concluídos</p>' + rosca(P.length, F.length) + '</div></section>' +
       '<section class="glass lista anim"><div class="ferr"><div class="abas" role="tablist"><button class="aba ' + (E.aba === 'pend' ? 'on' : '') + '" data-a="aba" data-v="pend" type="button">A faturar<b>' + P.length + '</b></button><button class="aba ' + (E.aba === 'feito' ? 'on' : '') + '" data-a="aba" data-v="feito" type="button">Faturados<b>' + F.length + '</b></button></div>' +
-      '<div class="busca"><input id="busca" type="search" placeholder="Buscar cliente, PI ou nº da nota" value="' + esc(E.q) + '" autocomplete="off"></div></div>' +
+      '<div class="busca"><input id="busca" type="search" placeholder="Buscar cliente, PI, nº da nota ou venda CA" value="' + esc(E.q) + '" autocomplete="off"></div></div>' +
       (E.aba === 'pend' ? '<p class="dica">Preencha a <b>data</b> e o <b>número da nota</b> e toque em “Registrar faturamento”. O VT passa para Faturados e o Operacional vê na hora.</p>' : '<p class="dica">Notas já registradas. Use Editar para corrigir ou Desfazer para voltar o VT para “A faturar”.</p>') +
       '<div class="itens">' + itens + '</div></section></main>';
 
@@ -190,10 +195,10 @@
   raiz.addEventListener('focusout', function () { setTimeout(function () { if (E.adiado && !digitando()) { E.adiado = false; desenhar(); } }, 50); });
   raiz.addEventListener('submit', function (ev) {
     ev.preventDefault();
-    var f = ev.target, k = f.getAttribute('data-k'), fdt = f.elements.fdt.value, nfn = f.elements.nfn.value.trim();
+    var f = ev.target, k = f.getAttribute('data-k'), fdt = f.elements.fdt.value, nfn = f.elements.nfn.value.trim(), vca = f.elements.vca ? f.elements.vca.value.trim() : '';
     if (!fdt) { E.msg[k] = 'Escolha a data do faturamento.'; desenhar(); return; }
-    if (!nfn) { E.msg[k] = 'Informe o número da nota fiscal.'; E.draft[k] = { fdt: fdt, nfn: '' }; desenhar(); return; }
-    gravar(k, fdt, nfn, false);
+    if (!nfn) { E.msg[k] = 'Informe o número da nota fiscal.'; E.draft[k] = { fdt: fdt, nfn: '', vca: vca }; desenhar(); return; }
+    gravar(k, fdt, nfn, false, vca);
   });
 
   /* atualização automática */
